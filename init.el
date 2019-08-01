@@ -281,6 +281,10 @@
    "s b" '(counsel-grep-or-swiper :wk "search in buffer")
    "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
    "s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
+   "s d" '(counsel-ag :wk "search in directory")
+   "s g" '(counsel-git-grep :wk "search in git repository")
+   "s p" '(projectile-ripgrep :wk "search in project")
+
    ;; Add search in project, regex in project, etc.
    ;; Add grep
 
@@ -609,6 +613,9 @@
   ;;(define-key company-mode-map (kbd "<tab>") 'company-complete)
   (define-key company-mode-map (kbd "<C-tab>") 'company-other-backend)
 
+  ;; Counsel company
+  (define-key company-active-map (kbd "C-l") 'counsel-company)
+
 
   ;; set default `company-backends'
   (setq company-backends
@@ -735,22 +742,25 @@
 
   ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
   ;; may have their own settings.
-  (load-theme 'doom-one t)
+  ;; (load-theme 'doom-one t)
 
-  (defvar siliusmv/is-dark-theme t
-    "Used in the function siliusmv/toggle-light-dark-theme")
-  
-  (defun siliusmv/toggle-light-dark-theme ()
-    "Toggle between light and dark themes"
+  (defvar siliusmv/my-themes
+    (list
+     '("dark" doom-one)
+     '("light" doom-one-light)))
+
+  (defvar siliusmv/initial-theme "dark"
+    "Initial theme for starting up emacs")
+
+  (defun siliusmv/choose-theme (&optional theme-short)
     (interactive)
-    (if siliusmv/is-dark-theme
-	(progn
-	  (setq siliusmv/is-dark-theme nil)
-	  (load-theme 'doom-one-light t))
-      (progn
-	(setq siliusmv/is-dark-theme t)
-	(load-theme 'doom-one t))))
+    (if (not theme-short)
+	(setq theme-short
+	      (ivy-read "Select theme: " siliusmv/my-themes)))
+    (let ((theme-name (nth 1 (assoc theme-short siliusmv/my-themes))))
+      (load-theme theme-name t)))
 
+  (siliusmv/choose-theme siliusmv/initial-theme)
   )
 
 ;; =========================================================
@@ -772,8 +782,7 @@
 	persp-auto-resume-time -1 ;; Do not autoresume
 	persp-remove-buffers-from-nil-persp-behaviour nil
 	persp-init-frame-behaviour nil ;; Open scratch for new frames
-	) 
-  
+	)
   )
 
 ;; =========================================================
@@ -797,10 +806,6 @@
 	'magit-auto-revert-repository-buffer-p)
 
   (use-package evil-magit) ;; Evil-movements in magit
-
-  ;; (add-hook 'magit-mode-hook
-  ;; 	    (lambda ()
-  ;; 	      (nlinum-relative-mode -1)))
   )
 
 
@@ -817,10 +822,7 @@
 ;; =========================================================
 ;; Jump to function definition
 ;; =========================================================
-(use-package imenu-anywhere
-  ;;:ensure t
-  :config
-  )
+(use-package imenu-anywhere)
 
 (use-package dumb-jump
   ;;:ensure t
@@ -836,13 +838,10 @@
    )
   )
 
-
-
 ;; =========================================================
 ;; Ivy++
 ;; =========================================================
 (use-package ivy
-  ;;:ensure t
   :diminish ivy-mode
   :init
   ;; The default search is ivy--regex-plus
@@ -858,13 +857,11 @@
   )
 
 (use-package swiper
-  ;;:ensure t
   :config
   :commands (swiper)
   )
 
 (use-package counsel
-  ;;:ensure t
   :general
   ( 
    "M-x" 'counsel-M-x
@@ -875,8 +872,6 @@
    "<f2> i" 'counsel-info-lookup-symbol
    "<f2> u" 'counsel-unicode-char
    )
-
-  :config
 
 
   ;; ;; Ivy-based interface to shell and system tools
@@ -1254,6 +1249,8 @@
   (setq projectile-completion-system 'ivy)
   )
 
+;; Install ag or ripgrep!!!!
+
 
 ;; =========================================================
 ;; Terminal
@@ -1352,7 +1349,7 @@
 
 (setenv "GPG_AGENT_INFO" nil)
 (setq epg-gpg-program "gpg2")
-
+ 
 (use-package treemacs
   :after evil
   :commands (treemacs)
