@@ -133,6 +133,19 @@
 	  (with-current-buffer buffer-to-kill
 	    (remove-hook 'kill-buffer-hook delete-frame-functions t))))))
 
+
+  ;; Functions for changing font size
+  (defun siliusmv/zoom-in ()
+    (interactive)
+    (let ((x (+ 10 (face-attribute 'default :height))))
+      (set-face-attribute 'default nil :height x)))
+
+  (defun siliusmv/zoom-out ()
+    (interactive)
+    (let ((x (- (face-attribute 'default :height) 10)))
+      (set-face-attribute 'default nil :height x)))
+
+  
   
   )
 
@@ -287,12 +300,15 @@
    "e d" '(siliusmv/cycle-dict :wk "cycle spell-check dictionary")
 
    ;; Toggle keymap
-   "t" '(:ignore t :wk "toggle")
-   "t l" '(siliusmv/nlinum-cycle :wk "line numbers")
-   "t d" '(siliusmv/cycle-dict :wk "cycle spell-check dictionary")
-   "t t" '(siliusmv/toggle-light-dark-theme :wk "light/dark theme")
-   "t s" '(flyspell-mode :wk "spelling")
-   "t f" '(flycheck-mode :wk "flycheck")
+   "v" '(:ignore t :wk "change variables")
+   "v l" '(siliusmv/nlinum-cycle :wk "toggle line numbers")
+   "v d" '(siliusmv/cycle-dict :wk "cycle spell-check dictionary")
+   "v t" '(siliusmv/choose-theme :wk "theme")
+   "v s" '(flyspell-mode :wk "toggle spelling")
+   "v F" '(flycheck-mode :wk "toggle flycheck")
+   "v f" '(:ignore t :wk "font size")
+   "v f +" '(siliusmv/zoom-in :wk "enlarge")
+   "v f -" '(siliusmv/zoom-out :wk "decrease")
    ;; General: Toggle light/dark theme. Toggle flyspell and flycheck
    ;; Mode specific: (map to ",") toggle pdf reader in auctex. Cycle between R sessions ess. Toggle language for flyspell.
 
