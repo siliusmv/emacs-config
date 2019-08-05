@@ -2,7 +2,6 @@
 ;;; %%%%%%%%%%%%%%%% My Emacs init file %%%%%%%%%%%%%%%%%%%%%
 ;;; =========================================================
 
-
 ;; =========================================================
 ;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
@@ -145,6 +144,7 @@
     (let ((x (- (face-attribute 'default :height) 10)))
       (set-face-attribute 'default nil :height x)))
 
+
   
   
   )
@@ -193,6 +193,7 @@
   (general-def
    "C-x k" 'kill-this-buffer
    )
+
 
   (general-define-key
    :states 'motion
@@ -283,10 +284,7 @@
    "s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
    "s d" '(counsel-ag :wk "search in directory")
    "s g" '(counsel-git-grep :wk "search in git repository")
-   "s p" '(projectile-ripgrep :wk "search in project")
-
-   ;; Add search in project, regex in project, etc.
-   ;; Add grep
+   ;; "s p" '(projectile-ripgrep :wk "search in project")
 
    ;; Project keymap
    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
@@ -306,7 +304,7 @@
    ;; Toggle keymap
    "v" '(:ignore t :wk "change variables")
    "v l" '(siliusmv/nlinum-cycle :wk "toggle line numbers")
-   "v d" '(siliusmv/cycle-dict :wk "cycle spell-check dictionary")
+   "v d" '(siliusmv/choose-dictionary :wk "spell-check dictionary")
    "v t" '(siliusmv/choose-theme :wk "theme")
    "v s" '(flyspell-mode :wk "toggle spelling")
    "v F" '(flycheck-mode :wk "toggle flycheck")
@@ -359,6 +357,29 @@
    "TAB x" '(persp-kill :wk "kill workspace")
    )
   )
+
+;;; ========================================================
+;;; Dired stuff
+;;; ========================================================
+(defun dired-hide-dotfiles ()
+  "Hides all dotfiles in a dired-buffer"
+  (interactive)
+  (dired-mark-files-regexp "^\\.")
+  (dired-do-kill-lines)
+  )
+
+(general-define-key
+ :states 'normal
+ :keymaps 'dired-mode-map
+ "l" 'dired-find-file
+ "h" 'dired-up-directory
+ "," '(:ignore t)
+ ", ." '(dired-hide-dotfiles :wk "hide dotfiles"))
+
+
+
+
+
 ;; =========================================================
 ;; Language servers
 ;; =========================================================
@@ -1092,21 +1113,19 @@
   (setq ispell-really-hunspell t)
   (setq ispell-dictionary "en_GB")
 
-  (defvar siliusmv/dict-lang "british")
-  (defun siliusmv/cycle-dict ()
-    "Cycle between available dictionaries"
-    (interactive)
-    (cond ((equal siliusmv/dict-lang "british")
-	   (progn
-	     (ispell-change-dictionary "no_BOK")
-	     (setq siliusmv/dict-lang "norwegian")
-	     (message "Switching to Norwegian dictionary")))
-	  ((equal siliusmv/dict-lang "norwegian")
-	   (progn
-	     (ispell-change-dictionary "en_GB")
-	     (setq siliusmv/dict-lang "british")
-	     (message "Switching to British dictionary")))))
   
+  (defvar siliusmv/my-dictionaries
+    (list
+     '("british" "en_GB")
+     '("norwegian" "no_BOK")))
+
+  (defun siliusmv/choose-dictionary (&optional dict)
+    (interactive)
+    (if (not dict)
+	(setq dict
+	      (ivy-read "Select dictionary: " siliusmv/my-dictionaries)))
+    (let ((dict-name (nth 1 (assoc dict siliusmv/my-dictionaries))))
+      (ispell-change-dictionary dict-name)))
 
 
   (use-package flyspell-correct-ivy
@@ -1145,8 +1164,6 @@
 	    (lambda ()
 	      (blink-cursor-mode -1)))
   )
-
-
 
 
 ;; =========================================================
@@ -1354,7 +1371,7 @@
   :after evil
   :commands (treemacs)
   :config
-  (fringe-mode '(0 . 1))
+  (fringe-mode '(1 . 1))
   (setq treemacs-fringe-indicator-mode nil
 	treemacs-no-png-images t
 	treemacs-width 40
@@ -1369,7 +1386,7 @@
     (evil-define-key 'treemacs treemacs-mode-map (kbd "l") 'treemacs-RET-action)
     (evil-define-key 'treemacs treemacs-mode-map (kbd "h") 'treemacs-TAB-action))
 
-  (use-package treemacs-projectile)
+(use-package treemacs-projectile)
 
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
 
@@ -1392,6 +1409,53 @@
   (setq dashboard-startup-banner 'logo)
   (setq dashboard-banner-logo-title "Welcome back!")
   )
+
+;; (use-package company-quickhelp
+;;   :hook (global-company-mode . company-quickhelp-mode)
+;;   :init (setq company-quickhelp-delay 0.5)
+;;   )
+
+;; (use-package company-box
+;;   :hook (company-mode . company-box-mode)
+;; 
+;;   :config
+;; 
+;;   ;; https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-company.el#L76
+;;   (when (and (display-graphic-p)
+;; 	     (require 'all-the-icons nil t))
+;;     (declare-function all-the-icons-faicon 'all-the-icons)
+;;     (declare-function all-the-icons-material 'all-the-icons)
+;;     (setq company-box-icons-all-the-icons
+;; 	  `((Unknown . ,(all-the-icons-material "find_in_page" :height 0.9 :v-adjust -0.2))
+;; 	    (Text . ,(all-the-icons-faicon "text-width" :height 0.85 :v-adjust -0.05))
+;; 	    (Method . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
+;; 	    (Function . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
+;; 	    (Constructor . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
+;; 	    (Field . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
+;; 	    (Variable . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
+;; 	    (Class . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
+;; 	    (Interface . ,(all-the-icons-material "share" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; 	    (Module . ,(all-the-icons-material "view_module" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; 	    (Property . ,(all-the-icons-faicon "wrench" :height 0.85 :v-adjust -0.05))
+;; 	    (Unit . ,(all-the-icons-material "settings_system_daydream" :height 0.9 :v-adjust -0.2))
+;; 	    (Value . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; 	    (Enum . ,(all-the-icons-material "storage" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
+;; 	    (Keyword . ,(all-the-icons-material "filter_center_focus" :height 0.9 :v-adjust -0.2))
+;; 	    (Snippet . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2))
+;; 	    (Color . ,(all-the-icons-material "palette" :height 0.9 :v-adjust -0.2))
+;; 	    (File . ,(all-the-icons-faicon "file-o" :height 0.9 :v-adjust -0.05))
+;; 	    (Reference . ,(all-the-icons-material "collections_bookmark" :height 0.9 :v-adjust -0.2))
+;; 	    (Folder . ,(all-the-icons-faicon "folder-open" :height 0.9 :v-adjust -0.05))
+;; 	    (EnumMember . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; 	    (Constant . ,(all-the-icons-faicon "square-o" :height 0.9 :v-adjust -0.05))
+;; 	    (Struct . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
+;; 	    (Event . ,(all-the-icons-faicon "bolt" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-orange))
+;; 	    (Operator . ,(all-the-icons-material "control_point" :height 0.9 :v-adjust -0.2))
+;; 	    (TypeParameter . ,(all-the-icons-faicon "arrows" :height 0.85 :v-adjust -0.05))
+;; 	    (Template . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2)))
+;; 	  company-box-icons-alist 'company-box-icons-all-the-icons))
+;; 
+;;   )
 
 
 ;; (use-package solaire-mode
