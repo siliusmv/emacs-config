@@ -70,9 +70,6 @@
   ;; Allow enclosing a marked region with $$
   (add-to-list 'insert-pair-alist (list ?\$ ?\$))
 
-  ;; Auto-fill (line wrapping)
-  (add-hook 'text-mode-hook 'auto-fill-mode)
-  (setq-default fill-column 75)
   ;; This must be done after loading GUI elements
   (defun remove-all-bars (frame)
     (select-frame frame)
@@ -157,7 +154,7 @@
 ;; =========================================================
 
 (use-package evil
-  ;;:ensure t
+
   :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
@@ -169,7 +166,7 @@
 
 (use-package evil-collection
   :after evil
-  ;;:ensure t
+
   :custom (evil-collection-minibuffer-setup t)
   :config
   (evil-collection-init)
@@ -185,7 +182,7 @@
 ;; General.el - keybindings
 ;; =========================================================
 (use-package general
-  ;;:ensure t
+
   :config
   (general-evil-setup t)
 
@@ -401,7 +398,7 @@
 ;; Relative nlinum mode
 ;; =========================================================
 (use-package nlinum-relative
-  ;;:ensure t
+
   :diminish nlinum-relative-mode
   :init
   ;; (global-nlinum-relative-mode)
@@ -583,22 +580,9 @@
 ;; =========================================================
 ;; Text navigation
 ;; =========================================================
-;; (use-package evil-snipe
-;;   ;;:ensure t
-;;   :after evil
-;;   :general
-;;   (:states '(motion)
-;;    "f" 'evil-snipe-f
-;;    "F" 'evil-snipe-F
-;;    "t" 'evil-snipe-t
-;;    "T" 'evil-snipe-T
-;;    )
-;;   :config
-;;   (setq evil-snipe-scope 'buffer)
-;;   )
 
 (use-package avy
-  ;;:ensure t
+
   :general
   (:states '(normal visual)
    "s" 'avy-goto-char-timer
@@ -608,7 +592,7 @@
   )
 
 (use-package ace-window
-  ;;:ensure t
+
   :defer t
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)) ; letters for switching window
@@ -621,28 +605,35 @@
 ;; =========================================================
 (use-package company
   :delight
-  ;;:ensure t
+
   :diminish company-mode
   :init
   (add-hook 'after-init-hook 'global-company-mode)
   :config
 
-  ;; Keybindings
-  (define-key company-active-map (kbd "C-j") 'company-complete-selection) ;; ivy-like
-  (define-key company-active-map (kbd "<return>") nil)
-  (define-key company-active-map (kbd "<tab>") 'company-complete-common)
-  ;;(define-key company-mode-map (kbd "<tab>") 'company-complete)
-  (define-key company-mode-map (kbd "<C-tab>") 'company-other-backend)
+  (general-define-key
+   :states '(motion insert)
+   :keymaps 'company-active-map
+   "C-j" 'company-complete-selection
+   "<return>" '(:ignore t)
+   "<tab>" 'company-complete-common
+   "C-n" 'company-select-next
+   "C-p" 'company-select-previous
+   "C-l" 'counsel-company
+   )
 
-  ;; Counsel company
-  (define-key company-active-map (kbd "C-l") 'counsel-company)
+  (general-define-key
+   :states '(motion insert)
+   :keymaps 'company-mode-map
+   "C-<tab>" 'company-other-backend
+   )
 
 
   ;; set default `company-backends'
   (setq company-backends
-	'((company-files          ; files & directory
-	   company-keywords       ; keywords (I don't know what this does...)
-	   company-capf           ; Basicly everything
+	'(company-capf
+	  company-files          ; files & directory
+	  (company-keywords       ; keywords (I don't know what this does...)
 	   company-yasnippet :separate)
 	  (company-abbrev company-dabbrev :separate)
 	  ))
@@ -660,21 +651,19 @@
 	company-dabbrev-code-ignore-case t
 	company-dabbrev-ignore-case t)
 
-  
-  (use-package company-statistics
-    ;;:ensure t
-    :config
-    (add-hook 'after-init-hook 'company-statistics-mode)
-    )
-
   )
+  
+(use-package company-statistics
+  :config
+  (add-hook 'after-init-hook 'company-statistics-mode))
+
 
 
 ;; =========================================================
 ;; ESS (Emacs Speaks Statistics)
 ;; =========================================================
 (use-package ess
-  ;;:ensure t
+
   :commands (run-ess-r)
   :defer 5
   :general
@@ -755,7 +744,7 @@
 ;; =========================================================
 
 (use-package doom-themes
-  ;;:ensure t
+
   :init
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
@@ -788,7 +777,7 @@
 ;; Wokspaces
 ;; =========================================================
 (use-package persp-mode
-  ;;:ensure t
+
   :init
   (persp-mode 1)
   :config
@@ -810,7 +799,7 @@
 ;; Tramp
 ;; =========================================================
 (use-package tramp
-  ;;:ensure t
+
   :config
   (setq tramp-default-method "ssh"))
 
@@ -818,7 +807,7 @@
 ;; Magit
 ;; =========================================================
 (use-package magit
-  ;;:ensure t
+
   :commands (magit-status)
   :bind ("C-x g" . 'magit-status)
   :config
@@ -834,7 +823,7 @@
 ;; Rainbow delimiters
 ;; =========================================================
 (use-package rainbow-delimiters
-  ;;:ensure t
+
   :hook (prog-mode . rainbow-delimiters-mode)
   :defer 5
   )
@@ -846,7 +835,7 @@
 (use-package imenu-anywhere)
 
 (use-package dumb-jump
-  ;;:ensure t
+
   :hook (prog-mode . dumb-jump-mode)
   :general
   (:states '(normal insert emacs)
@@ -912,7 +901,7 @@
 ;; Flycheck (linting)
 ;; =========================================================
 (use-package flycheck
-  ;;:ensure t
+
   ;;:hook (prog-mode . flycheck-mode)
   ;;:diminish flycheck-mode
   )
@@ -948,7 +937,10 @@
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
 
-  (require 'tex)
+
+  (setq 
+   TeX-auto-global "~/.emacs.d/auctex/auto-global"
+   TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
 
   ;;; Functions for changing PDF viewers
 
@@ -1021,17 +1013,19 @@
 
   :config
 
+  (setq TeX-complete-expert-commands t) ; Adds more commands for completion
   (setq Tex-auto-save t) ;; Parsing on save
   (setq TeX-parse-self t) ;; Parsing on load (scan file for macros)
   (setq-default TeX-master nil) ;; Allow multi-file documents
+  (setq-default TeX-PDF-mode t)
+
+  ;; automatically insert braces after sub/superscript in math mode
+  (setq TeX-electric-sub-and-superscript t)
+
   ;; Syntax highlighting
   ;; (not sure if this is correct way to activate)
   (global-font-lock-mode t) 
 
-  (setq ;; TeX-macro-private "~/.latex/"
-  	;; TeX-auto-private "~/.emacs.d/auctex/auto/"
-  	;; TeX-style-path "~/.emacs.d/auctex/auto/"
-  	TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
   
 
   (setq TeX-source-correlate-method 'synctex)
@@ -1049,14 +1043,17 @@
   )
 
 (use-package auctex-latexmk
-  ;;:ensure t
-  :config
-  ;;(add-hook 'LaTeX-mode-hook 'siliusmv/latexmk-setup)
-  (add-hook 'LaTeX-mode-hook (lambda () (auctex-latexmk-setup)))
+  :init
+  ;; Pass the -pdf flag when TeX-PDF-mode is active
+  (setq auctex-latexmk-inherit-TeX-PDF-mode t)
   (add-hook 'LaTeX-mode-hook (lambda ()
 			       (setq TeX-command-default "LatexMk")
 			       (setq TeX-command-force "LatexMk")
-			       (TeX-source-correlate-mode t))))
+			       (TeX-source-correlate-mode t)))
+  :config
+  (auctex-latexmk-setup)
+  ;; (add-hook 'LaTeX-mode-hook (lambda () (auctex-latexmk-setup)))
+  )
 
 
 (use-package company-reftex)
@@ -1072,14 +1069,58 @@
 	    company-auctex-bibs
 	    company-auctex-environments
 	    company-auctex-symbols :separate)
+	   company-capf
 	   (company-files
 	    company-dabbrev-code :separate)
-	   company-capf
 	   company-abbrev
 	   company-dabbrev
-	   )))
+	   ))
+    (company-auctex-init))
 
   (add-hook 'LaTeX-mode-hook 'my-latex-company-function)
+
+  (TeX-add-style-hook
+   "report"
+   (lambda ()
+     (TeX-add-to-alist 'LaTeX-provided-package-options
+		       '(("inputenc" "utf8") ("biblatex" "bibstyle=apa" "citestyle=authoryear" "natbib=true" "backend=biber" "maxcitenames=3" "mincitenames=1" "maxbibnames=99" "firstinits=true") ("tocbibind" "nottoc") ("caption" "margin=1cm" "labelfont=bf")))
+     (TeX-run-style-hooks
+      "inputenc"
+      "biblatex"
+      "hyperref"
+      "graphicx"
+      "amsmath"
+      "amssymb"
+      "todonotes"
+      "enumitem"
+      "setspace"
+      "fancyhdr"
+      "tocbibind"
+      "caption"
+      "textcomp"
+      "bm"
+      "gensymb"
+      "upgreek"
+      "chngcntr"
+      "placeins"
+      "algorithm"
+      "algpseudocode"
+      "amsthm"
+      "tikz")
+     (TeX-add-symbols
+      '("norm" 1)
+      '("partiald" 2)
+      '("derivative" 2)
+      "dd"
+      "i"
+      "j"))
+   :latex)
+
+
+
+
+
+
   
   )
 
@@ -1087,7 +1128,7 @@
 ;; =========================================================
 ;; Auto-fill texts
 ;; =========================================================
-(setq current-fill-column 75)
+(setq-default fill-column 75)
 (add-hook 'text-mode-hook 'auto-fill-mode)
 (add-hook 'LaTeX-mode 'auto-fill-mode)
 (diminish 'auto-fill-function)
@@ -1129,7 +1170,7 @@
 
 
   (use-package flyspell-correct-ivy
-    ;;:ensure t
+
     :demand t
     :bind (:map flyspell-mode-map
 		("C-c $" . flyspell-correct-word-generic)))
@@ -1142,7 +1183,7 @@
 ;; =========================================================
 
 (use-package pdf-tools
-  ;;:ensure t
+
   ;;:pin manual ;; manually update
   :config
   ;; initialise
@@ -1172,7 +1213,7 @@
 ;; Display a popup-buffer with the available key-combinations
 ;; whenever a keymap is pressed
 (use-package which-key
-  ;;:ensure t
+
   :defer 5
   :init
   (which-key-mode)
@@ -1189,7 +1230,7 @@
 ;; Calendar
 ;; =========================================================
 (use-package calfw
-  ;;:ensure t
+
   :defer 5
   :commands (cfw:open-calendar-buffer siliusmv/open-calendar)
   :general
@@ -1218,7 +1259,7 @@
   :config
 
   (use-package calfw-ical
-    ;;:ensure t
+
     )
 
   (defun siliusmv/open-calendar ()
@@ -1257,7 +1298,7 @@
 ;; Project management
 ;; =========================================================
 (use-package projectile
-  ;;:ensure t
+
   :diminish projectile-mode
   :bind ("C-c p" . 'projectile-command-map)
   :defer t
@@ -1275,7 +1316,7 @@
 (use-package multi-term
   :bind ("C-c t" . multi-term)
   :commands (multi-term)
-  ;;:ensure t
+
   :general
   (:keymaps 'term-mode-map
    :states '(normal insert emacs)
@@ -1301,29 +1342,10 @@
   (setq multi-term-program "/bin/bash")
   )
 
-;; (use-package xterm-color
-;;   :config
-;;   (setq comint-output-filter-functions
-;; 	(remove 'ansi-color-process-output comint-output-filter-functions))
-;; 
-;;   (add-hook 'shell-mode-hook
-;; 	    (lambda ()
-;; 	      ;; Disable font-locking in this buffer to improve performance
-;; 	      (font-lock-mode -1)
-;; 	      ;; Prevent font-locking from being re-enabled in this buffer
-;; 	      (make-local-variable 'font-lock-function)
-;; 	      (setq font-lock-function (lambda (_) nil))
-;; 	      (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
-;; 
-;;   ;; Also set TERM accordingly (xterm-256color)
-;; 
-;;   )
-
 ;; =========================================================
 ;; File navigation
 ;; =========================================================
 (use-package ranger
-  ;;:ensure t
   :bind
   (("C-c f" . ranger))
   :defer t
