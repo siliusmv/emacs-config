@@ -182,46 +182,55 @@
 ;; General.el - keybindings
 ;; =========================================================
 (use-package general
-
   :config
   (general-evil-setup t)
 
   ;; Global keybindings
-  (general-def
+  (general-define-key
+   :keymaps 'override
    "C-x k" 'kill-this-buffer
+   "M-k" 'scroll-down-command
+   "M-j" 'scroll-up-command
+   "M-c" 'recenter-top-bottom
    )
 
+  (general-define-key
+   :states 'visual
+   :keymaps 'override
+   :prefix "z"
+   ;; Editing commands
+   "" nil
+   "(" '(insert-pair :wk "insert pair")
+   "[" '(insert-pair :wk "insert pair")
+   "{" '(insert-pair :wk "insert pair")
+   "\"" '(insert-pair :wk "insert pair")
+   "\'" '(insert-pair :wk "insert pair")
+   "\$" '(insert-pair :wk "insert pair")
+   "`" '(insert-pair :wk "insert pair")
+   ")" '(delete-pair :wk "delete pair")
+   )
 
   (general-define-key
-   :states 'motion
+   :states 'normal
    :keymaps 'override
-   :prefix "]"
+   :prefix "g"
    "" nil
    ")" '(evil-next-close-paren :wk "next closing parenthesis")
-   "}" '(evil-next-close-brace :wk "next closing brace")
-   "]" '(evil-forward-section-begin :wk "next section")
-   "s" '(flyspell-correct-next :wk "next spelling error")
-   "e" '(flymake-goto-next-error :wk "flymake: next error")
-   "f" '(flycheck-next-error :wk "flycheck: next error")
-   "b" '(next-buffer :wk "next buffer")
-   "w" '(persp-next :wk "next workspace")
-   "t" '(centaur-tabs-forward :wk "next tab")
-   )
-
-  (general-define-key
-   :states 'motion
-   :keymaps 'override
-   :prefix "["
-   "" nil
    "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
+   "}" '(evil-next-close-brace :wk "next closing brace")
    "{" '(evil-previous-open-brace :wk "prev opening brace")
+   "]" '(evil-forward-section-begin :wk "next section")
    "[" '(evil-backward-section-begin :wk "prev section")
-   "s" '(flyspell-correct-previous :wk "prev spelling error")
-   "e" '(flymake-goto-prev-error :wk "flymake: prev error")
-   "f" '(flycheck-previous-error :wk "flycheck: prev error")
-   "b" '(previous-buffer :wk "prev buffer")
-   "w" '(persp-prev :wk "prev workspace")
-   "t" '(centaur-tabs-backward :wk "prev tab")
+   "s" '(flyspell-correct-next :wk "next spelling error")
+   "S" '(flyspell-correct-previous :wk "prev spelling error")
+   "e" '(flymake-goto-next-error :wk "flymake: next error")
+   "E" '(flymake-goto-prev-error :wk "flymake: prev error")
+   "f" '(flycheck-next-error :wk "flycheck: next error")
+   "F" '(flycheck-previous-error :wk "flycheck: prev error")
+   "b" '(next-buffer :wk "next buffer")
+   "B" '(previous-buffer :wk "prev buffer")
+   "w" '(persp-next :wk "next workspace")
+   "W" '(persp-prev :wk "prev workspace")
    )
 
   ;; Space as leader
@@ -239,6 +248,7 @@
    ;;"-" '(avy-goto-char-timer :wk "avy-timer")
    "g" '(magit-status :wk "git")
    "S" '(save-some-buffers :wk "save all buffers")
+   "s" '(counsel-grep-or-swiper :wk "search in buffer")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
@@ -275,28 +285,16 @@
    "q F" '(siliusmv/kill-buffer-and-frame :wk "Kill buffer, close frame")
 
    ;; Search keymap
-   "s" '(:ignore t :wk "search")
-   "s b" '(counsel-grep-or-swiper :wk "search in buffer")
-   "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
-   "s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
-   "s d" '(counsel-ag :wk "search in directory")
-   "s g" '(counsel-git-grep :wk "search in git repository")
+   "M-s" '(:ignore t :wk "search")
+   "M-s b" '(counsel-grep-or-swiper :wk "search in buffer")
+   "M-s 0" '(evil-ex-nohighlight :wk "turn off highlight")
+   "M-s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
+   "M-s d" '(counsel-ag :wk "search in directory")
+   "M-s g" '(counsel-git-grep :wk "search in git repository")
    ;; "s p" '(projectile-ripgrep :wk "search in project")
 
    ;; Project keymap
    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
-
-   ;; Editing commands
-   "e" '(:ignore t :wk "edit")
-   "e (" '(insert-pair :wk "insert pair")
-   "e [" '(insert-pair :wk "insert pair")
-   "e {" '(insert-pair :wk "insert pair")
-   "e \"" '(insert-pair :wk "insert pair")
-   "e '" '(insert-pair :wk "insert pair")
-   "e \$" '(insert-pair :wk "insert pair")
-   "e `" '(insert-pair :wk "insert pair")
-   "e )" '(delete-pair :wk "delete pair")
-   "e d" '(siliusmv/cycle-dict :wk "cycle spell-check dictionary")
 
    ;; Toggle keymap
    "v" '(:ignore t :wk "change variables")
@@ -333,25 +331,25 @@
    "w o" '(ace-window :wk "jump to other window")
 
    ;; "Open programs" - keymap
-   "o" '(:ignore t :wk "open program")
-   "o t" '(multi-term :wk "terminal")
-   "o r" '(run-ess-r :wk "R session")
-   "o m" '(mu4e :wk "email")
-   "o c" '(siliusmv/open-calendar :wk "calendar")
-   "o f" '(make-frame-command :wk "frame")
-   "o T" '(treemacs :wk "file-tree")
+   "M-o" '(:ignore t :wk "open program")
+   "M-o t" '(multi-term :wk "terminal")
+   "M-o r" '(run-ess-r :wk "R session")
+   "M-o m" '(mu4e :wk "email")
+   "M-o c" '(siliusmv/open-calendar :wk "calendar")
+   "M-o f" '(make-frame-command :wk "frame")
+   "M-o T" '(treemacs :wk "file-tree")
 
    ;; "Workspaces"
-   "TAB" '(:ignore t :wk "workspaces")
-   "TAB n" '(persp-add-new :wk "new workspace")
-   "TAB [" '(persp-next :wk "next workspace")
-   "TAB ]" '(persp-prev :wk "prev workspace")
-   "TAB b" '(persp-switch-to-buffer :wk "switch to buffer")
-   "TAB k" '(persp-kill-buffer :wk "kill buffer")
-   "TAB s" '(persp-frame-switch :wk "switch to workspace")
-   "TAB S" '(persp-save-state-to-file :wk "save workspace conf.")
-   "TAB l" '(persp-load-state-from-file :wk "load workspace conf.")
-   "TAB x" '(persp-kill :wk "kill workspace")
+   "M-w" '(:ignore t :wk "workspaces")
+   "M-w n" '(persp-add-new :wk "new workspace")
+   "M-w [" '(persp-next :wk "next workspace")
+   "M-w ]" '(persp-prev :wk "prev workspace")
+   "M-w b" '(persp-switch-to-buffer :wk "switch to buffer")
+   "M-w k" '(persp-kill-buffer :wk "kill buffer")
+   "M-w s" '(persp-frame-switch :wk "switch to workspace")
+   "M-w S" '(persp-save-state-to-file :wk "save workspace conf.")
+   "M-w l" '(persp-load-state-from-file :wk "load workspace conf.")
+   "M-w x" '(persp-kill :wk "kill workspace")
    )
   )
 
@@ -614,20 +612,19 @@
   (general-define-key
    :states '(motion insert)
    :keymaps 'company-active-map
-   "C-j" 'company-complete-selection
+   "<tab>" 'company-complete-common-or-cycle
+   "<backtab>" 'company-select-previous
    "<return>" '(:ignore t)
-   "<tab>" 'company-complete-common
-   "C-n" 'company-select-next
-   "C-p" 'company-select-previous
-   "C-l" 'counsel-company
+   "M-?" 'counsel-company
+   "M-j" 'company-complete-common-or-cycle
+   "M-k" 'company-select-previous
    )
 
   (general-define-key
    :states '(motion insert)
    :keymaps 'company-mode-map
-   "C-<tab>" 'company-other-backend
+   "M-<tab>" 'company-other-backend
    )
-
 
   ;; set default `company-backends'
   (setq company-backends
@@ -853,17 +850,28 @@
 ;; =========================================================
 (use-package ivy
   :diminish ivy-mode
+  :general
+   (:keymaps 'ivy-minibuffer-map
+   "<tab>" 'ivy-next-line
+   "<backtab>" 'ivy-previous-line
+   "M-j" 'ivy-next-line
+   "M-k" 'ivy-previous-line
+   "M-l" 'ivy-alt-done
+   "M-s" 'ivy-avy
+   "M-SPC" 'ivy-alt-done
+   "M-h" 'ivy-backward-kill-word
+   )
   :init
   ;; The default search is ivy--regex-plus
   (setq ivy-re-builders-alist
 	'((t . ivy--regex-ignore-order))) ;; Regexps can interchange order
 
+  (setq ivy-height 20)
+
   (ivy-mode 1)
   :config
   (setq ivy-use-virtual-buffers t) ;; Proposed from the Ivy wiki
   (setq ivy-count-format "(%d/%d) ") ;; Proposed from the Ivy wiki
-  ; (setq ivy-extra-directories nil) ;; Remove ./ and ../ from searches
-
   )
 
 (use-package swiper
@@ -900,11 +908,7 @@
 ;; =========================================================
 ;; Flycheck (linting)
 ;; =========================================================
-(use-package flycheck
-
-  ;;:hook (prog-mode . flycheck-mode)
-  ;;:diminish flycheck-mode
-  )
+(use-package flycheck)
 
 
 ;; =========================================================
@@ -936,7 +940,6 @@
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
-
 
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
@@ -1375,9 +1378,17 @@
   )
 
 
+;; =========================================================
+;; Org-mode
+;; =========================================================
+;;(use-package org-mode
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((R . t)))
 
-
-
+(general-def
+ "C-c l" 'org-store-link)
+ 
 
 ;; =========================================================
 ;; Other stuff
