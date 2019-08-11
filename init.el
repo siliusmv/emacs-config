@@ -140,10 +140,6 @@
     (interactive)
     (let ((x (- (face-attribute 'default :height) 10)))
       (set-face-attribute 'default nil :height x)))
-
-
-  
-  
   )
 
 ;; =========================================================
@@ -154,11 +150,9 @@
 ;; =========================================================
 
 (use-package evil
-
   :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
-
   :config
   (evil-mode 1)
   )
@@ -166,7 +160,6 @@
 
 (use-package evil-collection
   :after evil
-
   :custom (evil-collection-minibuffer-setup t)
   :config
   (evil-collection-init)
@@ -185,10 +178,9 @@
   :config
   (general-evil-setup t)
 
-  ;; Global keybindings
   (general-define-key
    :keymaps 'override
-   "C-x k" 'kill-this-buffer
+   :states 'normal
    "M-k" 'scroll-down-command
    "M-j" 'scroll-up-command
    "M-c" 'recenter-top-bottom
@@ -197,9 +189,10 @@
   (general-define-key
    :states 'visual
    :keymaps 'override
-   :prefix "z"
+   :prefix "M-SPC"
    ;; Editing commands
    "" nil
+   "ESC" '(:ignore t :wk t)
    "(" '(insert-pair :wk "insert pair")
    "[" '(insert-pair :wk "insert pair")
    "{" '(insert-pair :wk "insert pair")
@@ -241,6 +234,7 @@
    :non-normal-prefix "C-SPC"
    ;; Popular keybindings
    "" nil
+   "ESC" '(:ignore t :wk t)
    "SPC" '(counsel-find-file :wk "find file")
    "," '(persp-switch-to-buffer :wk "switch buffer")
    "." '(save-buffer :wk "save buffer")
@@ -249,6 +243,7 @@
    "g" '(magit-status :wk "git")
    "S" '(save-some-buffers :wk "save all buffers")
    "s" '(counsel-grep-or-swiper :wk "search in buffer")
+   "e" '(eval-last-sexp :ek "evaluate sexp")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
@@ -274,7 +269,6 @@
    "f r" '(ranger :wk "open ranger")
    "f d" '(dired :wk "open directory")
    "f SPC" '(counsel-find-file :wk "find files")
-   "f t" '(treemacs :wk "file-tree")
 
    ;; Quit
    "q" '(:ignore t :wk "quit")
@@ -306,8 +300,6 @@
    "v f" '(:ignore t :wk "font size")
    "v f +" '(siliusmv/zoom-in :wk "enlarge")
    "v f -" '(siliusmv/zoom-out :wk "decrease")
-   ;; General: Toggle light/dark theme. Toggle flyspell and flycheck
-   ;; Mode specific: (map to ",") toggle pdf reader in auctex. Cycle between R sessions ess. Toggle language for flyspell.
 
    ;; Window keymap
    "w" '(:ignore t :wk "window")
@@ -337,7 +329,6 @@
    "M-o m" '(mu4e :wk "email")
    "M-o c" '(siliusmv/open-calendar :wk "calendar")
    "M-o f" '(make-frame-command :wk "frame")
-   "M-o T" '(treemacs :wk "file-tree")
 
    ;; "Workspaces"
    "M-w" '(:ignore t :wk "workspaces")
@@ -368,12 +359,8 @@
  :keymaps 'dired-mode-map
  "l" 'dired-find-file
  "h" 'dired-up-directory
- "," '(:ignore t)
- ", ." '(dired-hide-dotfiles :wk "hide dotfiles"))
-
-
-
-
+ "M-SPC" '(:ignore t)
+ "M-SPC h" '(dired-hide-dotfiles :wk "hide dotfiles"))
 
 ;; =========================================================
 ;; Language servers
@@ -398,8 +385,6 @@
 (use-package nlinum-relative
 
   :diminish nlinum-relative-mode
-  :init
-  ;; (global-nlinum-relative-mode)
   :config
   (setq nlinum-highlight-current-line t)
   ;(nlinum-relative-setup-evil)             ;; setup for evil
@@ -409,7 +394,6 @@
   (add-hook 'prog-mode-hook 'nlinum-relative-mode)
 
   (defun siliusmv/nlinum-off ()
-    (interactive)
     (nlinum-relative-mode 0)
     (nlinum-mode 0))
 
@@ -430,12 +414,10 @@
 ;; =========================================================
 (use-package mu4e
   :after evil
-  :bind ("C-c m" . mu4e)
+  :commands (mu4e)
   :general
   (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-   :states '(motion emacs)
-   :prefix ","
-   :non-normal-prefix "C-,"
+   :prefix "M-SPC"
    "g" '(siliusmv/gmail-firefox :wk "gmail")
    "o" '(siliusmv/outlook-firefox :wk "outlook")
    )
@@ -590,8 +572,6 @@
   )
 
 (use-package ace-window
-
-  :defer t
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)) ; letters for switching window
   (setq aw-scope 'frame) ;; Only switch windows in the focused frame
@@ -603,25 +583,33 @@
 ;; =========================================================
 (use-package company
   :delight
-
   :diminish company-mode
   :init
   (add-hook 'after-init-hook 'global-company-mode)
   :config
 
   (general-define-key
-   :states '(motion insert)
    :keymaps 'company-active-map
    "<tab>" 'company-complete-common-or-cycle
    "<backtab>" 'company-select-previous
    "<return>" '(:ignore t)
-   "M-?" 'counsel-company
    "M-j" 'company-complete-common-or-cycle
    "M-k" 'company-select-previous
+   "M-s" 'company-search-candidates
+   "M-d" 'company-next-page
+   "M-u" 'company-previous-page
+
+   "M-SPC" '(:ignore t)
+   "M-SPC o" '(company-other-backend :wk "other backend")
+   "M-SPC d" '(company-diag :wk "diagnosis")
+   "M-SPC c" '(counsel-company :wk "counsel-company")
+   "M-SPC M-c" '(company-complete-common :wk "complete common")
+   "M-SPC h" '(company-doc-buffer :wk "show documentation")
    )
 
+  
   (general-define-key
-   :states '(motion insert)
+   :states 'insert
    :keymaps 'company-mode-map
    "M-<tab>" 'company-other-backend
    )
@@ -660,14 +648,11 @@
 ;; ESS (Emacs Speaks Statistics)
 ;; =========================================================
 (use-package ess
-
   :commands (run-ess-r)
   :defer 5
   :general
   (:keymaps 'ess-r-mode-map
-   :prefix ","
-   :non-normal-prefix "C-,"
-   :states '(motion emacs)
+   :prefix "M-SPC"
    "r" '(run-ess-r :wk "Open new R session")
    )
   :diminish
@@ -739,9 +724,7 @@
 ;; =========================================================
 ;; Themes
 ;; =========================================================
-
 (use-package doom-themes
-
   :init
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
@@ -806,7 +789,6 @@
 (use-package magit
 
   :commands (magit-status)
-  :bind ("C-x g" . 'magit-status)
   :config
   ;; Possible performance fix
   (setq auto-revert-buffer-list-filter
@@ -858,8 +840,9 @@
    "M-k" 'ivy-previous-line
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
-   "M-SPC" 'ivy-alt-done
    "M-h" 'ivy-backward-kill-word
+   "M-u" 'ivy-scroll-down-command
+   "M-d" 'ivy-scroll-up-command
    )
   :init
   ;; The default search is ivy--regex-plus
@@ -922,19 +905,17 @@
   ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
   (:keymaps 'TeX-mode-map
-   :states '(normal insert emacs)
-   :prefix ","
-   :non-normal-prefix "C-,"
+   :prefix "M-SPC"
    "" nil
    "v" '(TeX-view :wk "view pdf")
    "c" '(TeX-command-master :wk "compile document")
-   "," '(reftex-toc :wk "navigate document")
+   "t" '(reftex-toc :wk "navigate document")
    "r" '(reftex-toc-Rescan :wk "refresh reftex")
    "e" '(TeX-next-error :wk "compilation errors")
    "f" '(LaTeX-fill-buffer :wk "fill buffer")
-   "t" '(:ignore t :wk "toggle")
-   "t f" '(siliusmv/toggle-tex-fold :wk "folding")
-   "t v" '(siliusmv/toggle-latex-pdf-viewer :wk "PDF viewer")
+   "M-v" '(:ignore t :wk "variables")
+   "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
+   "M-v v" '(siliusmv/toggle-latex-pdf-viewer :wk "PDF viewer")
   )
 
   :init
@@ -1081,49 +1062,6 @@
     (company-auctex-init))
 
   (add-hook 'LaTeX-mode-hook 'my-latex-company-function)
-
-  (TeX-add-style-hook
-   "report"
-   (lambda ()
-     (TeX-add-to-alist 'LaTeX-provided-package-options
-		       '(("inputenc" "utf8") ("biblatex" "bibstyle=apa" "citestyle=authoryear" "natbib=true" "backend=biber" "maxcitenames=3" "mincitenames=1" "maxbibnames=99" "firstinits=true") ("tocbibind" "nottoc") ("caption" "margin=1cm" "labelfont=bf")))
-     (TeX-run-style-hooks
-      "inputenc"
-      "biblatex"
-      "hyperref"
-      "graphicx"
-      "amsmath"
-      "amssymb"
-      "todonotes"
-      "enumitem"
-      "setspace"
-      "fancyhdr"
-      "tocbibind"
-      "caption"
-      "textcomp"
-      "bm"
-      "gensymb"
-      "upgreek"
-      "chngcntr"
-      "placeins"
-      "algorithm"
-      "algpseudocode"
-      "amsthm"
-      "tikz")
-     (TeX-add-symbols
-      '("norm" 1)
-      '("partiald" 2)
-      '("derivative" 2)
-      "dd"
-      "i"
-      "j"))
-   :latex)
-
-
-
-
-
-
   
   )
 
@@ -1173,11 +1111,9 @@
 
 
   (use-package flyspell-correct-ivy
-
-    :demand t
-    :bind (:map flyspell-mode-map
-		("C-c $" . flyspell-correct-word-generic)))
-  ;; Map this key with the prefix "," as well
+    ;; :bind (:map flyspell-mode-map
+    ;; ("C-c $" . flyspell-correct-word-generic)))
+    )
   )
 
 
@@ -1238,9 +1174,7 @@
   :commands (cfw:open-calendar-buffer siliusmv/open-calendar)
   :general
   (:keymaps '(cfw:calendar-mode-map cfw:details-mode-map)
-   :states '(motion emacs)
-   :prefix ","
-   :non-normal-prefix "C-,"
+   :prefix "M-SPC"
    "g" '(siliusmv/gcal-firefox :wk "gmail")
    "o" '(siliusmv/outlook-cal-firefox :wk "outlook")
    )
@@ -1303,8 +1237,6 @@
 (use-package projectile
 
   :diminish projectile-mode
-  :bind ("C-c p" . 'projectile-command-map)
-  :defer t
   :config
   (projectile-mode +1)
   (setq projectile-completion-system 'ivy)
@@ -1317,14 +1249,10 @@
 ;; Terminal
 ;; =========================================================
 (use-package multi-term
-  :bind ("C-c t" . multi-term)
   :commands (multi-term)
-
   :general
   (:keymaps 'term-mode-map
-   :states '(normal insert emacs)
-   :prefix ","
-   :non-normal-prefix "C-,"
+   :prefix "M-SPC"
    "" nil
 
    "s" '(:ignore t :wk "send signal to shell")
@@ -1349,9 +1277,6 @@
 ;; File navigation
 ;; =========================================================
 (use-package ranger
-  :bind
-  (("C-c f" . ranger))
-  :defer t
   :config
   (setq ranger-cleanup-eagerly t) ;; Cleanup opened preview buffers
   )
@@ -1400,27 +1325,6 @@
 (setenv "GPG_AGENT_INFO" nil)
 (setq epg-gpg-program "gpg2")
  
-(use-package treemacs
-  :after evil
-  :commands (treemacs)
-  :config
-  (fringe-mode '(1 . 1))
-  (setq treemacs-fringe-indicator-mode nil
-	treemacs-no-png-images t
-	treemacs-width 40
-	treemacs-silent-refresh t
-	treemacs-silent-filewatch t
-	treemacs-file-event-delay 1000
-	treemacs-file-follow-delay 0.1))
-
-  (use-package treemacs-evil
-    :after treemacs
-    :config
-    (evil-define-key 'treemacs treemacs-mode-map (kbd "l") 'treemacs-RET-action)
-    (evil-define-key 'treemacs treemacs-mode-map (kbd "h") 'treemacs-TAB-action))
-
-(use-package treemacs-projectile)
-
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
 
 (use-package page-break-lines)
