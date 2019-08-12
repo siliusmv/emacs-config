@@ -140,6 +140,17 @@
     (interactive)
     (let ((x (- (face-attribute 'default :height) 10)))
       (set-face-attribute 'default nil :height x)))
+
+  (defun siliusmv/choose-from-list (prompt var-list &optional var-name)
+    (if (not var-name)
+	(setq var-name
+	      (ivy-read prompt var-list)))
+    (nth 1 (assoc var-name var-list)))
+
+  (defun siliusmv/kill-this-buffer ()
+    (interactive)
+    (kill-buffer (current-buffer)))
+
   )
 
 ;; =========================================================
@@ -185,6 +196,11 @@
    "M-j" 'scroll-up-command
    "M-c" 'recenter-top-bottom
    )
+
+  (general-define-key
+   :states 'visual
+   :keymaps 'override
+   "<tab>" 'indent-for-tab-command)
 
   (general-define-key
    :states 'visual
@@ -243,11 +259,12 @@
    "g" '(magit-status :wk "git")
    "S" '(save-some-buffers :wk "save all buffers")
    "s" '(counsel-grep-or-swiper :wk "search in buffer")
-   "e" '(eval-last-sexp :ek "evaluate sexp")
+   "e" '(eval-last-sexp :wk "evaluate sexp")
+   "l" '(org-store-link :wk "store org-link")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
-   "b k" '(kill-this-buffer :wk "kill buffer")
+   "b k" '(siliusmv/kill-this-buffer :wk "kill buffer")
    "b s" '(save-buffer :wk "save buffer")
    "b SPC" '(persp-switch-to-buffer :wk "switch buffer in persp")
    "b n" '(next-buffer :wk "next buffer")
@@ -360,7 +377,13 @@
  "l" 'dired-find-file
  "h" 'dired-up-directory
  "M-SPC" '(:ignore t)
- "M-SPC h" '(dired-hide-dotfiles :wk "hide dotfiles"))
+ "M-SPC h" '(dired-hide-dotfiles :wk "hide dotfiles")
+ "M-SPC c" '(dired-do-copy :wk "copy")
+ "M-SPC m" '(dired-do-rename :wk "move")
+ "M-SPC d" '(dired-do-delete :wk "delete")
+ "M-SPC s" '(dired-do-symlink :wk "symlink")
+ )
+
 
 ;; =========================================================
 ;; Language servers
@@ -593,20 +616,19 @@
    "<tab>" 'company-complete-common-or-cycle
    "<backtab>" 'company-select-previous
    "<return>" '(:ignore t)
-   "M-j" 'company-complete-common-or-cycle
+   "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "M-s" 'company-search-candidates
    "M-d" 'company-next-page
    "M-u" 'company-previous-page
+   "M-l" 'company-complete-common
 
    "M-SPC" '(:ignore t)
    "M-SPC o" '(company-other-backend :wk "other backend")
    "M-SPC d" '(company-diag :wk "diagnosis")
    "M-SPC c" '(counsel-company :wk "counsel-company")
-   "M-SPC M-c" '(company-complete-common :wk "complete common")
    "M-SPC h" '(company-doc-buffer :wk "show documentation")
    )
-
   
   (general-define-key
    :states 'insert
@@ -728,7 +750,9 @@
   :init
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	doom-themes-enable-italic t) ; if nil, italics is universally disabled
+	doom-themes-enable-italic t
+	doom-one-comment-bg t
+	doom-one-light-comment-bg t) ; if nil, italics is universally disabled
 
   ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
   ;; may have their own settings.
@@ -744,11 +768,9 @@
 
   (defun siliusmv/choose-theme (&optional theme-short)
     (interactive)
-    (if (not theme-short)
-	(setq theme-short
-	      (ivy-read "Select theme: " siliusmv/my-themes)))
-    (let ((theme-name (nth 1 (assoc theme-short siliusmv/my-themes))))
-      (load-theme theme-name t)))
+    (let ((theme
+	   (siliusmv/choose-from-list "Select theme: " siliusmv/my-themes theme-short)))
+      (load-theme theme t)))
 
   (siliusmv/choose-theme siliusmv/initial-theme)
   )
@@ -913,69 +935,40 @@
    "r" '(reftex-toc-Rescan :wk "refresh reftex")
    "e" '(TeX-next-error :wk "compilation errors")
    "f" '(LaTeX-fill-buffer :wk "fill buffer")
-   "M-v" '(:ignore t :wk "variables")
+   "M-v" '(:ignore t :wk "change variables")
    "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
-   "M-v v" '(siliusmv/toggle-latex-pdf-viewer :wk "PDF viewer")
+   "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
   )
 
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
 
+  ;; Completion for latex macros
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
    TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
 
+  
+
   ;;; Functions for changing PDF viewers
+  (defvar siliusmv/pdf-viewers
+    (list
+     '("evince" "Evince")
+     '("pdf-tools" "PDF Tools")
+     '("zathura" "Zathura2")))
 
-  (defun siliusmv/choose-latex-pdf-viewer (viewer)
+  (defun siliusmv/choose-latex-pdf-viewer (&optional viewer-name)
     "Change PDF viewer for latex"
-    (cond
-     ((equal viewer "evince")
-      (delete '(output-pdf "Evince") TeX-view-program-selection)
-      (setq TeX-view-program-selection
-  	    (cons '(output-pdf "Evince") TeX-view-program-selection)))
-     ((equal viewer "pdf-tools")
-      (progn
-  	(unless (assoc "PDF Tools" TeX-view-program-list-builtin)
-  	  (add-to-list 'TeX-view-program-list-builtin
-  		       '("PDF Tools" TeX-pdf-tools-sync-view)))
-  	(delete '(output-pdf "PDF Tools") TeX-view-program-selection)
-  	(setq TeX-view-program-selection
-  	      (cons '(output-pdf "PDF Tools") TeX-view-program-selection))))
-     ((equal viewer "zathura")
-      (progn
-  	;; Add backwards search to zathura
-  	;; https://www.emacswiki.org/emacs/AUCTeX#toc23
-  	(add-to-list 'TeX-view-program-list
-  		     '("Zathura2"
-  		       ("zathura %o"
-  			(mode-io-correlate " --synctex-forward %n:0:%b -x \"emacsclient --socket-name=my-gui-server --no-wait +%{line} %{input}\""))
-  		       "zathura"))
-  	(delete '(output-pdf "Zathura2") TeX-view-program-selection)
-  	(setq TeX-view-program-selection
-  	      (cons '(output-pdf "Zathura2") TeX-view-program-selection))))))
-
-  (defvar siliusmv/latex-pdf-viewer "evince"
-    "Variable used in siliusmv/toggle-latex-pdf-viewer")
-
-  (defun siliusmv/toggle-latex-pdf-viewer ()
-    "Toggle PDF viewer for latex"
     (interactive)
-    (cond
-     ((equal siliusmv/latex-pdf-viewer "evince")
-      (progn
-  	(setq siliusmv/latex-pdf-viewer "zathura")
-  	(siliusmv/choose-latex-pdf-viewer siliusmv/latex-pdf-viewer)))
-     ((equal siliusmv/latex-pdf-viewer "zathura")
-      (progn
-  	(setq siliusmv/latex-pdf-viewer "pdf-tools")
-  	(siliusmv/choose-latex-pdf-viewer siliusmv/latex-pdf-viewer)))
-     ((equal siliusmv/latex-pdf-viewer "pdf-tools")
-      (progn
-  	(setq siliusmv/latex-pdf-viewer "evince")
-  	(siliusmv/choose-latex-pdf-viewer siliusmv/latex-pdf-viewer))))
-    (message (concat "Switch PDF viewer to " siliusmv/latex-pdf-viewer)))
+    (let ((viewer
+	   (siliusmv/choose-from-list
+	    "Select PDF viewer: "
+	    siliusmv/pdf-viewers
+	    viewer-name)))
+      (delete `(output-pdf ,viewer) TeX-view-program-selection)
+      (setq TeX-view-program-selection
+      	    (cons `(output-pdf ,viewer) TeX-view-program-selection))))
 
 
   ;;; Functions for doing text-folding
@@ -995,7 +988,24 @@
   	(TeX-fold-buffer)
   	(setq siliusmv/toggle-state "folded"))))
 
+
+  (add-hook 'TeX-mode-hook
+	    (lambda ()
+	      ;; Add backwards search to zathura
+	      ;; https://www.emacswiki.org/emacs/AUCTeX#toc23
+	      (add-to-list 'TeX-view-program-list
+			   '("Zathura2"
+			     ("zathura %o"
+			      (mode-io-correlate " --synctex-forward %n:0:%b -x \"emacsclient --socket-name=my-gui-server --no-wait +%{line} %{input}\""))
+			     "zathura"))
+
+	      ;; Add PDF Tools as a possible viewer
+	      (unless (assoc "PDF Tools" TeX-view-program-list-builtin)
+		(add-to-list 'TeX-view-program-list-builtin
+			     '("PDF Tools" TeX-pdf-tools-sync-view)))))
+
   :config
+  (siliusmv/choose-latex-pdf-viewer "zathura")
 
   (setq TeX-complete-expert-commands t) ; Adds more commands for completion
   (setq Tex-auto-save t) ;; Parsing on save
@@ -1101,13 +1111,11 @@
      '("british" "en_GB")
      '("norwegian" "no_BOK")))
 
-  (defun siliusmv/choose-dictionary (&optional dict)
+  (defun siliusmv/choose-dictionary (&optional dict-name)
     (interactive)
-    (if (not dict)
-	(setq dict
-	      (ivy-read "Select dictionary: " siliusmv/my-dictionaries)))
-    (let ((dict-name (nth 1 (assoc dict siliusmv/my-dictionaries))))
-      (ispell-change-dictionary dict-name)))
+    (let ((dict
+	   (siliusmv/choose-from-list "Select dictionary: " siliusmv/my-dictionaries dict-name)))
+      (ispell-change-dictionary dict)))
 
 
   (use-package flyspell-correct-ivy
@@ -1311,9 +1319,15 @@
  'org-babel-load-languages
  '((R . t)))
 
-(general-def
- "C-c l" 'org-store-link)
- 
+(general-define-key
+ :keymaps 'org-mode-map
+ :states '(motion normal insert visual)
+ "<tab>" 'org-cycle)
+
+(use-package org-bullets
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
 
 ;; =========================================================
 ;; Other stuff
@@ -1322,9 +1336,6 @@
 (require 'iso-transl)
 
 
-(setenv "GPG_AGENT_INFO" nil)
-(setq epg-gpg-program "gpg2")
- 
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
 
 (use-package page-break-lines)
