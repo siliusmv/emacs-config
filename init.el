@@ -2,6 +2,13 @@
 ;;; %%%%%%%%%%%%%%%% My Emacs init file %%%%%%%%%%%%%%%%%%%%%
 ;;; =========================================================
 
+;; Global variables
+(defvar mu4e-p nil)
+(defvar init-theme "dark")
+(defvar init-dict "british")
+(defvar my-gc-cons-threshold (* 1024 1024 5))
+  
+
 ;; =========================================================
 ;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
@@ -9,7 +16,7 @@
 
 ;; Set garbage collection threshold
 ;; From https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
-(setq gc-cons-threshold-original gc-cons-threshold)
+; (setq gc-cons-threshold-original gc-cons-threshold)
 (setq gc-cons-threshold (* 1024 1024 100))
 
 ;; Set file-name-handler-alist
@@ -21,7 +28,7 @@
 (run-with-idle-timer
  5 nil
  (lambda ()
-   (setq gc-cons-threshold gc-cons-threshold-original)
+   (setq gc-cons-threshold my-gc-cons-threshold)
    (setq file-name-handler-alist file-name-handler-alist-original)
    (makunbound 'gc-cons-threshold-original)
    (makunbound 'file-name-handler-alist-original)
@@ -148,8 +155,18 @@
     (nth 1 (assoc var-name var-list)))
 
   (defun siliusmv/kill-this-buffer ()
+    "Kill the current buffer without any prompts"
     (interactive)
     (kill-buffer (current-buffer)))
+
+  (defun siliusmv/go-to-config ()
+    "Go to the emacs config-file"
+    (interactive)
+    (find-file "~/.emacs.d/init.el"))
+
+  (defun siliusmv/eval-sexp ()
+    "Eval the SEXP you are inside"
+    )
 
   )
 
@@ -195,6 +212,7 @@
    "M-k" 'scroll-down-command
    "M-j" 'scroll-up-command
    "M-c" 'recenter-top-bottom
+   "M-m" 'move-to-window-line-top-bottom
    )
 
   (general-define-key
@@ -259,8 +277,9 @@
    "g" '(magit-status :wk "git")
    "S" '(save-some-buffers :wk "save all buffers")
    "s" '(counsel-grep-or-swiper :wk "search in buffer")
-   "e" '(eval-last-sexp :wk "evaluate sexp")
+   "e" '(eval-defun :wk "evaluate sexp")
    "l" '(org-store-link :wk "store org-link")
+   "~" '(siliusmv/go-to-config :wk "config-file")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
@@ -343,7 +362,6 @@
    "M-o" '(:ignore t :wk "open program")
    "M-o t" '(multi-term :wk "terminal")
    "M-o r" '(run-ess-r :wk "R session")
-   "M-o m" '(mu4e :wk "email")
    "M-o c" '(siliusmv/open-calendar :wk "calendar")
    "M-o f" '(make-frame-command :wk "frame")
 
@@ -435,148 +453,155 @@
 ;; =========================================================
 ;; Email
 ;; =========================================================
-(use-package mu4e
-  :after evil
-  :commands (mu4e)
-  :general
-  (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-   :prefix "M-SPC"
-   "g" '(siliusmv/gmail-firefox :wk "gmail")
-   "o" '(siliusmv/outlook-firefox :wk "outlook")
-   )
-  :init
+(if mu4e-p
+    (use-package mu4e
+      :after evil
+      :commands (mu4e)
+      :general
+      (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
+       :prefix "M-SPC"
+       "g" '(siliusmv/gmail-firefox :wk "gmail")
+       "o" '(siliusmv/outlook-firefox :wk "outlook")
+       )
+      (:keymaps 'override
+       :prefix "SPC"
+       :non-normal-prefix "C-SPC"
+       "M-o m" '(mu4e :wk "email")
+       )
+      :init
 
-  (defun siliusmv/gmail-firefox ()
-    "Open gmail in firefox"
-    (interactive)
-    (browse-url-firefox "https://gmail.com" t)
-    )
-
-  (defun siliusmv/outlook-firefox ()
-    "Open outlook in firefox"
-    (interactive)
-    (browse-url-firefox "https://mail.ntnu.no/owa/silius.m.vandeskog@ntnu.no" t)
-    )
-
-  (setq-default
-   message-send-mail-function 'message-send-mail-with-sendmail
-   sendmail-program "/usr/bin/msmtp"
-   user-full-name "Silius Mortensønn Vandeskog"
-   user-mail-address "siliusv@gmail.com"
-   )
-
-  ;; Set mu4e as default mail agent
-  (setq mail-user-agent 'mu4e-user-agent)
-
-  :config
-  (defvar base-signature
-    (concat
-     "Silius M. Vandeskog\n"
-     "Phone: +47 93 68 49 45"))
-  (setq-default
-   mu4e-maildir "~/.mail"
-   mu4e-sent-folder "/gmail/sent"
-   mu4e-drafts-folder "/gmail/drafts"
-   mu4e-trash-folder "/gmail/trash"
-   mu4e-refile-folder "/gmail/all_mail"
-   mu4e-compose-signature base-signature
-   )
-
-  ;; https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
-  (add-to-list 'mu4e-view-actions
-	       '("ViewInBrowser" . mu4e-action-view-in-browser) t)
-
-  ; http://www.djcbsoftware.nl/code/mu/mu4e/Viewing-images-inline.html#Viewing-images-inline
-  ; enable inline images
-  (setq mu4e-view-show-images t)
-  ;; use imagemagick, if available
-  (when (fboundp 'imagemagick-register-types)
-    (imagemagick-register-types))
-
-
-  ;; HTML settings
-  ;; (require 'shr)
-  ;; (defun shr-render-current-buffer ()
-  ;;   (shr-render-region (point-min) (point-max)))
-  ;; (setq mu4e-html2text-command 'shr-render-current-buffer)
-
-  ;;(setq mu4e-html2text-command "html2text -utf8 -width 72")
-  ;;(setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
-  ;;(setq mu4e-html2text-command "pandoc -f html --pdf-engine=pdflatex")
-  (setq mu4e-html2text-command "w3m -dump -T text/html -cols 72 -o display_link_number=true -o auto_image=false -o display_image=false -o ignore_null_img_alt=true")
-
-  (setq browse-url-browser-function 'browse-url-generic)
-  (setq browse-url-generic-program "qutebrowser")
-  ;; (setq browse-url-generic-args '("--target window"))
-
-  (setq mu4e-compose-dont-reply-to-self t)
-
-  ;; http://cachestocaches.com/2017/3/complete-guide-email-emacs-using-mu-and-/?fbclid=IwAR2Udao8s5OrwCSPs9_NgHI1fjxdJJXwZhnaMWKuMhTvcdZxaNzINCi6tq4
-  (setq mu4e-contexts
-	`( ,(make-mu4e-context
-	     :name "gmail"
-	     :match-func (lambda (msg) (when msg
-					 (string-prefix-p "/gmail" (mu4e-message-field msg :maildir))))
-	     :vars '((user-mail-address . "siliusv@gmail.com")
-		     (mu4e-sent-folder . "/gmail/sent")
-		     (mu4e-drafts-folder . "/gmail/drafts")
-		     (mu4e-trash-folder . "/gmail/trash")
-		     (mu4e-refile-folder . "/gmail/all_mail")
-		     (mu4e-compose-signature . (concat
-						base-signature
-						"\nEmail: siliusv@gmail.com"))
-		     ))
-	   ,(make-mu4e-context
-	     :name "work"
-	     :match-func (lambda (msg) (when msg
-					 (string-prefix-p "/work" (mu4e-message-field msg :maildir))))
-	     :vars '(
-		     (user-mail-address ."siliusmv@stud.ntnu.no")
-		     (mu4e-sent-folder . "/work/sent")
-		     (mu4e-drafts-folder . "/work/drafts")
-		     (mu4e-trash-folder . "/work/trash")
-		     (mu4e-refile-folder . "/work/Archive1")
-		     (mu4e-compose-signature .
-					     (concat
-					      base-signature
-					      "\nEmail: "
-					      "siliusmv@stud.ntnu.no"))
-		     ))
-	   ))
-
-  (add-to-list 'mu4e-bookmarks
-	       (make-mu4e-bookmark
-		:name "All Inboxes"
-		:query "maildir:/work/inbox OR maildir:/gmail/inbox"
-		:key ?i))
-
-  
-
-  ;; Why would I want to leave my message open after I've sent it?
-  (setq message-kill-buffer-on-exit t)
-  ;; Don't ask for a 'context' upon opening mu4e
-  (setq mu4e-context-policy 'pick-first)
-  ;; Don't ask to quit... why is this the default?
-  (setq mu4e-confirm-quit nil)
-
-  
-  (setq-default mu4e-get-mail-command "mbsync -a"
-		mu4e-update-interval nil ;; This is handled by another script
-		mu4e-change-filenames-when-moving t)
-
-  ;; Don't get duplicate mails. gmail takes care of copying mails
-  (setq mu4e-sent-messages-behavior 'delete)
-	
-  ;; Shortcuts
-  (setq mu4e-maildir-shortcuts 
-	'(("/gmail/inbox" . ?g)
-	  ("/work/inbox" . ?w))
+      (defun siliusmv/gmail-firefox ()
+	"Open gmail in firefox"
+	(interactive)
+	(browse-url-firefox "https://gmail.com" t)
 	)
-  ;; This is needed to allow msmtp to do its magic:
-  (setq message-sendmail-f-is-evil 't)
-  ;;need to tell msmtp which account we're using
-  (setq message-sendmail-extra-arguments '("--read-envelope-from"))
-  ) 
+
+      (defun siliusmv/outlook-firefox ()
+	"Open outlook in firefox"
+	(interactive)
+	(browse-url-firefox "https://mail.ntnu.no/owa/silius.m.vandeskog@ntnu.no" t)
+	)
+
+      (setq-default
+       message-send-mail-function 'message-send-mail-with-sendmail
+       sendmail-program "/usr/bin/msmtp"
+       user-full-name "Silius Mortensønn Vandeskog"
+       user-mail-address "siliusv@gmail.com"
+       )
+
+      ;; Set mu4e as default mail agent
+      (setq mail-user-agent 'mu4e-user-agent)
+
+      :config
+      (defvar base-signature
+	(concat
+	 "Silius M. Vandeskog\n"
+	 "Phone: +47 93 68 49 45"))
+      (setq-default
+       mu4e-maildir "~/.mail"
+       mu4e-sent-folder "/gmail/sent"
+       mu4e-drafts-folder "/gmail/drafts"
+       mu4e-trash-folder "/gmail/trash"
+       mu4e-refile-folder "/gmail/all_mail"
+       mu4e-compose-signature base-signature
+       )
+
+      ;; https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
+      (add-to-list 'mu4e-view-actions
+		   '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+
+					; http://www.djcbsoftware.nl/code/mu/mu4e/Viewing-images-inline.html#Viewing-images-inline
+					; enable inline images
+      (setq mu4e-view-show-images t)
+      ;; use imagemagick, if available
+      (when (fboundp 'imagemagick-register-types)
+	(imagemagick-register-types))
+
+
+      ;; HTML settings
+      ;; (require 'shr)
+      ;; (defun shr-render-current-buffer ()
+      ;;   (shr-render-region (point-min) (point-max)))
+      ;; (setq mu4e-html2text-command 'shr-render-current-buffer)
+
+      ;;(setq mu4e-html2text-command "html2text -utf8 -width 72")
+      ;;(setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
+      ;;(setq mu4e-html2text-command "pandoc -f html --pdf-engine=pdflatex")
+      (setq mu4e-html2text-command "w3m -dump -T text/html -cols 72 -o display_link_number=true -o auto_image=false -o display_image=false -o ignore_null_img_alt=true")
+
+      (setq browse-url-browser-function 'browse-url-generic)
+      (setq browse-url-generic-program "qutebrowser")
+      ;; (setq browse-url-generic-args '("--target window"))
+
+      (setq mu4e-compose-dont-reply-to-self t)
+
+      ;; http://cachestocaches.com/2017/3/complete-guide-email-emacs-using-mu-and-/?fbclid=IwAR2Udao8s5OrwCSPs9_NgHI1fjxdJJXwZhnaMWKuMhTvcdZxaNzINCi6tq4
+      (setq mu4e-contexts
+	    `( ,(make-mu4e-context
+		 :name "gmail"
+		 :match-func (lambda (msg) (when msg
+					     (string-prefix-p "/gmail" (mu4e-message-field msg :maildir))))
+		 :vars '((user-mail-address . "siliusv@gmail.com")
+			 (mu4e-sent-folder . "/gmail/sent")
+			 (mu4e-drafts-folder . "/gmail/drafts")
+			 (mu4e-trash-folder . "/gmail/trash")
+			 (mu4e-refile-folder . "/gmail/all_mail")
+			 (mu4e-compose-signature . (concat
+						    base-signature
+						    "\nEmail: siliusv@gmail.com"))
+			 ))
+	       ,(make-mu4e-context
+		 :name "work"
+		 :match-func (lambda (msg) (when msg
+					     (string-prefix-p "/work" (mu4e-message-field msg :maildir))))
+		 :vars '(
+			 (user-mail-address ."siliusmv@stud.ntnu.no")
+			 (mu4e-sent-folder . "/work/sent")
+			 (mu4e-drafts-folder . "/work/drafts")
+			 (mu4e-trash-folder . "/work/trash")
+			 (mu4e-refile-folder . "/work/Archive1")
+			 (mu4e-compose-signature .
+						 (concat
+						  base-signature
+						  "\nEmail: "
+						  "siliusmv@stud.ntnu.no"))
+			 ))
+	       ))
+
+      (add-to-list 'mu4e-bookmarks
+		   (make-mu4e-bookmark
+		    :name "All Inboxes"
+		    :query "maildir:/work/inbox OR maildir:/gmail/inbox"
+		    :key ?i))
+
+      
+
+      ;; Why would I want to leave my message open after I've sent it?
+      (setq message-kill-buffer-on-exit t)
+      ;; Don't ask for a 'context' upon opening mu4e
+      (setq mu4e-context-policy 'pick-first)
+      ;; Don't ask to quit... why is this the default?
+      (setq mu4e-confirm-quit nil)
+
+      
+      (setq-default mu4e-get-mail-command "mbsync -a"
+		    mu4e-update-interval nil ;; This is handled by another script
+		    mu4e-change-filenames-when-moving t)
+
+      ;; Don't get duplicate mails. gmail takes care of copying mails
+      (setq mu4e-sent-messages-behavior 'delete)
+      
+      ;; Shortcuts
+      (setq mu4e-maildir-shortcuts 
+	    '(("/gmail/inbox" . ?g)
+	      ("/work/inbox" . ?w))
+	    )
+      ;; This is needed to allow msmtp to do its magic:
+      (setq message-sendmail-f-is-evil 't)
+      ;;need to tell msmtp which account we're using
+      (setq message-sendmail-extra-arguments '("--read-envelope-from"))
+      ) 
+  )
 
 
 
@@ -619,8 +644,8 @@
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "M-s" 'company-search-candidates
-   "M-d" 'company-next-page
-   "M-u" 'company-previous-page
+   "M-n" 'company-next-page
+   "M-p" 'company-previous-page
    "M-l" 'company-complete-common
 
    "M-SPC" '(:ignore t)
@@ -673,15 +698,16 @@
   :commands (run-ess-r)
   :defer 5
   :general
-  (:keymaps 'ess-r-mode-map
+  (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
    :prefix "M-SPC"
    "r" '(run-ess-r :wk "Open new R session")
+   "s" '(ess-switch-process :wk "Switch R session")
    )
   :diminish
   ((ess-r-package-mode . "")
    (eldoc-mode . ""))
   :init
-  (require 'ess-r-mode)
+  (require 'ess-site)
   :config
   (add-hook 'inferior-ess-r-mode-hook
 	    (lambda ()
@@ -750,9 +776,9 @@
   :init
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-	doom-themes-enable-italic t
-	doom-one-comment-bg t
-	doom-one-light-comment-bg t) ; if nil, italics is universally disabled
+	doom-themes-enable-italic t)
+	;; doom-one-comment-bg t
+	;; doom-one-light-comment-bg t) ; if nil, italics is universally disabled
 
   ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
   ;; may have their own settings.
@@ -763,16 +789,13 @@
      '("dark" doom-one)
      '("light" doom-one-light)))
 
-  (defvar siliusmv/initial-theme "dark"
-    "Initial theme for starting up emacs")
-
   (defun siliusmv/choose-theme (&optional theme-short)
     (interactive)
     (let ((theme
 	   (siliusmv/choose-from-list "Select theme: " siliusmv/my-themes theme-short)))
       (load-theme theme t)))
 
-  (siliusmv/choose-theme siliusmv/initial-theme)
+  (siliusmv/choose-theme init-theme)
   )
 
 ;; =========================================================
@@ -863,8 +886,8 @@
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
-   "M-u" 'ivy-scroll-down-command
-   "M-d" 'ivy-scroll-up-command
+   "M-p" 'ivy-scroll-down-command
+   "M-n" 'ivy-scroll-up-command
    )
   :init
   ;; The default search is ivy--regex-plus
@@ -1103,9 +1126,7 @@
   ;; Not sure that this works
   (setq-default ispell-program-name "hunspell")
   (setq ispell-really-hunspell t)
-  (setq ispell-dictionary "en_GB")
 
-  
   (defvar siliusmv/my-dictionaries
     (list
      '("british" "en_GB")
@@ -1116,6 +1137,9 @@
     (let ((dict
 	   (siliusmv/choose-from-list "Select dictionary: " siliusmv/my-dictionaries dict-name)))
       (ispell-change-dictionary dict)))
+
+
+  (siliusmv/choose-dictionary init-dict)
 
 
   (use-package flyspell-correct-ivy
@@ -1322,7 +1346,14 @@
 (general-define-key
  :keymaps 'org-mode-map
  :states '(motion normal insert visual)
- "<tab>" 'org-cycle)
+ "<tab>" 'org-cycle
+ )
+
+(setq org-export-use-babel nil)
+
+;; Necessary for exporting org to html
+(use-package htmlize)
+
 
 (use-package org-bullets
   :config
