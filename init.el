@@ -105,7 +105,7 @@
 
 
 
-
+ 
 ;; =========================================================
 ;; %%%%%%%%%%%%%%%%%%% BASIC SETTINGS %%%%%%%%%%%%%%%%%%%%%%
 ;; =========================================================
@@ -296,7 +296,6 @@
    :keymaps 'override
    :prefix "M-SPC"
    ;; Editing commands
-   "" nil
    "ESC" '(:ignore t :wk t)
    "(" '(insert-pair :wk "insert pair")
    "[" '(insert-pair :wk "insert pair")
@@ -334,11 +333,12 @@
   ;; Space as leader
   (general-define-key
    :keymaps 'override
-   :prefix "SPC"
+   :states '(normal insert visual emacs)
+   :prefix "M-SPC"
    ;; Popular keybindings
    "" nil
    "ESC" '(:ignore t :wk t)
-   "SPC" '(counsel-find-file :wk "find file")
+   "M-SPC" '(counsel-find-file :wk "find file")
    "," '(counsel-switch-buffer :wk "switch buffer")
    "." '(save-buffer :wk "save buffer")
    "-" '(counsel-grep-or-swiper :wk "search in buffer")
@@ -348,6 +348,8 @@
    "l" '(org-store-link :wk "store org-link")
    "~" '(siliusmv/go-to-config :wk "go home")
    "M-f" '(make-frame :wk "new frame")
+
+   "m" '(:ignore t :wk "mode specific")
 
    ;; Eval elisp
    "e" '(:ignore t :wk "elisp")
@@ -459,16 +461,15 @@
   )
 
 (general-define-key
- :states 'normal
  :keymaps 'dired-mode-map
+ :states 'normal
  "l" 'dired-find-file
  "h" 'dired-up-directory
- "M-SPC" '(:ignore t)
- "M-SPC h" '(dired-hide-dotfiles :wk "hide dotfiles")
- "M-SPC c" '(dired-do-copy :wk "copy")
- "M-SPC m" '(dired-do-rename :wk "move")
- "M-SPC d" '(dired-do-delete :wk "delete")
- "M-SPC s" '(dired-do-symlink :wk "symlink")
+ "M-SPC m h" '(dired-hide-dotfiles :wk "hide dotfiles")
+ "M-SPC m c" '(dired-do-copy :wk "copy")
+ "M-SPC m m" '(dired-do-rename :wk "move")
+ "M-SPC m d" '(dired-do-delete :wk "delete")
+ "M-SPC m s" '(dired-do-symlink :wk "symlink")
  )
 
 
@@ -528,13 +529,13 @@
       :commands (mu4e)
       :general
       (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-       :prefix "M-SPC"
+       :states '(motion normal insert visual emacs)
+       :prefix "M-SPC m"
        "g" '(siliusmv/gmail-firefox :wk "gmail")
        "o" '(siliusmv/outlook-firefox :wk "outlook")
        )
       (:keymaps 'override
-       :prefix "SPC"
-       :non-normal-prefix "C-SPC"
+       :prefix "M-SPC"
        "M-o m" '(mu4e :wk "email")
        )
       :init
@@ -703,8 +704,7 @@
   :delight
   :diminish company-mode
   :init
-  ;; (add-hook 'after-init-hook 'global-company-mode)
-  (global-company-mode)
+  (add-hook 'after-init-hook 'global-company-mode)
   :config
 
   (general-define-key
@@ -719,11 +719,10 @@
    "M-K" 'company-previous-page
    "M-l" 'company-complete-common
 
-   "M-SPC" '(:ignore t)
-   "M-SPC o" '(company-other-backend :wk "other backend")
-   "M-SPC d" '(company-diag :wk "diagnosis")
-   "M-SPC c" '(counsel-company :wk "counsel-company")
-   "M-SPC h" '(company-doc-buffer :wk "show documentation")
+   "M-SPC m o" '(company-other-backend :wk "other backend")
+   "M-SPC m d" '(company-diag :wk "diagnosis")
+   "M-SPC m c" '(counsel-company :wk "counsel-company")
+   "M-SPC m h" '(company-doc-buffer :wk "show documentation")
    )
   
   (general-define-key
@@ -753,9 +752,9 @@
   (setq company-dabbrev-downcase nil
 	company-dabbrev-code-ignore-case t
 	company-dabbrev-ignore-case t)
-
-  )
   
+  )
+
 (use-package company-statistics
   :config
   (add-hook 'after-init-hook 'company-statistics-mode))
@@ -770,14 +769,16 @@
   :defer 5
   :general
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-   :prefix "M-SPC"
-   "r" '(run-ess-r :wk "Open new R session")
-   "s" '(ess-switch-process :wk "Switch R session")
-   )
+	    :prefix "M-SPC m"
+	    :states '(motion normal insert visual emacs)
+	    "r" '(run-ess-r :wk "Open new R session")
+	    "s" '(ess-switch-process :wk "Switch R session")
+	    )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-   "M-e" 'ess-eval-region-or-line-visibly-and-step
-   "M-RET" 'ess-eval-region-or-function-or-paragraph-and-step
-   )
+	    :states '(motion normal insert visual emacs)
+	    "M-e" 'ess-eval-region-or-line-visibly-and-step
+	    "M-RET" 'ess-eval-region-or-function-or-paragraph-and-step
+	    )
   :diminish
   ((ess-r-package-mode . "")
    (eldoc-mode . ""))
@@ -836,14 +837,14 @@
 	     company-R-library
 	     company-dabbrev-code :separate)
 	    company-files
-	 )))
+	    )))
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
-  ; Company settings for ess
+					; Company settings for ess
   (add-hook 'ess-mode-hook 'my-ess-company-function)
   (add-hook 'inferior-ess-mode-hook 'my-ess-company-function)
 
-  ; Eglot stuff
+					; Eglot stuff
   (add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
 
@@ -866,8 +867,8 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
 	doom-themes-enable-italic t)
-	;; doom-one-comment-bg t
-	;; doom-one-light-comment-bg t) ; if nil, italics is universally disabled
+  ;; doom-one-comment-bg t
+  ;; doom-one-light-comment-bg t) ; if nil, italics is universally disabled
 
   ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
   ;; may have their own settings.
@@ -887,86 +888,85 @@
   (siliusmv/choose-theme init-theme)
   )
 
-;; =========================================================
-;; Wokspaces
-;; =========================================================
-
-(use-package eyebrowse
-  :init
-  (eyebrowse-mode)
-  )
-
-
-;;(use-package persp-mode
-;;  :init
-;;  (persp-mode 1)
-;;  :config
-;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
-;;  (setq wg-morph-on nil)
-;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
-;;
-;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
-;;	persp-auto-save-opt (if noninteractive 0 1)
-;;	persp-nil-name "main"
-;;	persp-auto-save-fname "autosave"
-;;	persp-auto-resume-time -1 ;; Do not autoresume
-;;	persp-remove-buffers-from-nil-persp-behaviour nil
-;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
-;;	)
-;;  )
-
-;; =========================================================
-;; Tramp
-;; =========================================================
-(use-package tramp
-
-  :config
-  (setq tramp-default-method "ssh"))
-
-;; =========================================================
-;; Magit
-;; =========================================================
-(use-package magit
-
-  :commands (magit-status)
-  :config
-  ;; Possible performance fix
-  (setq auto-revert-buffer-list-filter
-	'magit-auto-revert-repository-buffer-p)
-
-  (use-package evil-magit) ;; Evil-movements in magit
-  )
-
-
-;; =========================================================
-;; Rainbow delimiters
-;; =========================================================
-(use-package rainbow-delimiters
-
-  :hook (prog-mode . rainbow-delimiters-mode)
-  :defer 5
-  )
-
-
-;; =========================================================
-;; Jump to function definition
-;; =========================================================
-(use-package imenu-anywhere)
-
-(use-package dumb-jump
-
-  :hook (prog-mode . dumb-jump-mode)
-  :general
-  (:states '(normal insert emacs)
-   :prefix "SPC"
-   :non-normal-prefix "C-SPC"
-   "" nil
-   "j" '(:ignore t :wk "jump to text")
-   "j d" '(dumb-jump-go :wk "dumb-jump")
-   "j i" '(ivy-imenu-anywhere :wk "imenu")
+ ;; =========================================================
+ ;; Wokspaces
+ ;; =========================================================
+ 
+ (use-package eyebrowse
+   :init
+   (eyebrowse-mode)
    )
-  )
-
+ 
+ 
+ ;;(use-package persp-mode
+ ;;  :init
+ ;;  (persp-mode 1)
+ ;;  :config
+ ;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
+ ;;  (setq wg-morph-on nil)
+ ;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
+ ;;
+ ;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
+ ;;	persp-auto-save-opt (if noninteractive 0 1)
+ ;;	persp-nil-name "main"
+ ;;	persp-auto-save-fname "autosave"
+ ;;	persp-auto-resume-time -1 ;; Do not autoresume
+ ;;	persp-remove-buffers-from-nil-persp-behaviour nil
+ ;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
+ ;;	)
+ ;;  )
+ 
+ ;; =========================================================
+ ;; Tramp
+ ;; =========================================================
+ (use-package tramp
+ 
+   :config
+   (setq tramp-default-method "ssh"))
+ 
+ ;; =========================================================
+ ;; Magit
+ ;; =========================================================
+ (use-package magit
+ 
+   :commands (magit-status)
+   :config
+   ;; Possible performance fix
+   (setq auto-revert-buffer-list-filter
+ 	'magit-auto-revert-repository-buffer-p)
+ 
+   (use-package evil-magit) ;; Evil-movements in magit
+   )
+ 
+ 
+ ;; =========================================================
+ ;; Rainbow delimiters
+ ;; =========================================================
+ (use-package rainbow-delimiters
+ 
+   :hook (prog-mode . rainbow-delimiters-mode)
+   :defer 5
+   )
+ 
+ 
+ ;; =========================================================
+ ;; Jump to function definition
+ ;; =========================================================
+ (use-package imenu-anywhere)
+ 
+ (use-package dumb-jump
+ 
+   :hook (prog-mode . dumb-jump-mode)
+   :general
+   (:states '(normal insert emacs)
+    :prefix "M-SPC"
+    "" nil
+    "j" '(:ignore t :wk "jump to text")
+    "j d" '(dumb-jump-go :wk "dumb-jump")
+    "j i" '(ivy-imenu-anywhere :wk "imenu")
+    )
+   )
+ 
 ;; =========================================================
 ;; Ivy++
 ;; =========================================================
@@ -1046,8 +1046,7 @@
   ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
   (:keymaps 'TeX-mode-map
-   :prefix "M-SPC"
-   "" nil
+   :prefix "M-SPC m"
    "v" '(TeX-view :wk "view pdf")
    "c" '(TeX-command-master :wk "compile document")
    "t" '(reftex-toc :wk "navigate document")
@@ -1278,7 +1277,7 @@
 
   (general-define-key
    :keymaps 'pdf-view-mode-map
-   :prefix "M-SPC"
+   :prefix "M-SPC m"
    "t" '(pdf-outline :wk "toc") 
 
    "a" '(:ignore t :wk "annotations")
@@ -1310,11 +1309,6 @@
   (setq which-key-sort-order 'which-key-local-then-key-order)
   (which-key-setup-side-window-bottom)
   (setq which-key-side-window-max-height 0.5)
-
-  ;; make sure which-key doesn't show normally but refreshes quickly after it is
-  ;; triggered.
-  (setq which-key-idle-delay 10000)
-  (setq which-key-idle-secondary-delay 0.05)
   )
 
 
@@ -1328,7 +1322,7 @@
   :commands (cfw:open-calendar-buffer siliusmv/open-calendar)
   :general
   (:keymaps '(cfw:calendar-mode-map cfw:details-mode-map)
-   :prefix "M-SPC"
+   :prefix "M-SPC m"
    "g" '(siliusmv/gcal-firefox :wk "gmail")
    "o" '(siliusmv/outlook-cal-firefox :wk "outlook")
    )
@@ -1406,8 +1400,8 @@
   :commands (multi-term)
   :general
   (:keymaps 'term-mode-map
-   :prefix "M-SPC"
-   "" nil
+   :states '(motion normal insert visual emacs)
+   :prefix "M-SPC m"
 
    "s" '(:ignore t :wk "send signal to shell")
    "s q" '(term-quit-subjob :wk "quit")
@@ -1671,121 +1665,121 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
 
-(use-package page-break-lines)
+;;(use-package page-break-lines)
 
-(use-package dashboard
-  :config
-  (dashboard-setup-startup-hook)
-  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-  ;; To disable shortcut "jump" indicators for each section, set
-  (setq dashboard-show-shortcuts nil)
-  (setq dashboard-items '((projects  . 5)
-			  ;;(bookmarks . 5)
-			  (recents . 5)
-			  ;;(agenda . 5)
-			  ;;(registers . 5)
-			  ))
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
-  (setq dashboard-startup-banner 'logo)
-  (setq dashboard-banner-logo-title "Welcome back!")
-  )
-
-;; (use-package company-quickhelp
-;;   :hook (global-company-mode . company-quickhelp-mode)
-;;   :init (setq company-quickhelp-delay 0.5)
-;;   )
-
-;; (use-package company-box
-;;   :hook (company-mode . company-box-mode)
-;; 
+;; (use-package dashboard
 ;;   :config
-;; 
-;;   ;; https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-company.el#L76
-;;   (when (and (display-graphic-p)
-;; 	     (require 'all-the-icons nil t))
-;;     (declare-function all-the-icons-faicon 'all-the-icons)
-;;     (declare-function all-the-icons-material 'all-the-icons)
-;;     (setq company-box-icons-all-the-icons
-;; 	  `((Unknown . ,(all-the-icons-material "find_in_page" :height 0.9 :v-adjust -0.2))
-;; 	    (Text . ,(all-the-icons-faicon "text-width" :height 0.85 :v-adjust -0.05))
-;; 	    (Method . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
-;; 	    (Function . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
-;; 	    (Constructor . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
-;; 	    (Field . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
-;; 	    (Variable . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
-;; 	    (Class . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
-;; 	    (Interface . ,(all-the-icons-material "share" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Module . ,(all-the-icons-material "view_module" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Property . ,(all-the-icons-faicon "wrench" :height 0.85 :v-adjust -0.05))
-;; 	    (Unit . ,(all-the-icons-material "settings_system_daydream" :height 0.9 :v-adjust -0.2))
-;; 	    (Value . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Enum . ,(all-the-icons-material "storage" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
-;; 	    (Keyword . ,(all-the-icons-material "filter_center_focus" :height 0.9 :v-adjust -0.2))
-;; 	    (Snippet . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2))
-;; 	    (Color . ,(all-the-icons-material "palette" :height 0.9 :v-adjust -0.2))
-;; 	    (File . ,(all-the-icons-faicon "file-o" :height 0.9 :v-adjust -0.05))
-;; 	    (Reference . ,(all-the-icons-material "collections_bookmark" :height 0.9 :v-adjust -0.2))
-;; 	    (Folder . ,(all-the-icons-faicon "folder-open" :height 0.9 :v-adjust -0.05))
-;; 	    (EnumMember . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Constant . ,(all-the-icons-faicon "square-o" :height 0.9 :v-adjust -0.05))
-;; 	    (Struct . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
-;; 	    (Event . ,(all-the-icons-faicon "bolt" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-orange))
-;; 	    (Operator . ,(all-the-icons-material "control_point" :height 0.9 :v-adjust -0.2))
-;; 	    (TypeParameter . ,(all-the-icons-faicon "arrows" :height 0.85 :v-adjust -0.05))
-;; 	    (Template . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2)))
-;; 	  company-box-icons-alist 'company-box-icons-all-the-icons))
-;; 
+;;   (dashboard-setup-startup-hook)
+;;   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+;;   ;; To disable shortcut "jump" indicators for each section, set
+;;   (setq dashboard-show-shortcuts nil)
+;;   (setq dashboard-items '((projects  . 5)
+;; 			  ;;(bookmarks . 5)
+;; 			  (recents . 5)
+;; 			  ;;(agenda . 5)
+;; 			  ;;(registers . 5)
+;; 			  ))
+;;   (setq dashboard-set-heading-icons t)
+;;   (setq dashboard-set-file-icons t)
+;;   (setq dashboard-startup-banner 'logo)
+;;   (setq dashboard-banner-logo-title "Welcome back!")
 ;;   )
 
-
-;; (use-package solaire-mode
-;;   :hook
-;;   ( ;((change-major-mode after-revert ediff-prepare-buffer) . 'turn-on-solaire-mode)
-;;    (minibuffer-setup . solaire-mode-in-minibuffer))
+;; ;; (use-package company-quickhelp
+;; ;;   :hook (global-company-mode . company-quickhelp-mode)
+;; ;;   :init (setq company-quickhelp-delay 0.5)
+;; ;;   )
+;; 
+;; ;; (use-package company-box
+;; ;;   :hook (company-mode . company-box-mode)
+;; ;; 
 ;; ;;   :config
 ;; ;; 
-;; ;;   ;; solaire-mode messes with hl-line-mode when using the daemon
-;; ;;   (defun siliusmv/add-solaire (frame)
-;; ;;     (select-frame frame)
-;; ;;     (if (display-graphic-p)
-;; ;; 	(if (not (bound-and-true-p solaire-mode))
-;; ;; 	    (progn
-;; ;; 	      (solaire-global-mode)
-;; ;; 	      (solaire-mode-swap-bg) ; Only necessary for doom-themes
-;; ;; 	      ))
-;; ;;       ;; This part is for when you open a non-graphical frame and everything
-;; ;;       ;; gets really ugly
-;; ;;       (if siliusmv/is-dark-theme
-;; ;; 	  (load-theme 'doom-one t)
-;; ;; 	(load-theme 'doom-one-light t))))
+;; ;;   ;; https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-company.el#L76
+;; ;;   (when (and (display-graphic-p)
+;; ;; 	     (require 'all-the-icons nil t))
+;; ;;     (declare-function all-the-icons-faicon 'all-the-icons)
+;; ;;     (declare-function all-the-icons-material 'all-the-icons)
+;; ;;     (setq company-box-icons-all-the-icons
+;; ;; 	  `((Unknown . ,(all-the-icons-material "find_in_page" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (Text . ,(all-the-icons-faicon "text-width" :height 0.85 :v-adjust -0.05))
+;; ;; 	    (Method . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
+;; ;; 	    (Function . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
+;; ;; 	    (Constructor . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
+;; ;; 	    (Field . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
+;; ;; 	    (Variable . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
+;; ;; 	    (Class . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
+;; ;; 	    (Interface . ,(all-the-icons-material "share" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; ;; 	    (Module . ,(all-the-icons-material "view_module" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; ;; 	    (Property . ,(all-the-icons-faicon "wrench" :height 0.85 :v-adjust -0.05))
+;; ;; 	    (Unit . ,(all-the-icons-material "settings_system_daydream" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (Value . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; ;; 	    (Enum . ,(all-the-icons-material "storage" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
+;; ;; 	    (Keyword . ,(all-the-icons-material "filter_center_focus" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (Snippet . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (Color . ,(all-the-icons-material "palette" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (File . ,(all-the-icons-faicon "file-o" :height 0.9 :v-adjust -0.05))
+;; ;; 	    (Reference . ,(all-the-icons-material "collections_bookmark" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (Folder . ,(all-the-icons-faicon "folder-open" :height 0.9 :v-adjust -0.05))
+;; ;; 	    (EnumMember . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
+;; ;; 	    (Constant . ,(all-the-icons-faicon "square-o" :height 0.9 :v-adjust -0.05))
+;; ;; 	    (Struct . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
+;; ;; 	    (Event . ,(all-the-icons-faicon "bolt" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-orange))
+;; ;; 	    (Operator . ,(all-the-icons-material "control_point" :height 0.9 :v-adjust -0.2))
+;; ;; 	    (TypeParameter . ,(all-the-icons-faicon "arrows" :height 0.85 :v-adjust -0.05))
+;; ;; 	    (Template . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2)))
+;; ;; 	  company-box-icons-alist 'company-box-icons-all-the-icons))
 ;; ;; 
-;; ;;   (if (daemonp)
-;; ;;       (add-hook 'after-make-frame-functions #'siliusmv/add-solaire)
-;; ;;     (solaire-global-mode)
-;; ;;     (solaire-mode-swap-bg))
+;; ;;   )
 ;; 
-;;   )
-
-
-;; =========================================================
-;; Mandatory stuff
-;; =========================================================
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes nil)
- '(ess-style (quote RStudio))
- '(evil-collection-minibuffer-setup t t)
- '(evil-search-module (quote evil-search))
- '(send-mail-function (quote mailclient-send-it)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-;;; init.el ends here
+;; 
+;; ;; (use-package solaire-mode
+;; ;;   :hook
+;; ;;   ( ;((change-major-mode after-revert ediff-prepare-buffer) . 'turn-on-solaire-mode)
+;; ;;    (minibuffer-setup . solaire-mode-in-minibuffer))
+;; ;; ;;   :config
+;; ;; ;; 
+;; ;; ;;   ;; solaire-mode messes with hl-line-mode when using the daemon
+;; ;; ;;   (defun siliusmv/add-solaire (frame)
+;; ;; ;;     (select-frame frame)
+;; ;; ;;     (if (display-graphic-p)
+;; ;; ;; 	(if (not (bound-and-true-p solaire-mode))
+;; ;; ;; 	    (progn
+;; ;; ;; 	      (solaire-global-mode)
+;; ;; ;; 	      (solaire-mode-swap-bg) ; Only necessary for doom-themes
+;; ;; ;; 	      ))
+;; ;; ;;       ;; This part is for when you open a non-graphical frame and everything
+;; ;; ;;       ;; gets really ugly
+;; ;; ;;       (if siliusmv/is-dark-theme
+;; ;; ;; 	  (load-theme 'doom-one t)
+;; ;; ;; 	(load-theme 'doom-one-light t))))
+;; ;; ;; 
+;; ;; ;;   (if (daemonp)
+;; ;; ;;       (add-hook 'after-make-frame-functions #'siliusmv/add-solaire)
+;; ;; ;;     (solaire-global-mode)
+;; ;; ;;     (solaire-mode-swap-bg))
+;; ;; 
+;; ;;   )
+;; 
+;; 
+;; ;; =========================================================
+;; ;; Mandatory stuff
+;; ;; =========================================================
+;; (custom-set-variables
+;;  ;; custom-set-variables was added by Custom.
+;;  ;; If you edit it by hand, you could mess it up, so be careful.
+;;  ;; Your init file should contain only one such instance.
+;;  ;; If there is more than one, they won't work right.
+;;  '(custom-safe-themes nil)
+;;  '(ess-style (quote RStudio))
+;;  '(evil-collection-minibuffer-setup t t)
+;;  '(evil-search-module (quote evil-search))
+;;  '(send-mail-function (quote mailclient-send-it)))
+;; (custom-set-faces
+;;  ;; custom-set-faces was added by Custom.
+;;  ;; If you edit it by hand, you could mess it up, so be careful.
+;;  ;; Your init file should contain only one such instance.
+;;  ;; If there is more than one, they won't work right.
+;;  )
+;; 
+;; ;;; init.el ends here
