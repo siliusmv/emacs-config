@@ -249,38 +249,32 @@
 
   (general-define-key
    :keymaps 'override
-   :states '(normal visual)
+   :states '(normal visual insert emacs)
    "M-k" '(scroll-down-command :wk t)
    "M-j" '(scroll-up-command :wk t)
-   "M-l" '(recenter-top-bottom :wk t)
-   "M-m" '(move-to-window-line-top-bottom :wk t)
-   "/" '(counsel-grep-or-swiper :wk "search in buffer")
-   "?" '(which-key-show-top-level :wk "show all bindings")
+   "M-/" '(counsel-grep-or-swiper :wk "search in buffer")
+   "M-?" '(which-key-show-top-level :wk "show all bindings")
+   "M-b" '(ivy-switch-buffer :wk "switch buffer")
+   "M-p" '(evil-paste-after :wk "copy from clipboard")
+   "M-o" '(ace-window :wk "other window")
+   "C-M-f" '(toggle-fullscreen :wk "fullscreen")
+   "M-n" '(make-frame :wk "new frame")
+   "M-s" '(save-buffer :wk "save buffer")
+   "M-S" '(save-some-buffers :wk "save all buffers")
+   "M-`" '(ns-next-frame :wk "switch frame")
    )
 
-  ;; macOS stuff
   (general-define-key
    :keymaps 'override
-   :states '(normal insert)
-   "M-v" '(yank :wk "copy from clipboard")
+   :states '(normal visual)
+   "/" '(counsel-grep-or-swiper :wk "search in buffer")
    )
 
   (general-define-key
    :keymaps 'minibuffer-local-map
-   "M-v" '(yank :wk "copy from clipboard")
+   "M-p" '(yank :wk "copy from clipboard")
    )
   
-  (general-define-key
-   :keymaps 'override
-   "M-o" 'ace-window
-
-   ;; macOS stuff
-   "C-M-f" 'toggle-fullscreen
-   "M-n" 'make-frame
-   "M-s" 'save-buffer
-   "M-`" 'ns-next-frame
-   
-   )
 
   (general-define-key
    :states 'visual
@@ -291,19 +285,20 @@
    "M-x" 'kill-region
    )
 
+  ;; Editing commands
   (general-define-key
    :states 'visual
    :keymaps 'override
-   :prefix "M-SPC"
-   ;; Editing commands
+   :prefix "M-i"
+   "" '(:ignore t :wk "insert")
    "ESC" '(:ignore t :wk t)
-   "(" '(insert-pair :wk "insert pair")
-   "[" '(insert-pair :wk "insert pair")
-   "{" '(insert-pair :wk "insert pair")
-   "\"" '(insert-pair :wk "insert pair")
-   "\'" '(insert-pair :wk "insert pair")
-   "\$" '(insert-pair :wk "insert pair")
-   "`" '(insert-pair :wk "insert pair")
+   "(" '(insert-pair :wk "(")
+   "[" '(insert-pair :wk "[")
+   "{" '(insert-pair :wk "{")
+   "\"" '(insert-pair :wk "\"")
+   "\'" '(insert-pair :wk "\'")
+   "\$" '(insert-pair :wk "\$")
+   "`" '(insert-pair :wk "`")
    ")" '(delete-pair :wk "delete pair")
    )
 
@@ -471,6 +466,7 @@
  "M-SPC m d" '(dired-do-delete :wk "delete")
  "M-SPC m s" '(dired-do-symlink :wk "symlink")
  )
+
 
 
 ;; =========================================================
@@ -686,8 +682,9 @@
    "s" 'avy-goto-char-timer
    )
   :config
-  (setq avy-style 'words)
-  (setq avy-timeout-seconds 0.2)
+  (setq avy-style 'at-full
+	avy-all-windows t
+	avy-timeout-seconds 0.2)
   )
 
 (use-package ace-window
@@ -832,10 +829,14 @@
   (defun my-ess-company-function ()
     (set (make-local-variable 'company-backends)
 	 '( (company-capf ; Works together with eglot
+	     company-files
 	     company-R-args
 	     company-R-objects
 	     company-R-library
 	     company-dabbrev-code :separate)
+	    (company-R-args
+	     company-R-objects
+	     company-R-library :separate)
 	    company-files
 	    )))
   (setq ess-use-company nil) ; Don't let ESS decide backends
@@ -895,6 +896,20 @@
  (use-package eyebrowse
    :init
    (eyebrowse-mode)
+   :general
+   (:keymaps 'override
+    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
+    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
+    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
+    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
+    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
+    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
+    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
+    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
+    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+    )
+   :config
+   (setq eyebrowse-new-workspace t)
    )
  
  
@@ -1074,7 +1089,8 @@
     (list
      '("evince" "Evince")
      '("pdf-tools" "PDF Tools")
-     '("zathura" "Zathura2")))
+     '("zathura" "Zathura2")
+     '("preview" "Preview.app")))
 
   (defun siliusmv/choose-latex-pdf-viewer (&optional viewer-name)
     "Change PDF viewer for latex"
@@ -1152,6 +1168,7 @@
   (add-hook 'LaTeX-mode-hook
   	    (lambda () (reftex-mode 1)))
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+  (setq reftex-plug-into-AUCTEX t)
   )
 
 (use-package auctex-latexmk
@@ -1272,13 +1289,21 @@
     "f" 'pdf-links-action-perform
     "J" 'pdf-view-next-page-command
     "K" 'pdf-view-previous-page-command
-    "s" 'isearch-forward
+   )
+
+  ;; This does not seem to work
+  (general-define-key
+   :keymaps 'pdf-view-mode-map
+    "M-j" 'pdf-view-next-page-command
+    "M-k" 'pdf-view-previous-page-command
    )
 
   (general-define-key
    :keymaps 'pdf-view-mode-map
    :prefix "M-SPC m"
    "t" '(pdf-outline :wk "toc") 
+
+   "/" '(isearch-forward :wk "search in buffer")
 
    "a" '(:ignore t :wk "annotations")
    "a t" '(pdf-annot-add-text-annotation :wk "text")
@@ -1760,26 +1785,26 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 ;; ;; ;;     (solaire-mode-swap-bg))
 ;; ;; 
 ;; ;;   )
-;; 
-;; 
-;; ;; =========================================================
-;; ;; Mandatory stuff
-;; ;; =========================================================
-;; (custom-set-variables
-;;  ;; custom-set-variables was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(custom-safe-themes nil)
-;;  '(ess-style (quote RStudio))
-;;  '(evil-collection-minibuffer-setup t t)
-;;  '(evil-search-module (quote evil-search))
-;;  '(send-mail-function (quote mailclient-send-it)))
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  )
-;; 
-;; ;;; init.el ends here
+
+
+;; =========================================================
+;; Mandatory stuff
+;; =========================================================
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes nil)
+ '(ess-style (quote RStudio))
+ '(evil-collection-minibuffer-setup t t)
+ '(evil-search-module (quote evil-search))
+ '(send-mail-function (quote mailclient-send-it)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+;;; init.el ends here
