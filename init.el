@@ -950,7 +950,6 @@
  ;; Magit
  ;; =========================================================
  (use-package magit
- 
    :commands (magit-status)
    :config
    ;; Possible performance fix
@@ -965,7 +964,6 @@
  ;; Rainbow delimiters
  ;; =========================================================
  (use-package rainbow-delimiters
- 
    :hook (prog-mode . rainbow-delimiters-mode)
    :defer 5
    )
@@ -977,7 +975,6 @@
  (use-package imenu-anywhere)
  
  (use-package dumb-jump
- 
    :hook (prog-mode . dumb-jump-mode)
    :general
    (:states '(normal insert emacs)
@@ -1421,20 +1418,40 @@
    (shell . t)
    (C . t)))
 
+(add-hook 'org-mode-hook
+	  (lambda ()
+	    (nlinum-mode -1)))
+
+(defun siliusmv/org-cycle-current-headline ()
+  "Cycle the current headline. Taken from
+https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-without-going-to-block-header"
+  (interactive)
+  (org-cycle-internal-local))
+
+
 (general-define-key
  :keymaps 'org-mode-map
  :states '(motion normal insert visual)
  "<tab>" 'org-cycle
+ "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(normal visual)
+ :states '(normal visual insert)
  "g" nil
- "g h" 'outline-up-heading
- "g l" 'outline-next-visible-heading
- "g j" 'org-forward-heading-same-level
- "g k" 'org-backward-heading-same-level
+ "g s" '(avy-org-goto-heading-timer :wk "avy heading")
+ "g j" '(org-next-visible-heading :wk "next heading")
+ "g k" '(org-previous-visible-heading :wk "prev heading")
+ "g h" '(outline-up-heading :wk "up one heading")
+ "g M-j" '(org-next-block :wk "next block")
+ "g M-k" '(org-previous-block :wk "next block")
+ )
+
+(general-define-key
+ :keymaps 'org-mode-map
+ "C-M-j" '(org-next-visible-heading :wk "next heading")
+ "C-M-k" '(org-prev-visible-heading :wk "prev heading")
  )
 
 (setq org-export-use-babel nil)
@@ -1463,9 +1480,9 @@
   )
 
 
-;; (use-package org-bullets
-;;   :config
-;;   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+(use-package org-bullets
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 
 ;; =========================================================================
