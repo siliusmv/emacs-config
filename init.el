@@ -1054,6 +1054,16 @@
 (use-package flycheck)
 
 
+
+;; =========================================================
+;; ouline stuff
+;; =========================================================
+(use-package outline-magic
+  :general
+  (:keymaps 'outline-minor-mode-map
+   "<C-tab>" 'outline-cycle)
+  )
+
 ;; =========================================================
 ;; LaTeX-stuff (AuCTeX, refTeX and more)
 ;; =========================================================
@@ -1080,7 +1090,7 @@
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
-
+  (add-hook 'LaTeX-mode-hook #'outline-minor-mode)
   ;; Completion for latex macros
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
