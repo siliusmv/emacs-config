@@ -116,6 +116,7 @@
 
 (global-hl-line-mode) ;; Highlight current line
 
+
 ;; Allow enclosing a marked region with $$
 (add-to-list 'insert-pair-alist (list ?\$ ?\$))
 
@@ -303,9 +304,9 @@
    )
 
   (general-define-key
-   :states 'normal
+   :states '(normal insert visual emacs)
    :keymaps 'override
-   :prefix "g"
+   :prefix "M-g"
    "" nil
    ")" '(evil-next-close-paren :wk "next closing parenthesis")
    "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
@@ -431,17 +432,17 @@
    "o" '(:ignore t :wk "open program")
    "o t" '(multi-term :wk "terminal")
    "o r" '(run-ess-r :wk "R session")
-   "o c" '(siliusmv/open-calendar :wk "calendar")
    "o f" '(make-frame-command :wk "frame")
+   "o d" '(dired :wk "dired")
 
    ;; "Workspaces"
    "M-w" '(:ignore t :wk "workspaces")
-   "M-w n" '(eyebrowse-create-window-config :wk "new workspace")
-   "M-w [" '(eyebrowse-next-window-config :wk "next workspace")
-   "M-w ]" '(eyebrowse-last-window-config :wk "prev workspace")
-   "M-w s" '(eyebrowse-switch-to-window-config :wk "switch to workspace")
-   "M-w r" '(eyebrowse-rename-window-config :wk "rename workspace")
-   "M-w d" '(eyebrowse-close-window-config)
+   "M-w n" '(eyebrowse-create-window-config :wk "new")
+   "M-w k" '(eyebrowse-next-window-config :wk "next")
+   "M-w j" '(eyebrowse-prev-window-config :wk "prev")
+   "M-w s" '(eyebrowse-switch-to-window-config :wk "switch to other")
+   "M-w r" '(eyebrowse-rename-window-config :wk "rename")
+   "M-w d" '(eyebrowse-close-window-config :wk "close current")
    )
   )
 
@@ -907,9 +908,15 @@
     "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
     "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
     "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+
+    "M-w" '(:ignore t :wk "workspace cycling")
+    "M-w k" '(eyebrowse-next-window-config :wk "next")
+    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
     )
    :config
-   (setq eyebrowse-new-workspace t)
+   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
+	 eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
+	 )
    )
  
  
@@ -1339,72 +1346,6 @@
 
 
 ;; =========================================================
-;; Calendar
-;; =========================================================
-(use-package calfw
-
-  :defer 5
-  :commands (cfw:open-calendar-buffer siliusmv/open-calendar)
-  :general
-  (:keymaps '(cfw:calendar-mode-map cfw:details-mode-map)
-   :prefix "M-SPC m"
-   "g" '(siliusmv/gcal-firefox :wk "gmail")
-   "o" '(siliusmv/outlook-cal-firefox :wk "outlook")
-   )
-
-  :init
-
-  (defun siliusmv/gcal-firefox ()
-    "Open google calendar in firefox"
-    (interactive)
-    (browse-url-firefox "https://calendar.google.com/calendar/r" t)
-    )
-
-  (defun siliusmv/outlook-cal-firefox ()
-    "Open outlook calendar in firefox"
-    (interactive)
-    (browse-url-firefox "https://mail.ntnu.no/owa/silius.m.vandeskog@ntnu.no/#path=/calendar/view/Month" t)
-    )
-
-  :config
-
-  (use-package calfw-ical
-
-    )
-
-  (defun siliusmv/open-calendar ()
-    "Collect different calendars and display them"
-    (interactive)
-    (cfw:open-calendar-buffer
-     :contents-sources
-     (list
-      ;;(cfw:org-create-source "Green")  ; orgmode source
-      ;;(cfw:howm-create-source "Blue")  ; howm source
-      ;;(cfw:cal-create-source "Orange") ; diary source
-      ;;(cfw:ical-create-source "Moon" "~/moon.ics" "Gray")  ; ICS source1
-      (cfw:ical-create-source
-       "gcal"
-       "https://calendar.google.com/calendar/ical/siliusv%40gmail.com/private-bd7c25c2f3af07ae6b2c126f76822e3b/basic.ics"
-       "Blue") ; google calendar ICS
-      (cfw:ical-create-source
-       "work"
-       "https://outlook.office365.com/owa/calendar/8973f4f445fd477282c6ae68a234b61a@stud.ntnu.no/5a904a8004824dd2a0afad309bceb32b1928256821864056809/calendar.ics"
-       "Red") ; Work calendar
-      ))) 
-  
-  (setq cfw:face-item-separator-color nil
-        cfw:render-line-breaker 'cfw:render-line-breaker-none
-        cfw:fchar-junction ?╋
-        cfw:fchar-vertical-line ?┃
-        cfw:fchar-horizontal-line ?━
-        cfw:fchar-left-junction ?┣
-        cfw:fchar-right-junction ?┫
-        cfw:fchar-top-junction ?┯
-        cfw:fchar-top-left-corner ?┏
-        cfw:fchar-top-right-corner ?┓)
-  )
-
-;; =========================================================
 ;; Project management
 ;; =========================================================
 (use-package projectile
@@ -1684,6 +1625,13 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 ;; =========================================================
 ;; Other stuff
 ;; =========================================================
+
+;; Restore last emacs session
+(desktop-save-mode 1)
+
+
+
+
 
 (require 'iso-transl)
 
