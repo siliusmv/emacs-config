@@ -9,6 +9,7 @@
 ;; Get working functionality for workspaces
 ;; Create a which-key map for magit
 ;; Get full control of which-key
+;; Ensure that the dictionary in auctex is correct, and not "default"
 
 
 ;; Global variables
@@ -306,7 +307,8 @@
   (general-define-key
    :states '(normal insert visual emacs)
    :keymaps 'override
-   :prefix "M-g"
+   :prefix "g"
+   :non-normal-prefix "M-g"
    "" nil
    ")" '(evil-next-close-paren :wk "next closing parenthesis")
    "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
@@ -339,8 +341,6 @@
    "." '(save-buffer :wk "save buffer")
    "-" '(counsel-grep-or-swiper :wk "search in buffer")
    "g" '(magit-status :wk "git")
-   "S" '(save-some-buffers :wk "save all buffers")
-   "s" '(counsel-grep-or-swiper :wk "search in buffer")
    "l" '(org-store-link :wk "store org-link")
    "~" '(siliusmv/go-to-config :wk "go home")
    "M-f" '(make-frame :wk "new frame")
@@ -385,12 +385,12 @@
    "q F" '(siliusmv/kill-buffer-and-frame :wk "Kill buffer, close frame")
 
    ;; Search keymap
-   "M-s" '(:ignore t :wk "search")
-   "M-s b" '(counsel-grep-or-swiper :wk "search in buffer")
-   "M-s 0" '(evil-ex-nohighlight :wk "turn off highlight")
-   "M-s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
-   "M-s d" '(counsel-ag :wk "search in directory")
-   "M-s g" '(counsel-git-grep :wk "search in git repository")
+   "s" '(:ignore t :wk "search")
+   "s b" '(counsel-grep-or-swiper :wk "search in buffer")
+   "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
+   "s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
+   "s d" '(counsel-ag :wk "search in directory")
+   "s g" '(counsel-git-grep :wk "search in git repository")
    ;; "s p" '(projectile-ripgrep :wk "search in project")
 
    ;; Project keymap
@@ -712,16 +712,23 @@
    "<return>" '(:ignore t)
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
-   "M-s" 'company-search-candidates
-   "M-J" 'company-next-page
-   "M-K" 'company-previous-page
+   "C-M-j" 'company-next-page
+   "C-M-k" 'company-previous-page
    "M-l" 'company-complete-common
+   "M-s" 'company-search-candidates
 
    "M-SPC m o" '(company-other-backend :wk "other backend")
    "M-SPC m d" '(company-diag :wk "diagnosis")
    "M-SPC m c" '(counsel-company :wk "counsel-company")
    "M-SPC m h" '(company-doc-buffer :wk "show documentation")
    )
+
+  (general-define-key
+   :keymaps 'company-search-map
+   "C-M-j" 'company-search-repeat-forward
+   "C-M-k" 'company-search-repeat-backward
+   )
+
   
   (general-define-key
    :states 'insert
@@ -908,6 +915,7 @@
     "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
     "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
     "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
 
     "M-w" '(:ignore t :wk "workspace cycling")
     "M-w k" '(eyebrowse-next-window-config :wk "next")
@@ -1000,8 +1008,8 @@
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
-   "M-K" 'ivy-scroll-down-command
-   "M-J" 'ivy-scroll-up-command
+   "C-M-k" 'ivy-scroll-down-command
+   "C-M-j" 'ivy-scroll-up-command
    "M-v" 'yank ; For pasting passwords into the minibuffer in tramp
    )
   :init
@@ -1076,21 +1084,39 @@
   :general
   (:keymaps 'TeX-mode-map
    :prefix "M-SPC m"
+   "ESC" '(:ignore t :wk t)
    "v" '(TeX-view :wk "view pdf")
    "c" '(TeX-command-master :wk "compile document")
    "t" '(reftex-toc :wk "navigate document")
    "r" '(reftex-toc-Rescan :wk "refresh reftex")
    "e" '(TeX-next-error :wk "compilation errors")
-   "f" '(LaTeX-fill-buffer :wk "fill buffer")
+   "M-f" '(LaTeX-fill-buffer :wk "fill buffer")
+
+   "i" '(:ignore t :wk "insert")
+   "i m" '(TeX-insert-macro :wk "macro")
+   "i e" '(LaTeX-environment :wk "macro")
+   "i ]" '(LaTeX-close-environment :wk "close environment")
+   "i c" '(reftex-citation :wk "citation")
+   "i r" '(reftex-reference :wk "label")
+
    "M-v" '(:ignore t :wk "change variables")
    "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
    "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
   )
+  (:keymaps 'TeX-mode-map
+   :prefix "M-i"
+   "" '(:ignore t :wk "insert")
+   "m" '(TeX-insert-macro :wk "macro")
+   "e" '(LaTeX-environment :wk "macro")
+   "]" '(LaTeX-close-environment :wk "close environment")
+   "c" '(reftex-citation :wk "citation")
+   "r" '(reftex-reference :wk "label")
+   )
 
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
-  (add-hook 'LaTeX-mode-hook #'outline-minor-mode)
+  (add-hook 'LaTeX-mode-hook #'outline-minor-mode) ; outline-mode for sections
   ;; Completion for latex macros
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
@@ -1155,12 +1181,16 @@
   :config
   (siliusmv/choose-latex-pdf-viewer "zathura")
 
-  (setq TeX-complete-expert-commands t) ; Adds more commands for completion
+  ;;(setq TeX-complete-expert-commands t) ; Adds more commands for completion
   (setq Tex-auto-save t) ;; Parsing on save
   (setq TeX-parse-self t) ;; Parsing on load (scan file for macros)
   (setq-default TeX-master nil) ;; Allow multi-file documents
   (setq-default TeX-PDF-mode t)
 
+  (setq TeX-auto-regexp-list 'TeX-auto-full-regexp-list
+	TeX-auto-parse-length 999999
+	TeX-auto-global '("/Users/siliusmv/.emacs.d/auctex/auto-global/" "~/.emacs.d/auctex/auto-global/"))
+  
   ;; automatically insert braces after sub/superscript in math mode
   (setq TeX-electric-sub-and-superscript t)
 
@@ -1168,7 +1198,8 @@
   ;; (not sure if this is correct way to activate)
   (global-font-lock-mode t) 
 
-  
+
+  (setq LaTeX-includegraphics-read-file 'LaTeX-includegraphics-read-file-relative)
 
   (setq TeX-source-correlate-method 'synctex)
   (TeX-source-correlate-mode)
@@ -1211,12 +1242,13 @@
 	    company-auctex-macros
 	    company-auctex-bibs
 	    company-auctex-environments
-	    company-auctex-symbols :separate)
-	   company-capf
-	   (company-files
-	    company-dabbrev-code :separate)
-	   company-abbrev
-	   company-dabbrev
+	    company-auctex-symbols
+	    company-capf
+	    :separate)
+	   company-files
+	   (company-dabbrev-code
+	    company-abbrev
+	    company-dabbrev :separate)
 	   ))
     (company-auctex-init))
 
