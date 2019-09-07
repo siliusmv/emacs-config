@@ -17,7 +17,8 @@
 (defvar init-theme "dark")
 (defvar init-dict "british")
 (defvar my-gc-cons-threshold (* 1024 1024 5))
-  
+
+(defvar macos-p (string-equal system-type "darwin"))
 
 ;; =========================================================
 ;; Startup optimisation
@@ -81,20 +82,24 @@
 ;; LANG, TEXINPUTS and BIBINPUTS are added here. You can customize
 ;; 'exec-env-from-shell-variables' in site-start.el or the user's
 ;; config file.
-(use-package exec-path-from-shell
-  :config
+(if macos-p
+    (progn
+     (use-package exec-path-from-shell
+       :config
 
-  ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
-  (exec-path-from-shell-copy-env "LC_ALL")
-  (exec-path-from-shell-copy-env "LANG")
+       ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
+       (exec-path-from-shell-copy-env "LC_ALL")
+       (exec-path-from-shell-copy-env "LANG")
 
-  (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
-  (exec-path-from-shell-initialize)
-  )
+       (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
+       (exec-path-from-shell-initialize)
+       )
 
-;; macOS stuff
-(setq mac-option-modifier nil ;; do not use the option key
-      mac-command-modifier 'meta) ;; command is meta
+     ;; macOS stuff
+     (setq mac-option-modifier nil ;; do not use the option key
+	   mac-command-modifier 'meta) ;; command is meta
+
+     ))
 
 (defun toggle-fullscreen ()
   "Toggle full screen"
@@ -1316,11 +1321,14 @@
 (use-package pdf-tools
   :config
 
-  (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
+  (if macos-p
+      (progn
+	(setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
 
-  (custom-set-variables
-   '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
-  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+	(custom-set-variables
+	 '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+	(setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+	))
 
   ;; initialise
   (pdf-tools-install)
