@@ -17,7 +17,7 @@
 (defvar init-theme "dark")
 (defvar init-dict "british")
 (defvar my-gc-cons-threshold (* 1024 1024 5))
-
+(defvar pdf-tools-p t)
 (defvar macos-p (string-equal system-type "darwin"))
 
 ;; =========================================================
@@ -71,6 +71,11 @@
 ;; Use straight together with use-package
 (straight-use-package 'use-package) ; Install use-package
 (setq straight-use-package-by-default t)
+
+
+
+;; Use daemon
+(server-start)
 
 
 ;;;
@@ -1317,61 +1322,61 @@
 ;; ;; PDF Tools
 ;; ;; =========================================================
 (use-package tablist) ;; Apparently necessary for PDF Tools
+(if pdf-tools-p
+    (use-package pdf-tools
+      :config
 
-(use-package pdf-tools
-  :config
+      (if macos-p
+	  (progn
+	    (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/opt/libffi/lib/pkgconfig")
 
-  (if macos-p
-      (progn
-	(setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig")
+	    (custom-set-variables
+	     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+	    (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+	    ))
 
-	(custom-set-variables
-	 '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
-	(setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
-	))
+      ;; initialise
+      (pdf-tools-install)
+      ;; open pdfs scaled to fit page
+      (setq-default pdf-view-display-size 'fit-page)
+      ;; automatically annotate highlights
+      (setq pdf-annot-activate-created-annotations t)
+      ;; use normal isearch
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       :states 'normal
+       "f" 'pdf-links-action-perform
+       "J" 'pdf-view-next-page-command
+       "K" 'pdf-view-previous-page-command
+       )
 
-  ;; initialise
-  (pdf-tools-install)
-  ;; open pdfs scaled to fit page
-  (setq-default pdf-view-display-size 'fit-page)
-  ;; automatically annotate highlights
-  (setq pdf-annot-activate-created-annotations t)
-  ;; use normal isearch
-  (general-define-key
-   :keymaps 'pdf-view-mode-map
-   :states 'normal
-    "f" 'pdf-links-action-perform
-    "J" 'pdf-view-next-page-command
-    "K" 'pdf-view-previous-page-command
-   )
+      ;; This does not seem to work
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       "M-j" 'pdf-view-next-page-command
+       "M-k" 'pdf-view-previous-page-command
+       )
 
-  ;; This does not seem to work
-  (general-define-key
-   :keymaps 'pdf-view-mode-map
-    "M-j" 'pdf-view-next-page-command
-    "M-k" 'pdf-view-previous-page-command
-   )
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       :prefix "M-SPC m"
+       "t" '(pdf-outline :wk "toc") 
 
-  (general-define-key
-   :keymaps 'pdf-view-mode-map
-   :prefix "M-SPC m"
-   "t" '(pdf-outline :wk "toc") 
+       "/" '(isearch-forward :wk "search in buffer")
 
-   "/" '(isearch-forward :wk "search in buffer")
+       "a" '(:ignore t :wk "annotations")
+       "a t" '(pdf-annot-add-text-annotation :wk "text")
+       "a m" '(pdf-annot-add-markup-annotation :wk "markup")
+       "a d" '(pdf-annot-delete :wk "delete")
+       "a l" '(pdf-annot-list-annotations :wk "list annotations")
+       )
 
-   "a" '(:ignore t :wk "annotations")
-   "a t" '(pdf-annot-add-text-annotation :wk "text")
-   "a m" '(pdf-annot-add-markup-annotation :wk "markup")
-   "a d" '(pdf-annot-delete :wk "delete")
-   "a l" '(pdf-annot-list-annotations :wk "list annotations")
-   )
-
-  ;; Stop the annoying blinking in the pdf
-  (add-hook 'pdf-view-mode-hook
-	    (lambda ()
-	      (blink-cursor-mode -1)))
-  )
-
+      ;; Stop the annoying blinking in the pdf
+      (add-hook 'pdf-view-mode-hook
+		(lambda ()
+		  (blink-cursor-mode -1)))
+      )
+)
 
 ;; =========================================================
 ;; which-key
@@ -1702,8 +1707,18 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 ;; =========================================================
 
 ;; Restore last emacs session
-(desktop-save-mode 1)
+;;(desktop-save-mode 1)
 
+(defun kill-emacs-fancy ()
+  (interactive)
+  (let ((save-p
+	 (siliusmv/choose-from-list
+	  "Save desktop? "
+	  (list '(yes t)
+		'(no nil)))))
+    (if save-p (desktop-save)))
+  (save-some-buffers)
+  (kill-emacs))
 
 
 
