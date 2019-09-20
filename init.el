@@ -334,8 +334,6 @@
    "F" '(flycheck-previous-error :wk "flycheck: prev error")
    "b" '(next-buffer :wk "next buffer")
    "B" '(previous-buffer :wk "prev buffer")
-   "w" '(eyebrowse-next-window-config :wk "next workspace")
-   "W" '(eyebrowse-last-window-config :wk "prev workspace")
    )
 
   ;; Space as leader
@@ -453,6 +451,7 @@
    "M-w s" '(eyebrowse-switch-to-window-config :wk "switch to other")
    "M-w r" '(eyebrowse-rename-window-config :wk "rename")
    "M-w d" '(eyebrowse-close-window-config :wk "close current")
+   "TAB" '(eyebrowse-switch-to-window-config :wk "switch workspace")
    )
   )
 
@@ -817,6 +816,19 @@
 	    (lambda ()
 	      (nlinum-relative-mode -1)
 	      (electric-pair-local-mode -1)))
+
+  ;; outline-minor-mode for R
+  (add-hook 'ess-mode-hook
+	    '(lambda ()
+	       (outline-minor-mode)
+	       (setq outline-regexp "\\(^#\\{3,4\\} \\)\\|\\(^.*<- function(.*{\\)")
+	       (defun outline-level ()
+		 (cond ((looking-at "^#### ") 1)
+		       ((looking-at "^### ") 2)
+		       ((looking-at "^.*<- function(.*{") 3)
+		       (t 1000)))
+	       ))
+
 
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
@@ -1411,33 +1423,38 @@
 ;; Install ag or ripgrep!!!!
 
 
-;; =========================================================
-;; Terminal
-;; =========================================================
-(use-package multi-term
-  :commands (multi-term)
-  :general
-  (:keymaps 'term-mode-map
-   :states '(motion normal insert visual emacs)
-   :prefix "M-SPC m"
+;; ;; =========================================================
+;; ;; Terminal
+;; ;; =========================================================
+;; (use-package multi-term
+;;   :commands (multi-term)
+;;   :general
+;;   (:keymaps 'term-mode-map
+;;    :states '(motion normal insert visual emacs)
+;;    :prefix "M-SPC m"
+;; 
+;;    "s" '(:ignore t :wk "send signal to shell")
+;;    "s q" '(term-quit-subjob :wk "quit")
+;;    "s k" '(term-kill-subjob :wk "kill")
+;;    "s s" '(term-stop-subjob :wk "stop")
+;;    "s c" '(term-continue-subjob :wk "continue")
+;;    "s i" '(term-interrupt-subjob :wk "interupt")
+;; 
+;;    "b" '(:ignore t :wk "terminal buffer commands")
+;;    "b n" '(multi-term-next :wk "next buffer")
+;;    "b p" '(multi-term-prev :wk "previous buffer")
+;;    "b k" '(kill-this-buffer :wk "kill buffer")
+;; 
+;;    "q" '(siliusmv/kill-buffer-and-frame :wk "kill buffer, close frame")
+;;    )
+;;   :config
+;;   (setq multi-term-program "/bin/bash")
+;;   )
 
-   "s" '(:ignore t :wk "send signal to shell")
-   "s q" '(term-quit-subjob :wk "quit")
-   "s k" '(term-kill-subjob :wk "kill")
-   "s s" '(term-stop-subjob :wk "stop")
-   "s c" '(term-continue-subjob :wk "continue")
-   "s i" '(term-interrupt-subjob :wk "interupt")
-
-   "b" '(:ignore t :wk "terminal buffer commands")
-   "b n" '(multi-term-next :wk "next buffer")
-   "b p" '(multi-term-prev :wk "previous buffer")
-   "b k" '(kill-this-buffer :wk "kill buffer")
-
-   "q" '(siliusmv/kill-buffer-and-frame :wk "kill buffer, close frame")
-   )
-  :config
-  (setq multi-term-program "/bin/bash")
-  )
+;; Eshell stuff
+(add-hook 'eshell-mode-hook
+	  (lambda ()
+	    (setq company-idle-delay nil)))
 
 
 ;; =========================================================
@@ -1493,7 +1510,7 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(normal visual insert)
+ :states '(normal visual)
  "g" nil
  "g s" '(avy-org-goto-heading-timer :wk "avy heading")
  "g j" '(org-next-visible-heading :wk "next heading")
@@ -1707,19 +1724,8 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 ;; =========================================================
 
 ;; Restore last emacs session
-;;(desktop-save-mode 1)
-
-(defun kill-emacs-fancy ()
-  (interactive)
-  (let ((save-p
-	 (siliusmv/choose-from-list
-	  "Save desktop? "
-	  (list '(yes t)
-		'(no nil)))))
-    (if save-p (desktop-save)))
-  (save-some-buffers)
-  (kill-emacs))
-
+(desktop-save-mode 1)
+(setq desktop-save 'ask)
 
 
 
