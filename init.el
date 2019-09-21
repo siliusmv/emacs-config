@@ -2,12 +2,23 @@
 ;;; %%%%%%%%%%%%%%%% My Emacs init file %%%%%%%%%%%%%%%%%%%%%
 ;;; =========================================================
 
+;; TODO
+;; Add (when (on-macos)) or similar to the init
+;; Something is wrong with ESS ans line-numbers, I think!
+;; Remove use of Ctrl from ESS
+;; Get working functionality for workspaces
+;; Create a which-key map for magit
+;; Get full control of which-key
+;; Ensure that the dictionary in auctex is correct, and not "default"
+
+
 ;; Global variables
 (defvar mu4e-p nil)
 (defvar init-theme "dark")
 (defvar init-dict "british")
 (defvar my-gc-cons-threshold (* 1024 1024 5))
-  
+(defvar pdf-tools-p t)
+(defvar macos-p (string-equal system-type "darwin"))
 
 ;; =========================================================
 ;; Startup optimisation
@@ -62,122 +73,151 @@
 (setq straight-use-package-by-default t)
 
 
+
+;; Use daemon
+(server-start)
+
+
+;;;
+;;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
+;;; Import the shell environment
+;;;
+;; Import some shell environment variables into Emacs at launch. Steve
+;; Purcell's exec-path-from-shell imports PATH and MANPATH by default;
+;; LANG, TEXINPUTS and BIBINPUTS are added here. You can customize
+;; 'exec-env-from-shell-variables' in site-start.el or the user's
+;; config file.
+(if macos-p
+    (progn
+     (use-package exec-path-from-shell
+       :config
+
+       ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
+       (exec-path-from-shell-copy-env "LC_ALL")
+       (exec-path-from-shell-copy-env "LANG")
+
+       (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
+       (exec-path-from-shell-initialize)
+       )
+
+     ;; macOS stuff
+     (setq mac-option-modifier nil ;; do not use the option key
+	   mac-command-modifier 'meta) ;; command is meta
+
+     ))
+
+(defun toggle-fullscreen ()
+  "Toggle full screen"
+  (interactive)
+  (set-frame-parameter
+     nil 'fullscreen
+     (when (not (frame-parameter nil 'fullscreen)) 'fullboth)))
+
+
+
+
+ 
 ;; =========================================================
 ;; %%%%%%%%%%%%%%%%%%% BASIC SETTINGS %%%%%%%%%%%%%%%%%%%%%%
 ;; =========================================================
-(use-package emacs
-  :config
-  ;; Remove menus and stuff
-  (setq inhibit-startup-screen t) ;; Remove startup screen
+;; Remove menus and stuff
+(setq inhibit-startup-screen t) ;; Remove startup screen
 
-  (setq column-number-mode t) ;; Display column numbers
+(setq column-number-mode t) ;; Display column numbers
 
-  (global-hl-line-mode) ;; Highlight current line
+(global-hl-line-mode) ;; Highlight current line
 
-  ;; Allow enclosing a marked region with $$
-  (add-to-list 'insert-pair-alist (list ?\$ ?\$))
 
-  ;; This must be done after loading GUI elements
-  (defun remove-all-bars (frame)
-    (select-frame frame)
-    (if (display-graphic-p)
-	(progn
-	  (toggle-scroll-bar -1)
-	  (menu-bar-mode -1)
-	  (tool-bar-mode -1))))
+;; Allow enclosing a marked region with $$
+(add-to-list 'insert-pair-alist (list ?\$ ?\$))
 
-  (if (daemonp)
-      (add-hook 'after-make-frame-functions #'remove-all-bars)
-    (progn
-      (toggle-scroll-bar -1)
-      (menu-bar-mode -1)
-      (tool-bar-mode -1)))
+;; This must be done after loading GUI elements
+(defun remove-all-bars (frame)
+  (select-frame frame)
+  (progn
+    (toggle-scroll-bar -1)
+    (menu-bar-mode -1)
+    (tool-bar-mode -1)))
 
-  ;; Backup files
-  (setq make-backup-files nil) ;; Do not create backup files
-  ;; Move all temporary backup files to /tmp
-  (setq backup-directory-alist
-	`((".*" . ,temporary-file-directory)))
-  (setq auto-save-file-name-transforms
-	`((".*" ,temporary-file-directory t)))
+(add-hook 'after-make-frame-functions #'remove-all-bars)
 
-  ;; Change all prompts to y or n
-  (fset 'yes-or-no-p 'y-or-n-p)
+(if (display-graphic-p)
+  (progn
+    (toggle-scroll-bar -1)
+    (menu-bar-mode -1)
+    (tool-bar-mode -1)))
 
-  ;; Ignore case in completion
-  (setq completion-ignore-case t)
-  (setq case-fold-search nil)
-  (setq read-buffer-completion-ignore-case t)
-  (setq read-file-name-completion-ignore-case t)
+;; Backup files
+(setq make-backup-files nil) ;; Do not create backup files
+;; Move all temporary backup files to /tmp
+(setq backup-directory-alist
+      `((".*" . ,temporary-file-directory)))
+(setq auto-save-file-name-transforms
+      `((".*" ,temporary-file-directory t)))
 
-  ;; Add the themes-folder to load-path
-  (add-to-list 'custom-theme-load-path
-	       (expand-file-name "~/.emacs.d/themes/"))
+;; Change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
 
-  (xterm-mouse-mode t) ;; Enable mouse in terminal
+;; Ignore case in completion
+(setq completion-ignore-case t)
+(setq case-fold-search nil)
+(setq read-buffer-completion-ignore-case t)
+(setq read-file-name-completion-ignore-case t)
 
-  (defun siliusmv/kill-buffer-and-frame ()
+;; Add the themes-folder to load-path
+(add-to-list 'custom-theme-load-path
+	     (expand-file-name "~/.emacs.d/themes/"))
+
+(xterm-mouse-mode t) ;; Enable mouse in terminal
+
+(defun siliusmv/kill-buffer-and-frame ()
   "Kill the current buffer and delete the selected frame."
-    (interactive)
-    (let ((frame-to-delete (selected-frame))
-	  (buffer-to-kill (current-buffer))
-	  (delete-frame-functions (lambda () (ignore-errors (delete-frame)))))
-      (unwind-protect
-	  (progn
-	    (add-hook 'kill-buffer-hook delete-frame-functions t t)
-	    (if (kill-buffer (current-buffer))
-		;; If `delete-frame' failed before, we rerun it to regenerate
-		;; the error so it can be seen in the echo area.
-		(when (eq (selected-frame) frame-to-delete)
-		  (delete-frame))))
-	;; If the buffer is not dead for some reason (probably because
-	;; of a `quit' signal), remove the hook again.
-	(ignore-errors
-	  (with-current-buffer buffer-to-kill
-	    (remove-hook 'kill-buffer-hook delete-frame-functions t))))))
+  (interactive)
+  (let ((frame-to-delete (selected-frame))
+	(buffer-to-kill (current-buffer))
+	(delete-frame-functions (lambda () (ignore-errors (delete-frame)))))
+    (unwind-protect
+	(progn
+	  (add-hook 'kill-buffer-hook delete-frame-functions t t)
+	  (if (kill-buffer (current-buffer))
+	      ;; If `delete-frame' failed before, we rerun it to regenerate
+	      ;; the error so it can be seen in the echo area.
+	      (when (eq (selected-frame) frame-to-delete)
+		(delete-frame))))
+      ;; If the buffer is not dead for some reason (probably because
+      ;; of a `quit' signal), remove the hook again.
+      (ignore-errors
+	(with-current-buffer buffer-to-kill
+	  (remove-hook 'kill-buffer-hook delete-frame-functions t))))))
 
 
-  ;; Functions for changing font size
-  (defun siliusmv/zoom-in ()
-    (interactive)
-    (let ((x (+ 10 (face-attribute 'default :height))))
-      (set-face-attribute 'default nil :height x)))
+;; Functions for changing font size
+(defun siliusmv/zoom-in ()
+  (interactive)
+  (let ((x (+ 10 (face-attribute 'default :height))))
+    (set-face-attribute 'default nil :height x)))
 
-  (defun siliusmv/zoom-out ()
-    (interactive)
-    (let ((x (- (face-attribute 'default :height) 10)))
-      (set-face-attribute 'default nil :height x)))
+(defun siliusmv/zoom-out ()
+  (interactive)
+  (let ((x (- (face-attribute 'default :height) 10)))
+    (set-face-attribute 'default nil :height x)))
 
-  (defun siliusmv/choose-from-list (prompt var-list &optional var-name)
-    (if (not var-name)
-	(setq var-name
-	      (ivy-read prompt var-list)))
-    (nth 1 (assoc var-name var-list)))
+(defun siliusmv/choose-from-list (prompt var-list &optional var-name)
+  (if (not var-name)
+      (setq var-name
+	    (ivy-read prompt var-list)))
+  (nth 1 (assoc var-name var-list)))
 
-  (defun siliusmv/kill-this-buffer ()
-    "Kill the current buffer without any prompts"
-    (interactive)
-    (kill-buffer (current-buffer)))
+(defun siliusmv/kill-this-buffer ()
+  "Kill the current buffer without any prompts"
+  (interactive)
+  (kill-buffer (current-buffer)))
 
-  (defun siliusmv/go-to-config ()
-    "Go to the emacs config-file"
-    (interactive)
-    (find-file "~/.emacs.d/init.el"))
+(defun siliusmv/go-to-config ()
+  "Go to the emacs config-file"
+  (interactive)
+  (find-file "~/.emacs.d/init.el"))
 
-  (defun siliusmv/eval-sexp ()
-    "Eval the SEXP you are inside"
-    )
-
-
-  ;; ;; Display time in the mode line
-  ;; (setq display-time-format
-  ;; 	(format-time-string " %H:%M"))
-  ;; (display-time-mode 1)
-
-  ;; (setq battery-mode-line-format)
-  ;; (display-battery-mode)
-
-  )
 
 ;; =========================================================
 ;; %%%%%%%%%%%%% PACKAGE SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%
@@ -217,39 +257,64 @@
 
   (general-define-key
    :keymaps 'override
-   :states 'normal
-   "M-k" 'scroll-down-command
-   "M-j" 'scroll-up-command
-   "M-c" 'recenter-top-bottom
-   "M-m" 'move-to-window-line-top-bottom
+   :states '(normal visual insert emacs)
+   "M-k" '(scroll-down-command :wk t)
+   "M-j" '(scroll-up-command :wk t)
+   "M-/" '(counsel-grep-or-swiper :wk "search in buffer")
+   "M-?" '(which-key-show-top-level :wk "show all bindings")
+   "M-b" '(ivy-switch-buffer :wk "switch buffer")
+   "M-p" '(evil-paste-after :wk "copy from clipboard")
+   "M-o" '(ace-window :wk "other window")
+   "C-M-f" '(toggle-fullscreen :wk "fullscreen")
+   "M-n" '(make-frame :wk "new frame")
+   "M-s" '(save-buffer :wk "save buffer")
+   "M-S" '(save-some-buffers :wk "save all buffers")
+   "M-`" '(ns-next-frame :wk "switch frame")
    )
 
   (general-define-key
-   :states 'visual
    :keymaps 'override
-   "<tab>" 'indent-for-tab-command)
+   :states '(normal visual)
+   "/" '(counsel-grep-or-swiper :wk "search in buffer")
+   )
+
+  (general-define-key
+   :keymaps 'minibuffer-local-map
+   "M-p" '(yank :wk "copy from clipboard")
+   )
+  
 
   (general-define-key
    :states 'visual
    :keymaps 'override
-   :prefix "M-SPC"
-   ;; Editing commands
-   "" nil
+   "<tab>" 'indent-for-tab-command
+   ;; macOS stuff
+   "M-c" 'kill-ring-save
+   "M-x" 'kill-region
+   )
+
+  ;; Editing commands
+  (general-define-key
+   :states 'visual
+   :keymaps 'override
+   :prefix "M-i"
+   "" '(:ignore t :wk "insert")
    "ESC" '(:ignore t :wk t)
-   "(" '(insert-pair :wk "insert pair")
-   "[" '(insert-pair :wk "insert pair")
-   "{" '(insert-pair :wk "insert pair")
-   "\"" '(insert-pair :wk "insert pair")
-   "\'" '(insert-pair :wk "insert pair")
-   "\$" '(insert-pair :wk "insert pair")
-   "`" '(insert-pair :wk "insert pair")
+   "(" '(insert-pair :wk "(")
+   "[" '(insert-pair :wk "[")
+   "{" '(insert-pair :wk "{")
+   "\"" '(insert-pair :wk "\"")
+   "\'" '(insert-pair :wk "\'")
+   "\$" '(insert-pair :wk "\$")
+   "`" '(insert-pair :wk "`")
    ")" '(delete-pair :wk "delete pair")
    )
 
   (general-define-key
-   :states 'normal
+   :states '(normal insert visual emacs)
    :keymaps 'override
    :prefix "g"
+   :non-normal-prefix "M-g"
    "" nil
    ")" '(evil-next-close-paren :wk "next closing parenthesis")
    "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
@@ -265,30 +330,31 @@
    "F" '(flycheck-previous-error :wk "flycheck: prev error")
    "b" '(next-buffer :wk "next buffer")
    "B" '(previous-buffer :wk "prev buffer")
-   "w" '(persp-next :wk "next workspace")
-   "W" '(persp-prev :wk "prev workspace")
    )
 
   ;; Space as leader
   (general-define-key
-   :states '(normal insert visual emacs)
    :keymaps 'override
-   :prefix "SPC"
-   :non-normal-prefix "C-SPC"
+   :states '(normal insert visual emacs)
+   :prefix "M-SPC"
    ;; Popular keybindings
    "" nil
    "ESC" '(:ignore t :wk t)
-   "SPC" '(counsel-find-file :wk "find file")
-   "," '(persp-switch-to-buffer :wk "switch buffer")
+   "M-SPC" '(counsel-find-file :wk "find file")
+   "," '(counsel-switch-buffer :wk "switch buffer")
    "." '(save-buffer :wk "save buffer")
    "-" '(counsel-grep-or-swiper :wk "search in buffer")
-   ;;"-" '(avy-goto-char-timer :wk "avy-timer")
    "g" '(magit-status :wk "git")
-   "S" '(save-some-buffers :wk "save all buffers")
-   "s" '(counsel-grep-or-swiper :wk "search in buffer")
-   "e" '(eval-defun :wk "evaluate sexp")
    "l" '(org-store-link :wk "store org-link")
-   "~" '(siliusmv/go-to-config :wk "config-file")
+   "~" '(siliusmv/go-to-config :wk "go home")
+   "M-f" '(make-frame :wk "new frame")
+
+   "m" '(:ignore t :wk "mode specific")
+
+   ;; Eval elisp
+   "e" '(:ignore t :wk "elisp")
+   "e o" '(eval-defun :wk "evaluate outer sexp")
+   "e i" '(eval-last-sexp :wk "evaluate inner sexp")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
@@ -311,9 +377,8 @@
 
    ;; Files keymap
    "f" '(:ignore t :wk "files")
-   "f r" '(ranger :wk "open ranger")
    "f d" '(dired :wk "open directory")
-   "f SPC" '(counsel-find-file :wk "find files")
+   "f f" '(counsel-find-file :wk "find files")
 
    ;; Quit
    "q" '(:ignore t :wk "quit")
@@ -324,12 +389,12 @@
    "q F" '(siliusmv/kill-buffer-and-frame :wk "Kill buffer, close frame")
 
    ;; Search keymap
-   "M-s" '(:ignore t :wk "search")
-   "M-s b" '(counsel-grep-or-swiper :wk "search in buffer")
-   "M-s 0" '(evil-ex-nohighlight :wk "turn off highlight")
-   "M-s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
-   "M-s d" '(counsel-ag :wk "search in directory")
-   "M-s g" '(counsel-git-grep :wk "search in git repository")
+   "s" '(:ignore t :wk "search")
+   "s b" '(counsel-grep-or-swiper :wk "search in buffer")
+   "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
+   "s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
+   "s d" '(counsel-ag :wk "search in directory")
+   "s g" '(counsel-git-grep :wk "search in git repository")
    ;; "s p" '(projectile-ripgrep :wk "search in project")
 
    ;; Project keymap
@@ -368,23 +433,21 @@
    "w o" '(ace-window :wk "jump to other window")
 
    ;; "Open programs" - keymap
-   "M-o" '(:ignore t :wk "open program")
-   "M-o t" '(multi-term :wk "terminal")
-   "M-o r" '(run-ess-r :wk "R session")
-   "M-o c" '(siliusmv/open-calendar :wk "calendar")
-   "M-o f" '(make-frame-command :wk "frame")
+   "o" '(:ignore t :wk "open program")
+   "o t" '(multi-term :wk "terminal")
+   "o r" '(run-ess-r :wk "R session")
+   "o f" '(make-frame-command :wk "frame")
+   "o d" '(dired :wk "dired")
 
    ;; "Workspaces"
    "M-w" '(:ignore t :wk "workspaces")
-   "M-w n" '(persp-add-new :wk "new workspace")
-   "M-w [" '(persp-next :wk "next workspace")
-   "M-w ]" '(persp-prev :wk "prev workspace")
-   "M-w b" '(persp-switch-to-buffer :wk "switch to buffer")
-   "M-w k" '(persp-kill-buffer :wk "kill buffer")
-   "M-w s" '(persp-frame-switch :wk "switch to workspace")
-   "M-w S" '(persp-save-state-to-file :wk "save workspace conf.")
-   "M-w l" '(persp-load-state-from-file :wk "load workspace conf.")
-   "M-w x" '(persp-kill :wk "kill workspace")
+   "M-w n" '(eyebrowse-create-window-config :wk "new")
+   "M-w k" '(eyebrowse-next-window-config :wk "next")
+   "M-w j" '(eyebrowse-prev-window-config :wk "prev")
+   "M-w s" '(eyebrowse-switch-to-window-config :wk "switch to other")
+   "M-w r" '(eyebrowse-rename-window-config :wk "rename")
+   "M-w d" '(eyebrowse-close-window-config :wk "close current")
+   "TAB" '(eyebrowse-switch-to-window-config :wk "switch workspace")
    )
   )
 
@@ -399,17 +462,17 @@
   )
 
 (general-define-key
- :states 'normal
  :keymaps 'dired-mode-map
+ :states 'normal
  "l" 'dired-find-file
  "h" 'dired-up-directory
- "M-SPC" '(:ignore t)
- "M-SPC h" '(dired-hide-dotfiles :wk "hide dotfiles")
- "M-SPC c" '(dired-do-copy :wk "copy")
- "M-SPC m" '(dired-do-rename :wk "move")
- "M-SPC d" '(dired-do-delete :wk "delete")
- "M-SPC s" '(dired-do-symlink :wk "symlink")
+ "M-SPC m h" '(dired-hide-dotfiles :wk "hide dotfiles")
+ "M-SPC m c" '(dired-do-copy :wk "copy")
+ "M-SPC m m" '(dired-do-rename :wk "move")
+ "M-SPC m d" '(dired-do-delete :wk "delete")
+ "M-SPC m s" '(dired-do-symlink :wk "symlink")
  )
+
 
 
 ;; =========================================================
@@ -468,13 +531,13 @@
       :commands (mu4e)
       :general
       (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-       :prefix "M-SPC"
+       :states '(motion normal insert visual emacs)
+       :prefix "M-SPC m"
        "g" '(siliusmv/gmail-firefox :wk "gmail")
        "o" '(siliusmv/outlook-firefox :wk "outlook")
        )
       (:keymaps 'override
-       :prefix "SPC"
-       :non-normal-prefix "C-SPC"
+       :prefix "M-SPC"
        "M-o m" '(mu4e :wk "email")
        )
       :init
@@ -625,7 +688,9 @@
    "s" 'avy-goto-char-timer
    )
   :config
-  (setq avy-style 'words)
+  (setq avy-style 'at-full
+	avy-all-windows t
+	avy-timeout-seconds 0.2)
   )
 
 (use-package ace-window
@@ -652,22 +717,28 @@
    "<return>" '(:ignore t)
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
-   "M-s" 'company-search-candidates
-   "M-n" 'company-next-page
-   "M-p" 'company-previous-page
+   "C-M-j" 'company-next-page
+   "C-M-k" 'company-previous-page
    "M-l" 'company-complete-common
+   "M-s" 'company-search-candidates
 
-   "M-SPC" '(:ignore t)
-   "M-SPC o" '(company-other-backend :wk "other backend")
-   "M-SPC d" '(company-diag :wk "diagnosis")
-   "M-SPC c" '(counsel-company :wk "counsel-company")
-   "M-SPC h" '(company-doc-buffer :wk "show documentation")
+   "M-SPC m o" '(company-other-backend :wk "other backend")
+   "M-SPC m d" '(company-diag :wk "diagnosis")
+   "M-SPC m c" '(counsel-company :wk "counsel-company")
+   "M-SPC m h" '(company-doc-buffer :wk "show documentation")
    )
+
+  (general-define-key
+   :keymaps 'company-search-map
+   "C-M-j" 'company-search-repeat-forward
+   "C-M-k" 'company-search-repeat-backward
+   )
+
   
   (general-define-key
    :states 'insert
    :keymaps 'company-mode-map
-   "M-<tab>" 'company-other-backend
+   "M-c" 'company-other-backend
    )
 
   ;; set default `company-backends'
@@ -691,9 +762,9 @@
   (setq company-dabbrev-downcase nil
 	company-dabbrev-code-ignore-case t
 	company-dabbrev-ignore-case t)
-
-  )
   
+  )
+
 (use-package company-statistics
   :config
   (add-hook 'after-init-hook 'company-statistics-mode))
@@ -708,20 +779,52 @@
   :defer 5
   :general
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-   :prefix "M-SPC"
-   "r" '(run-ess-r :wk "Open new R session")
-   "s" '(ess-switch-process :wk "Switch R session")
-   )
+	    :prefix "M-SPC m"
+	    :states '(motion normal insert visual emacs)
+	    "r" '(run-ess-r :wk "Open new R session")
+	    "s" '(ess-switch-process :wk "Switch R session")
+	    )
+  (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
+	    :states '(motion normal insert visual emacs)
+	    "M-e" 'ess-eval-region-or-line-visibly-and-step
+	    "M-RET" 'ess-eval-region-or-function-or-paragraph-and-step
+	    )
   :diminish
   ((ess-r-package-mode . "")
    (eldoc-mode . ""))
   :init
+
+  ;; Enable sweaving directly within the AUCTeX ecosystem.
+  (setq-default ess-swv-plug-into-AUCTeX-p t)
+
+  ;; Automagically delete trailing whitespace when saving R script
+  ;; files. One can add other commands in the ess-mode-hook below.
+  (add-hook 'ess-mode-hook
+	    '(lambda()
+	       (add-hook 'write-contents-functions
+			 (lambda ()
+			   (ess-nuke-trailing-whitespace)))
+	       (setq ess-nuke-trailing-whitespace-p t)))
+
   (require 'ess-site)
   :config
   (add-hook 'inferior-ess-r-mode-hook
 	    (lambda ()
 	      (nlinum-relative-mode -1)
 	      (electric-pair-local-mode -1)))
+
+  ;; outline-minor-mode for R
+  (add-hook 'ess-mode-hook
+	    '(lambda ()
+	       (outline-minor-mode)
+	       (setq outline-regexp "\\(^#\\{3,4\\} \\)\\|\\(^.*<- function(.*{\\)")
+	       (defun outline-level ()
+		 (cond ((looking-at "^#### ") 1)
+		       ((looking-at "^### ") 2)
+		       ((looking-at "^.*<- function(.*{") 3)
+		       (t 1000)))
+	       ))
+
 
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
@@ -751,19 +854,24 @@
 
   (defun my-ess-company-function ()
     (set (make-local-variable 'company-backends)
-	 '(company-capf ; Works together with eglot
-	   company-files
-	   (company-R-args
-	    company-R-objects
- 	    company-R-library :separate)
- 	   )))
+	 '( (company-capf ; Works together with eglot
+	     company-files
+	     company-R-args
+	     company-R-objects
+	     company-R-library
+	     company-dabbrev-code :separate)
+	    (company-R-args
+	     company-R-objects
+	     company-R-library :separate)
+	    company-files
+	    )))
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
-  ; Company settings for ess
+					; Company settings for ess
   (add-hook 'ess-mode-hook 'my-ess-company-function)
   (add-hook 'inferior-ess-mode-hook 'my-ess-company-function)
 
-  ; Eglot stuff
+					; Eglot stuff
   (add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
 
@@ -786,8 +894,8 @@
   ;; Global settings (defaults)
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
 	doom-themes-enable-italic t)
-	;; doom-one-comment-bg t
-	;; doom-one-light-comment-bg t) ; if nil, italics is universally disabled
+  ;; doom-one-comment-bg t
+  ;; doom-one-light-comment-bg t) ; if nil, italics is universally disabled
 
   ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
   ;; may have their own settings.
@@ -807,80 +915,103 @@
   (siliusmv/choose-theme init-theme)
   )
 
-;; =========================================================
-;; Wokspaces
-;; =========================================================
-(use-package persp-mode
+ ;; =========================================================
+ ;; Wokspaces
+ ;; =========================================================
+ 
+ (use-package eyebrowse
+   :init
+   (eyebrowse-mode)
+   :general
+   (:keymaps 'override
+    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
+    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
+    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
+    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
+    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
+    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
+    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
+    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
+    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
 
-  :init
-  (persp-mode 1)
-  :config
-  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
-  (setq wg-morph-on nil)
-  (setq persp-autokill-buffer-on-remove 'kill-weak)
-
-  (setq persp-nil-hidden t ;; Hide nil-perspecive
-	persp-auto-save-opt (if noninteractive 0 1)
-	persp-nil-name "main"
-	persp-auto-save-fname "autosave"
-	persp-auto-resume-time -1 ;; Do not autoresume
-	persp-remove-buffers-from-nil-persp-behaviour nil
-	persp-init-frame-behaviour nil ;; Open scratch for new frames
-	)
-  )
-
-;; =========================================================
-;; Tramp
-;; =========================================================
-(use-package tramp
-
-  :config
-  (setq tramp-default-method "ssh"))
-
-;; =========================================================
-;; Magit
-;; =========================================================
-(use-package magit
-
-  :commands (magit-status)
-  :config
-  ;; Possible performance fix
-  (setq auto-revert-buffer-list-filter
-	'magit-auto-revert-repository-buffer-p)
-
-  (use-package evil-magit) ;; Evil-movements in magit
-  )
-
-
-;; =========================================================
-;; Rainbow delimiters
-;; =========================================================
-(use-package rainbow-delimiters
-
-  :hook (prog-mode . rainbow-delimiters-mode)
-  :defer 5
-  )
-
-
-;; =========================================================
-;; Jump to function definition
-;; =========================================================
-(use-package imenu-anywhere)
-
-(use-package dumb-jump
-
-  :hook (prog-mode . dumb-jump-mode)
-  :general
-  (:states '(normal insert emacs)
-   :prefix "SPC"
-   :non-normal-prefix "C-SPC"
-   "" nil
-   "j" '(:ignore t :wk "jump to text")
-   "j d" '(dumb-jump-go :wk "dumb-jump")
-   "j i" '(ivy-imenu-anywhere :wk "imenu")
+    "M-w" '(:ignore t :wk "workspace cycling")
+    "M-w k" '(eyebrowse-next-window-config :wk "next")
+    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
+    )
+   :config
+   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
+	 eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
+	 )
    )
-  )
-
+ 
+ 
+ ;;(use-package persp-mode
+ ;;  :init
+ ;;  (persp-mode 1)
+ ;;  :config
+ ;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
+ ;;  (setq wg-morph-on nil)
+ ;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
+ ;;
+ ;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
+ ;;	persp-auto-save-opt (if noninteractive 0 1)
+ ;;	persp-nil-name "main"
+ ;;	persp-auto-save-fname "autosave"
+ ;;	persp-auto-resume-time -1 ;; Do not autoresume
+ ;;	persp-remove-buffers-from-nil-persp-behaviour nil
+ ;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
+ ;;	)
+ ;;  )
+ 
+ ;; =========================================================
+ ;; Tramp
+ ;; =========================================================
+ (use-package tramp
+ 
+   :config
+   (setq tramp-default-method "ssh"))
+ 
+ ;; =========================================================
+ ;; Magit
+ ;; =========================================================
+ (use-package magit
+   :commands (magit-status)
+   :config
+   ;; Possible performance fix
+   (setq auto-revert-buffer-list-filter
+ 	'magit-auto-revert-repository-buffer-p)
+ 
+   (use-package evil-magit) ;; Evil-movements in magit
+   )
+ 
+ 
+ ;; =========================================================
+ ;; Rainbow delimiters
+ ;; =========================================================
+ (use-package rainbow-delimiters
+   :hook (prog-mode . rainbow-delimiters-mode)
+   :defer 5
+   )
+ 
+ 
+ ;; =========================================================
+ ;; Jump to function definition
+ ;; =========================================================
+ (use-package imenu-anywhere)
+ 
+ (use-package dumb-jump
+   :hook (prog-mode . dumb-jump-mode)
+   :general
+   (:states '(normal insert emacs)
+    :prefix "M-SPC"
+    "" nil
+    "j" '(:ignore t :wk "jump to text")
+    "j d" '(dumb-jump-go :wk "dumb-jump")
+    "j i" '(ivy-imenu-anywhere :wk "imenu")
+    )
+   )
+ 
 ;; =========================================================
 ;; Ivy++
 ;; =========================================================
@@ -895,8 +1026,9 @@
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
-   "M-p" 'ivy-scroll-down-command
-   "M-n" 'ivy-scroll-up-command
+   "C-M-k" 'ivy-scroll-down-command
+   "C-M-j" 'ivy-scroll-up-command
+   "M-v" 'yank ; For pasting passwords into the minibuffer in tramp
    )
   :init
   ;; The default search is ivy--regex-plus
@@ -948,6 +1080,16 @@
 (use-package flycheck)
 
 
+
+;; =========================================================
+;; ouline stuff
+;; =========================================================
+(use-package outline-magic
+  :general
+  (:keymaps 'outline-minor-mode-map
+   "<C-tab>" 'outline-cycle)
+  )
+
 ;; =========================================================
 ;; LaTeX-stuff (AuCTeX, refTeX and more)
 ;; =========================================================
@@ -959,23 +1101,40 @@
   ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
   (:keymaps 'TeX-mode-map
-   :prefix "M-SPC"
-   "" nil
+   :prefix "M-SPC m"
+   "ESC" '(:ignore t :wk t)
    "v" '(TeX-view :wk "view pdf")
    "c" '(TeX-command-master :wk "compile document")
    "t" '(reftex-toc :wk "navigate document")
    "r" '(reftex-toc-Rescan :wk "refresh reftex")
    "e" '(TeX-next-error :wk "compilation errors")
-   "f" '(LaTeX-fill-buffer :wk "fill buffer")
+   "M-f" '(LaTeX-fill-buffer :wk "fill buffer")
+
+   "i" '(:ignore t :wk "insert")
+   "i m" '(TeX-insert-macro :wk "macro")
+   "i e" '(LaTeX-environment :wk "macro")
+   "i ]" '(LaTeX-close-environment :wk "close environment")
+   "i c" '(reftex-citation :wk "citation")
+   "i r" '(reftex-reference :wk "label")
+
    "M-v" '(:ignore t :wk "change variables")
    "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
    "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
   )
+  (:keymaps 'TeX-mode-map
+   :prefix "M-i"
+   "" '(:ignore t :wk "insert")
+   "m" '(TeX-insert-macro :wk "macro")
+   "e" '(LaTeX-environment :wk "macro")
+   "]" '(LaTeX-close-environment :wk "close environment")
+   "c" '(reftex-citation :wk "citation")
+   "r" '(reftex-reference :wk "label")
+   )
 
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
-
+  (add-hook 'LaTeX-mode-hook #'outline-minor-mode) ; outline-mode for sections
   ;; Completion for latex macros
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
@@ -988,7 +1147,8 @@
     (list
      '("evince" "Evince")
      '("pdf-tools" "PDF Tools")
-     '("zathura" "Zathura2")))
+     '("zathura" "Zathura2")
+     '("preview" "Preview.app")))
 
   (defun siliusmv/choose-latex-pdf-viewer (&optional viewer-name)
     "Change PDF viewer for latex"
@@ -1039,12 +1199,16 @@
   :config
   (siliusmv/choose-latex-pdf-viewer "zathura")
 
-  (setq TeX-complete-expert-commands t) ; Adds more commands for completion
+  ;;(setq TeX-complete-expert-commands t) ; Adds more commands for completion
   (setq Tex-auto-save t) ;; Parsing on save
   (setq TeX-parse-self t) ;; Parsing on load (scan file for macros)
   (setq-default TeX-master nil) ;; Allow multi-file documents
   (setq-default TeX-PDF-mode t)
 
+  (setq TeX-auto-regexp-list 'TeX-auto-full-regexp-list
+	TeX-auto-parse-length 999999
+	TeX-auto-global '("/Users/siliusmv/.emacs.d/auctex/auto-global/" "~/.emacs.d/auctex/auto-global/"))
+  
   ;; automatically insert braces after sub/superscript in math mode
   (setq TeX-electric-sub-and-superscript t)
 
@@ -1052,7 +1216,8 @@
   ;; (not sure if this is correct way to activate)
   (global-font-lock-mode t) 
 
-  
+
+  (setq LaTeX-includegraphics-read-file 'LaTeX-includegraphics-read-file-relative)
 
   (setq TeX-source-correlate-method 'synctex)
   (TeX-source-correlate-mode)
@@ -1066,6 +1231,7 @@
   (add-hook 'LaTeX-mode-hook
   	    (lambda () (reftex-mode 1)))
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+  (setq reftex-plug-into-AUCTEX t)
   )
 
 (use-package auctex-latexmk
@@ -1094,12 +1260,13 @@
 	    company-auctex-macros
 	    company-auctex-bibs
 	    company-auctex-environments
-	    company-auctex-symbols :separate)
-	   company-capf
-	   (company-files
-	    company-dabbrev-code :separate)
-	   company-abbrev
-	   company-dabbrev
+	    company-auctex-symbols
+	    company-capf
+	    :separate)
+	   company-files
+	   (company-dabbrev-code
+	    company-abbrev
+	    company-dabbrev :separate)
 	   ))
     (company-auctex-init))
 
@@ -1132,14 +1299,15 @@
   ;; Flyspell for comments and strings in prog-mode
   (add-hook 'prog-mode 'flyspell-prog-mode)
 
-  ;; Not sure that this works
-  (setq-default ispell-program-name "hunspell")
-  (setq ispell-really-hunspell t)
+  ;; ;; Not sure that this works
+  ;; (setq-default ispell-program-name "hunspell")
+  ;; (setq ispell-really-hunspell t)
+  (setq-default ispell-program-name "/usr/local/bin/aspell")
 
   (defvar siliusmv/my-dictionaries
     (list
      '("british" "en_GB")
-     '("norwegian" "no_BOK")))
+     '("norwegian" "norsk7-tex")))
 
   (defun siliusmv/choose-dictionary (&optional dict-name)
     (interactive)
@@ -1158,34 +1326,65 @@
   )
 
 
-;; =========================================================
-;; PDF Tools
-;; =========================================================
+;; ;; =========================================================
+;; ;; PDF Tools
+;; ;; =========================================================
+(use-package tablist) ;; Apparently necessary for PDF Tools
+(if pdf-tools-p
+    (use-package pdf-tools
+      :config
 
-(use-package pdf-tools
+      (if macos-p
+	  (progn
+	    (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/opt/libffi/lib/pkgconfig")
 
-  ;;:pin manual ;; manually update
-  :config
-  ;; initialise
-  (pdf-tools-install)
-  ;; open pdfs scaled to fit page
-  (setq-default pdf-view-display-size 'fit-page)
-  ;; automatically annotate highlights
-  (setq pdf-annot-activate-created-annotations t)
-  ;; use normal isearch
-  (define-key pdf-view-mode-map (kbd "C-s") 'isearch-forward)
-  (evil-collection-define-key 'normal 'pdf-view-mode-map
-    "f" 'pdf-links-action-perform
-    "J" 'pdf-view-next-page-command
-    "K" 'pdf-view-previous-page-command
-    )
+	    (custom-set-variables
+	     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+	    (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+	    ))
 
-  ;; Stop the annoying blinking in the pdf
-  (add-hook 'pdf-view-mode-hook
-	    (lambda ()
-	      (blink-cursor-mode -1)))
-  )
+      ;; initialise
+      (pdf-tools-install)
+      ;; open pdfs scaled to fit page
+      (setq-default pdf-view-display-size 'fit-page)
+      ;; automatically annotate highlights
+      (setq pdf-annot-activate-created-annotations t)
+      ;; use normal isearch
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       :states 'normal
+       "f" 'pdf-links-action-perform
+       "J" 'pdf-view-next-page-command
+       "K" 'pdf-view-previous-page-command
+       )
 
+      ;; This does not seem to work
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       "M-j" 'pdf-view-next-page-command
+       "M-k" 'pdf-view-previous-page-command
+       )
+
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       :prefix "M-SPC m"
+       "t" '(pdf-outline :wk "toc") 
+
+       "/" '(isearch-forward :wk "search in buffer")
+
+       "a" '(:ignore t :wk "annotations")
+       "a t" '(pdf-annot-add-text-annotation :wk "text")
+       "a m" '(pdf-annot-add-markup-annotation :wk "markup")
+       "a d" '(pdf-annot-delete :wk "delete")
+       "a l" '(pdf-annot-list-annotations :wk "list annotations")
+       )
+
+      ;; Stop the annoying blinking in the pdf
+      (add-hook 'pdf-view-mode-hook
+		(lambda ()
+		  (blink-cursor-mode -1)))
+      )
+)
 
 ;; =========================================================
 ;; which-key
@@ -1207,72 +1406,6 @@
 
 
 ;; =========================================================
-;; Calendar
-;; =========================================================
-(use-package calfw
-
-  :defer 5
-  :commands (cfw:open-calendar-buffer siliusmv/open-calendar)
-  :general
-  (:keymaps '(cfw:calendar-mode-map cfw:details-mode-map)
-   :prefix "M-SPC"
-   "g" '(siliusmv/gcal-firefox :wk "gmail")
-   "o" '(siliusmv/outlook-cal-firefox :wk "outlook")
-   )
-
-  :init
-
-  (defun siliusmv/gcal-firefox ()
-    "Open google calendar in firefox"
-    (interactive)
-    (browse-url-firefox "https://calendar.google.com/calendar/r" t)
-    )
-
-  (defun siliusmv/outlook-cal-firefox ()
-    "Open outlook calendar in firefox"
-    (interactive)
-    (browse-url-firefox "https://mail.ntnu.no/owa/silius.m.vandeskog@ntnu.no/#path=/calendar/view/Month" t)
-    )
-
-  :config
-
-  (use-package calfw-ical
-
-    )
-
-  (defun siliusmv/open-calendar ()
-    "Collect different calendars and display them"
-    (interactive)
-    (cfw:open-calendar-buffer
-     :contents-sources
-     (list
-      ;;(cfw:org-create-source "Green")  ; orgmode source
-      ;;(cfw:howm-create-source "Blue")  ; howm source
-      ;;(cfw:cal-create-source "Orange") ; diary source
-      ;;(cfw:ical-create-source "Moon" "~/moon.ics" "Gray")  ; ICS source1
-      (cfw:ical-create-source
-       "gcal"
-       "https://calendar.google.com/calendar/ical/siliusv%40gmail.com/private-bd7c25c2f3af07ae6b2c126f76822e3b/basic.ics"
-       "Blue") ; google calendar ICS
-      (cfw:ical-create-source
-       "work"
-       "https://outlook.office365.com/owa/calendar/8973f4f445fd477282c6ae68a234b61a@stud.ntnu.no/5a904a8004824dd2a0afad309bceb32b1928256821864056809/calendar.ics"
-       "Red") ; Work calendar
-      ))) 
-  
-  (setq cfw:face-item-separator-color nil
-        cfw:render-line-breaker 'cfw:render-line-breaker-none
-        cfw:fchar-junction ?╋
-        cfw:fchar-vertical-line ?┃
-        cfw:fchar-horizontal-line ?━
-        cfw:fchar-left-junction ?┣
-        cfw:fchar-right-junction ?┫
-        cfw:fchar-top-junction ?┯
-        cfw:fchar-top-left-corner ?┏
-        cfw:fchar-top-right-corner ?┓)
-  )
-
-;; =========================================================
 ;; Project management
 ;; =========================================================
 (use-package projectile
@@ -1286,41 +1419,38 @@
 ;; Install ag or ripgrep!!!!
 
 
-;; =========================================================
-;; Terminal
-;; =========================================================
-(use-package multi-term
-  :commands (multi-term)
-  :general
-  (:keymaps 'term-mode-map
-   :prefix "M-SPC"
-   "" nil
+;; ;; =========================================================
+;; ;; Terminal
+;; ;; =========================================================
+;; (use-package multi-term
+;;   :commands (multi-term)
+;;   :general
+;;   (:keymaps 'term-mode-map
+;;    :states '(motion normal insert visual emacs)
+;;    :prefix "M-SPC m"
+;; 
+;;    "s" '(:ignore t :wk "send signal to shell")
+;;    "s q" '(term-quit-subjob :wk "quit")
+;;    "s k" '(term-kill-subjob :wk "kill")
+;;    "s s" '(term-stop-subjob :wk "stop")
+;;    "s c" '(term-continue-subjob :wk "continue")
+;;    "s i" '(term-interrupt-subjob :wk "interupt")
+;; 
+;;    "b" '(:ignore t :wk "terminal buffer commands")
+;;    "b n" '(multi-term-next :wk "next buffer")
+;;    "b p" '(multi-term-prev :wk "previous buffer")
+;;    "b k" '(kill-this-buffer :wk "kill buffer")
+;; 
+;;    "q" '(siliusmv/kill-buffer-and-frame :wk "kill buffer, close frame")
+;;    )
+;;   :config
+;;   (setq multi-term-program "/bin/bash")
+;;   )
 
-   "s" '(:ignore t :wk "send signal to shell")
-   "s q" '(term-quit-subjob :wk "quit")
-   "s k" '(term-kill-subjob :wk "kill")
-   "s s" '(term-stop-subjob :wk "stop")
-   "s c" '(term-continue-subjob :wk "continue")
-   "s i" '(term-interrupt-subjob :wk "interupt")
-
-   "b" '(:ignore t :wk "terminal buffer commands")
-   "b n" '(multi-term-next :wk "next buffer")
-   "b p" '(multi-term-prev :wk "previous buffer")
-   "b k" '(kill-this-buffer :wk "kill buffer")
-
-   "q" '(siliusmv/kill-buffer-and-frame :wk "kill buffer, close frame")
-   )
-  :config
-  (setq multi-term-program "/bin/bash")
-  )
-
-;; =========================================================
-;; File navigation
-;; =========================================================
-(use-package ranger
-  :config
-  (setq ranger-cleanup-eagerly t) ;; Cleanup opened preview buffers
-  )
+;; Eshell stuff
+(add-hook 'eshell-mode-hook
+	  (lambda ()
+	    (setq company-idle-delay nil)))
 
 
 ;; =========================================================
@@ -1350,12 +1480,46 @@
 ;;(use-package org-mode
 (org-babel-do-load-languages
  'org-babel-load-languages
- '((R . t)))
+ '((emacs-lisp . t)
+   (R . t)
+   (latex . t)
+   (shell . t)
+   (C . t)))
+
+(add-hook 'org-mode-hook
+	  (lambda ()
+	    (nlinum-mode -1)))
+
+(defun siliusmv/org-cycle-current-headline ()
+  "Cycle the current headline. Taken from
+https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-without-going-to-block-header"
+  (interactive)
+  (org-cycle-internal-local))
+
 
 (general-define-key
  :keymaps 'org-mode-map
  :states '(motion normal insert visual)
  "<tab>" 'org-cycle
+ "C-<tab>" 'siliusmv/org-cycle-current-headline
+ )
+
+(general-define-key
+ :keymaps 'org-mode-map
+ :states '(normal visual)
+ "g" nil
+ "g s" '(avy-org-goto-heading-timer :wk "avy heading")
+ "g j" '(org-next-visible-heading :wk "next heading")
+ "g k" '(org-previous-visible-heading :wk "prev heading")
+ "g h" '(outline-up-heading :wk "up one heading")
+ "g M-j" '(org-next-block :wk "next block")
+ "g M-k" '(org-previous-block :wk "next block")
+ )
+
+(general-define-key
+ :keymaps 'org-mode-map
+ "C-M-j" '(org-next-visible-heading :wk "next heading")
+ "C-M-k" '(org-prev-visible-heading :wk "prev heading")
  )
 
 (setq org-export-use-babel nil)
@@ -1363,24 +1527,44 @@
 ;; Necessary for exporting org to html
 (use-package htmlize)
 
+;; Prettify pdf exports
+(require 'ox-latex)
+(add-to-list 'org-latex-packages-alist '("" "minted"))
+(setq org-latex-listings 'minted)
+
+(setq org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+
+;; Do asynchronous org-babel calls in an R session
+(use-package ob-session-async
+  :straight
+  (:type git
+   :host github
+   :repo "jackkamm/ob-session-async")
+  :config
+  (require 'ob-session-async-R)
+  )
+
 
 (use-package org-bullets
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 
-;; =========================================================
-;; Other stuff
-;; =========================================================
+;; =========================================================================
+;; Modeline
+;; =========================================================================
 
-(use-package minions
-  :config (minions-mode 1))
+
+(use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
 
 (use-package fancy-battery
-  :hook (after-init . fancy-battery-mode))
+  :config
+  (fancy-battery-mode))
 
 (use-package doom-modeline
-  :hook (after-init . doom-modeline-mode)
   :config
   ;; How tall the mode-line should be (only respected in GUI Emacs).
   (setq doom-modeline-height 25)
@@ -1427,109 +1611,119 @@
 
   ;; Only show true name for symlinks
   (setq find-file-visit-truename t)
+
+  ;; Display time
+  (setq display-time-format
+	(format-time-string "%H:%M"))
+
+
+  (doom-modeline-def-segment my-time
+    (let* ((hour (string-to-number (format-time-string "%I")))
+	   (icon (all-the-icons-wicon (format "time-%s" hour) :height 1.3 :v-adjust 0.0)))
+      (concat
+       (propertize (format-time-string " %H:%M ") 'face `(:height 0.9))
+       (propertize (format "%s " icon) 'face `(:height 1.0 :family ,(all-the-icons-wicon-family)) 'display '(raise -0.0)))))
+  
+  (doom-modeline-def-modeline 'main
+    '(bar workspace-name window-number modals matches buffer-info remote-host buffer-position parrot selection-info)
+    '(objed-state misc-info persp-name fancy-battery my-time grip irc mu4e github debug lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs checker))
+
+  (doom-modeline-def-modeline 'minimal
+    '(bar matches buffer-info-simple)
+    '(media-info major-mode))
+
+  (doom-modeline-def-modeline 'special
+    '(bar window-number modals matches buffer-info buffer-position parrot selection-info)
+    '(objed-state misc-info fancy-battery my-time irc-buffers debug lsp minor-modes input-method indent-info buffer-encoding major-mode process checker))
+
+  (doom-modeline-def-modeline 'project
+    '(bar window-number buffer-default-directory)
+    '(misc-info fancy-battery my-time mu4e github debug major-mode process))
+
+  (doom-modeline-def-modeline 'package
+    '(bar window-number package)
+    '(misc-info major-mode process))
+
+  (doom-modeline-def-modeline 'info
+    '(bar window-number buffer-info info-nodes buffer-position parrot selection-info)
+    '(misc-info buffer-encoding major-mode))
+
+  (doom-modeline-def-modeline 'media
+    '(bar window-number buffer-size buffer-info)
+    '(misc-info media-info major-mode process vcs))
+
+  (doom-modeline-def-modeline 'pdf
+    '(bar window-number buffer-size buffer-info pdf-pages)
+    '(misc-info major-mode process vcs))
+
+  (doom-modeline-def-modeline 'helm
+    '(bar helm-buffer-id helm-number helm-follow helm-prefix-argument)
+    '(helm-help))
+
+  (doom-modeline-def-modeline 'timemachine
+    '(bar window-number matches git-timemachine buffer-position parrot selection-info)
+    '(misc-info fancy-battery my-time mu4e github debug minor-modes indent-info buffer-encoding major-mode))
+
+
+  (defun doom-modeline-set-main-modeline (&optional default)
+    "Set main mode-line.
+If DEFAULT is non-nil, set the default mode-line for all buffers."
+    (doom-modeline-set-modeline 'main default))
+
+  (defun doom-modeline-set-minimal-modeline ()
+    "Set minimal mode-line."
+    (doom-modeline-set-modeline 'minimal))
+
+  (defun doom-modeline-set-special-modeline ()
+    "Set sepcial mode-line."
+    (doom-modeline-set-modeline 'special))
+
+  (defun doom-modeline-set-project-modeline ()
+    "Set project mode-line."
+    (doom-modeline-set-modeline 'project))
+
+  (defun doom-modeline-set-info-modeline ()
+    "Set Info mode-line."
+    (doom-modeline-set-modeline 'info))
+
+  (defun doom-modeline-set-package-modeline ()
+    "Set package mode-line."
+    (doom-modeline-set-modeline 'package))
+
+  (defun doom-modeline-set-media-modeline ()
+    "Set media mode-line."
+    (doom-modeline-set-modeline 'media))
+
+  (defun doom-modeline-set-pdf-modeline ()
+    "Set pdf mode-line."
+    (doom-modeline-set-modeline 'pdf))
+
+  (defun doom-modeline-set-helm-modeline (&rest _)
+    "Set helm mode-line."
+    (doom-modeline-set-modeline 'helm))
+
+  (defun doom-modeline-set-timemachine-modeline (&rest _)
+    "Set timemachine mode-line."
+    (doom-modeline-set-modeline 'timemachine))
+
+  (doom-modeline-mode)
   )
+
+
+
+;; =========================================================
+;; Other stuff
+;; =========================================================
+
+;; Restore last emacs session
+(desktop-save-mode 1)
+(setq desktop-save 'ask)
+
 
 
 (require 'iso-transl)
 
 
-(use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
-
-(use-package page-break-lines)
-
-(use-package dashboard
-  :config
-  (dashboard-setup-startup-hook)
-  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-  ;; To disable shortcut "jump" indicators for each section, set
-  (setq dashboard-show-shortcuts nil)
-  (setq dashboard-items '((projects  . 5)
-			  ;;(bookmarks . 5)
-			  (recents . 5)
-			  ;;(agenda . 5)
-			  ;;(registers . 5)
-			  ))
-  (setq dashboard-set-heading-icons t)
-  (setq dashboard-set-file-icons t)
-  (setq dashboard-startup-banner 'logo)
-  (setq dashboard-banner-logo-title "Welcome back!")
-  )
-
-;; (use-package company-quickhelp
-;;   :hook (global-company-mode . company-quickhelp-mode)
-;;   :init (setq company-quickhelp-delay 0.5)
-;;   )
-
-;; (use-package company-box
-;;   :hook (company-mode . company-box-mode)
-;; 
-;;   :config
-;; 
-;;   ;; https://github.com/seagle0128/.emacs.d/blob/master/lisp/init-company.el#L76
-;;   (when (and (display-graphic-p)
-;; 	     (require 'all-the-icons nil t))
-;;     (declare-function all-the-icons-faicon 'all-the-icons)
-;;     (declare-function all-the-icons-material 'all-the-icons)
-;;     (setq company-box-icons-all-the-icons
-;; 	  `((Unknown . ,(all-the-icons-material "find_in_page" :height 0.9 :v-adjust -0.2))
-;; 	    (Text . ,(all-the-icons-faicon "text-width" :height 0.85 :v-adjust -0.05))
-;; 	    (Method . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
-;; 	    (Function . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
-;; 	    (Constructor . ,(all-the-icons-faicon "cube" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-purple))
-;; 	    (Field . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
-;; 	    (Variable . ,(all-the-icons-faicon "tag" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-lblue))
-;; 	    (Class . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
-;; 	    (Interface . ,(all-the-icons-material "share" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Module . ,(all-the-icons-material "view_module" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Property . ,(all-the-icons-faicon "wrench" :height 0.85 :v-adjust -0.05))
-;; 	    (Unit . ,(all-the-icons-material "settings_system_daydream" :height 0.9 :v-adjust -0.2))
-;; 	    (Value . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Enum . ,(all-the-icons-material "storage" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
-;; 	    (Keyword . ,(all-the-icons-material "filter_center_focus" :height 0.9 :v-adjust -0.2))
-;; 	    (Snippet . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2))
-;; 	    (Color . ,(all-the-icons-material "palette" :height 0.9 :v-adjust -0.2))
-;; 	    (File . ,(all-the-icons-faicon "file-o" :height 0.9 :v-adjust -0.05))
-;; 	    (Reference . ,(all-the-icons-material "collections_bookmark" :height 0.9 :v-adjust -0.2))
-;; 	    (Folder . ,(all-the-icons-faicon "folder-open" :height 0.9 :v-adjust -0.05))
-;; 	    (EnumMember . ,(all-the-icons-material "format_align_right" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-lblue))
-;; 	    (Constant . ,(all-the-icons-faicon "square-o" :height 0.9 :v-adjust -0.05))
-;; 	    (Struct . ,(all-the-icons-material "settings_input_component" :height 0.9 :v-adjust -0.2 :face 'all-the-icons-orange))
-;; 	    (Event . ,(all-the-icons-faicon "bolt" :height 0.85 :v-adjust -0.05 :face 'all-the-icons-orange))
-;; 	    (Operator . ,(all-the-icons-material "control_point" :height 0.9 :v-adjust -0.2))
-;; 	    (TypeParameter . ,(all-the-icons-faicon "arrows" :height 0.85 :v-adjust -0.05))
-;; 	    (Template . ,(all-the-icons-material "format_align_center" :height 0.9 :v-adjust -0.2)))
-;; 	  company-box-icons-alist 'company-box-icons-all-the-icons))
-;; 
-;;   )
-
-
-;; (use-package solaire-mode
-;;   :hook
-;;   ( ;((change-major-mode after-revert ediff-prepare-buffer) . 'turn-on-solaire-mode)
-;;    (minibuffer-setup . solaire-mode-in-minibuffer))
-;; ;;   :config
-;; ;; 
-;; ;;   ;; solaire-mode messes with hl-line-mode when using the daemon
-;; ;;   (defun siliusmv/add-solaire (frame)
-;; ;;     (select-frame frame)
-;; ;;     (if (display-graphic-p)
-;; ;; 	(if (not (bound-and-true-p solaire-mode))
-;; ;; 	    (progn
-;; ;; 	      (solaire-global-mode)
-;; ;; 	      (solaire-mode-swap-bg) ; Only necessary for doom-themes
-;; ;; 	      ))
-;; ;;       ;; This part is for when you open a non-graphical frame and everything
-;; ;;       ;; gets really ugly
-;; ;;       (if siliusmv/is-dark-theme
-;; ;; 	  (load-theme 'doom-one t)
-;; ;; 	(load-theme 'doom-one-light t))))
-;; ;; 
-;; ;;   (if (daemonp)
-;; ;;       (add-hook 'after-make-frame-functions #'siliusmv/add-solaire)
-;; ;;     (solaire-global-mode)
-;; ;;     (solaire-mode-swap-bg))
-;; 
-;;   )
 
 
 ;; =========================================================
