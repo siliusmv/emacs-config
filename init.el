@@ -136,7 +136,8 @@
   (select-frame frame)
   (progn
     (toggle-scroll-bar -1)
-    (menu-bar-mode -1)
+    (if (not macos-p)
+	(menu-bar-mode -1))
     (tool-bar-mode -1)))
 
 (add-hook 'after-make-frame-functions #'remove-all-bars)
@@ -144,7 +145,8 @@
 (if (display-graphic-p)
   (progn
     (toggle-scroll-bar -1)
-    (menu-bar-mode -1)
+    (if (not macos-p)
+	(menu-bar-mode -1))
     (tool-bar-mode -1)))
 
 ;; Backup files
@@ -315,10 +317,9 @@
    )
 
   (general-define-key
-   :states '(normal insert visual emacs)
+   :states '(normal insert visual)
    :keymaps 'override
-   :prefix "g"
-   :non-normal-prefix "M-g"
+   :prefix "M-g"
    "" nil
    ")" '(evil-next-close-paren :wk "next closing parenthesis")
    "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
@@ -335,6 +336,28 @@
    "b" '(next-buffer :wk "next buffer")
    "B" '(previous-buffer :wk "prev buffer")
    )
+
+  (general-define-key
+   :states '(normal visual)
+   :prefix "g"
+   "" nil
+   ")" '(evil-next-close-paren :wk "next closing parenthesis")
+   "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
+   "}" '(evil-next-close-brace :wk "next closing brace")
+   "{" '(evil-previous-open-brace :wk "prev opening brace")
+   "]" '(evil-forward-section-begin :wk "next section")
+   "[" '(evil-backward-section-begin :wk "prev section")
+   "s" '(flyspell-correct-next :wk "next spelling error")
+   "S" '(flyspell-correct-previous :wk "prev spelling error")
+   "e" '(flymake-goto-next-error :wk "flymake: next error")
+   "E" '(flymake-goto-prev-error :wk "flymake: prev error")
+   "f" '(flycheck-next-error :wk "flycheck: next error")
+   "F" '(flycheck-previous-error :wk "flycheck: prev error")
+   "b" '(next-buffer :wk "next buffer")
+   "B" '(previous-buffer :wk "prev buffer")
+   )
+
+
 
   ;; Space as leader
   (general-define-key
@@ -363,6 +386,7 @@
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
    "b k" '(siliusmv/kill-this-buffer :wk "kill buffer")
+   "b K" '(kill-buffer :wk "kill some buffer")
    "b s" '(save-buffer :wk "save buffer")
    "b SPC" '(persp-switch-to-buffer :wk "switch buffer in persp")
    "b n" '(next-buffer :wk "next buffer")
@@ -724,7 +748,7 @@
    "C-M-j" 'company-next-page
    "C-M-k" 'company-previous-page
    "M-l" 'company-complete-common
-   "M-s" 'company-search-candidates
+   "C-M-s" 'company-search-candidates
 
    "M-SPC m o" '(company-other-backend :wk "other backend")
    "M-SPC m d" '(company-diag :wk "diagnosis")
@@ -758,7 +782,7 @@
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t
 	company-tooltip-align-annotations t
-	company-idle-delay 0.1
+	company-idle-delay 0.5
 	company-minimum-prefix-length 1
 	company-tooltip-limit 10)
 
@@ -814,18 +838,18 @@
   :config
   (add-hook 'inferior-ess-r-mode-hook
 	    (lambda ()
-	      (nlinum-relative-mode -1)
+	      (setq nlinum-relative-mode nil)
 	      (electric-pair-local-mode -1)))
 
   ;; outline-minor-mode for R
   (add-hook 'ess-mode-hook
 	    '(lambda ()
 	       (outline-minor-mode)
-	       (setq outline-regexp "\\(^#\\{3,4\\} \\)\\|\\(^.*<- function(.*{\\)")
+	       (setq outline-regexp "\\(^#\\{3,4\\} \\)\\|\\(^.*<- function(.*\\)")
 	       (defun outline-level ()
-		 (cond ((looking-at "^#### ") 1)
-		       ((looking-at "^### ") 2)
-		       ((looking-at "^.*<- function(.*{") 3)
+		 (cond ((looking-at "^### ") 1)
+		       ((looking-at "^#### ") 2)
+		       ((looking-at "^.*<- function(.*") 3)
 		       (t 1000)))
 	       ))
 
@@ -1091,7 +1115,9 @@
 (use-package outline-magic
   :general
   (:keymaps 'outline-minor-mode-map
-   "<C-tab>" 'outline-cycle)
+   "<C-tab>" 'outline-cycle
+   "M-g j" '(outline-next-heading :wk "next heading")
+   "M-g k" '(outline-previous-heading :wk "previous heading"))
   )
 
 ;; =========================================================
@@ -1303,15 +1329,22 @@
   ;; Flyspell for comments and strings in prog-mode
   (add-hook 'prog-mode 'flyspell-prog-mode)
 
+;;  (setq-default ispell-program-name "/usr/local/bin/aspell")
+
+  (when (executable-find "hunspell")
+    (setq-default ispell-program-name "/usr/local/bin/hunspell")
+    (setq ispell-really-hunspell t)
+    (setenv "DICTIONARY" "english_british")
+    (setq ispell-dictionary "english_british"))
+  
   ;; ;; Not sure that this works
   ;; (setq-default ispell-program-name "hunspell")
   ;; (setq ispell-really-hunspell t)
-  (setq-default ispell-program-name "/usr/local/bin/aspell")
 
   (defvar siliusmv/my-dictionaries
     (list
-     '("british" "en_GB")
-     '("norwegian" "norsk7-tex")))
+     '("british" "english_british")
+     '("norwegian" "norsk_bokmaal")))
 
   (defun siliusmv/choose-dictionary (&optional dict-name)
     (interactive)
@@ -1452,9 +1485,15 @@
 ;;   )
 
 ;; Eshell stuff
-(add-hook 'eshell-mode-hook
-	  (lambda ()
-	    (setq company-idle-delay nil)))
+(use-package eshell
+  :config
+  (add-hook 'eshell-mode-hook
+	    (lambda ()
+	      (setq-local company-idle-delay nil)
+	      (add-to-list 'eshell-visual-commands "tmux")
+	      (add-to-list 'eshell-visual-commands "htop")
+	    ))
+  )
 
 
 ;; =========================================================
@@ -1492,7 +1531,7 @@
 
 (add-hook 'org-mode-hook
 	  (lambda ()
-	    (nlinum-mode -1)))
+	    (auto-fill-mode)))
 
 (defun siliusmv/org-cycle-current-headline ()
   "Cycle the current headline. Taken from
@@ -1511,13 +1550,13 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 (general-define-key
  :keymaps 'org-mode-map
  :states '(normal visual)
- "g" nil
- "g s" '(avy-org-goto-heading-timer :wk "avy heading")
- "g j" '(org-next-visible-heading :wk "next heading")
- "g k" '(org-previous-visible-heading :wk "prev heading")
- "g h" '(outline-up-heading :wk "up one heading")
- "g M-j" '(org-next-block :wk "next block")
- "g M-k" '(org-previous-block :wk "next block")
+ "M-g" nil
+ "M-g s" '(avy-org-goto-heading-timer :wk "avy heading")
+ "M-g j" '(org-next-visible-heading :wk "next heading")
+ "M-g k" '(org-previous-visible-heading :wk "prev heading")
+ "M-g h" '(outline-up-heading :wk "up one heading")
+ "M-g M-j" '(org-next-block :wk "next block")
+ "M-g M-k" '(org-previous-block :wk "next block")
  )
 
 (general-define-key
@@ -1555,6 +1594,34 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 (use-package org-bullets
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+
+(use-package org-ref
+  :init
+  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
+	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/notes.org"
+	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
+	org-ref-pdf-directory "~/OneDrive - NTNU/literature/articles/")
+
+
+  ;; open pdf with system pdf viewer (works on mac)
+  (setq bibtex-completion-pdf-open-function
+	(lambda (fpath)
+	  (start-process "open" "*open*" "open" fpath)))
+
+  ;; https://github.com/jkitchin/org-ref
+  (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
+
+  (require 'org-ref)
+  (require 'org-ref-latex)
+  (require 'org-ref-bibtex)
+  (require 'org-ref-pdf)
+  (require 'org-ref-url-utils)
+  (require 'doi-utils)
+  (require 'org-ref-arxiv)
+  (require 'org-ref-scopus)
+
+  )
 
 
 ;; =========================================================================
