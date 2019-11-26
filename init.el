@@ -1,8 +1,7 @@
-;;; =========================================================
-;;; %%%%%%%%%%%%%%%% My Emacs init file %%%%%%%%%%%%%%%%%%%%%
-;;; =========================================================
+;;; My Emacs init file
 
-;; TODO
+;;;; TODO
+;; Add midnight mode for cleaning up buffers
 ;; Add (when (on-macos)) or similar to the init
 ;; Something is wrong with ESS ans line-numbers, I think!
 ;; Remove use of Ctrl from ESS
@@ -10,9 +9,10 @@
 ;; Create a which-key map for magit
 ;; Get full control of which-key
 ;; Ensure that the dictionary in auctex is correct, and not "default"
+;; Start using outshine instead of outline
 
-
-;; Global variables
+;;; Non-package specific stuff
+;;;; Global variables
 (defvar mu4e-p nil)
 (defvar init-theme "dark")
 (defvar init-dict "british")
@@ -20,10 +20,8 @@
 (defvar pdf-tools-p t)
 (defvar macos-p (string-equal system-type "darwin"))
 
-;; =========================================================
-;; Startup optimisation
+;;;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
-;; =========================================================
 
 ;; Set garbage collection threshold
 ;; From https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
@@ -46,9 +44,7 @@
    (message "gc-cons-threshold and file-name-handler-alist restored")))
 
 
-;;; =========================================================
-;;; Bootstrap straight.el
-;;; =========================================================
+;;;; Bootstrap straight.el
 
 ;; https://github.com/raxod502/straight.el/issues/356
 (setq straight-recipes-emacsmirror-use-mirror t) ; Use a mirror for emacsmirror
@@ -78,10 +74,8 @@
 (server-start)
 
 
-;;;
-;;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
-;;; Import the shell environment
-;;;
+;;;; Import the shell environment
+;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
 ;; Import some shell environment variables into Emacs at launch. Steve
 ;; Purcell's exec-path-from-shell imports PATH and MANPATH by default;
 ;; LANG, TEXINPUTS and BIBINPUTS are added here. You can customize
@@ -117,9 +111,7 @@
 
 
  
-;; =========================================================
-;; %%%%%%%%%%%%%%%%%%% BASIC SETTINGS %%%%%%%%%%%%%%%%%%%%%%
-;; =========================================================
+;;;; BASIC SETTINGS
 ;; Remove menus and stuff
 (setq inhibit-startup-screen t) ;; Remove startup screen
 
@@ -225,12 +217,8 @@
   )
 
 
-;; =========================================================
-;; %%%%%%%%%%%%% PACKAGE SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%
-;; =========================================================
-;; =========================================================
-;; Evil-mode
-;; =========================================================
+;;; Package specific settings
+;;;; Evil-mode
 
 (use-package evil
   :init
@@ -249,14 +237,10 @@
   )
 
 
-;; =========================================================
-;; Diminish
-;; =========================================================
+;;;; Diminish
 (use-package diminish)
 
-;; =========================================================
-;; General.el - keybindings
-;; =========================================================
+;;;; General.el - keybindings
 (use-package general
   :config
   (general-evil-setup t)
@@ -276,6 +260,7 @@
    "M-s" '(save-buffer :wk "save buffer")
    "M-S" '(save-some-buffers :wk "save all buffers")
    "M-`" '(ns-next-frame :wk "switch frame")
+   "M-d" '(evil-delete :wk "evil-delete")
    )
 
   (general-define-key
@@ -479,9 +464,7 @@
    )
   )
 
-;;; ========================================================
-;;; Dired stuff
-;;; ========================================================
+;;;; Dired stuff
 (defun dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
   (interactive)
@@ -503,9 +486,7 @@
 
 
 
-;; =========================================================
-;; Language servers
-;; =========================================================
+;;;; Language servers
 (use-package eglot)
 
 
@@ -520,19 +501,14 @@
 	      :filter-return #'flymake--transform-mode-line-format)
   )
 
-;; =========================================================
-;; Relative nlinum mode
-;; =========================================================
+;;;; Relative nlinum mode
 (use-package nlinum-relative
-
   :diminish nlinum-relative-mode
   :config
   (setq nlinum-highlight-current-line t)
   ;(nlinum-relative-setup-evil)             ;; setup for evil
   (setq nlinum-relative-redisplay-delay 0)      ;; delay
   (setq nlinum-relative-current-symbol "")
-  (add-hook 'text-mode-hook 'nlinum-relative-mode)
-  (add-hook 'prog-mode-hook 'nlinum-relative-mode)
 
   (defun siliusmv/nlinum-off ()
     (nlinum-relative-mode 0)
@@ -550,9 +526,7 @@
     )
   )
 
-;; =========================================================
-;; Email
-;; =========================================================
+;;;; Email
 (if mu4e-p
     (use-package mu4e
       :after evil
@@ -705,9 +679,7 @@
 
 
 
-;; =========================================================
-;; Text navigation
-;; =========================================================
+;;;; Text navigation
 
 (use-package avy
 
@@ -728,9 +700,7 @@
   (setq aw-background nil) ; Don't remove colour around the letters
   )
 
-;; =========================================================
-;; Company
-;; =========================================================
+;;;; Company
 (use-package company
   :delight
   :diminish company-mode
@@ -799,9 +769,7 @@
 
 
 
-;; =========================================================
-;; ESS (Emacs Speaks Statistics)
-;; =========================================================
+;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
   :commands (run-ess-r)
   :defer 5
@@ -838,21 +806,8 @@
   :config
   (add-hook 'inferior-ess-r-mode-hook
 	    (lambda ()
-	      (setq nlinum-relative-mode nil)
+	      (setq-local nlinum-relative-mode nil)
 	      (electric-pair-local-mode -1)))
-
-  ;; outline-minor-mode for R
-  (add-hook 'ess-mode-hook
-	    '(lambda ()
-	       (outline-minor-mode)
-	       (setq outline-regexp "\\(^#\\{3,4\\} \\)\\|\\(^.*<- function(.*\\)")
-	       (defun outline-level ()
-		 (cond ((looking-at "^### ") 1)
-		       ((looking-at "^#### ") 2)
-		       ((looking-at "^.*<- function(.*") 3)
-		       (t 1000)))
-	       ))
-
 
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
@@ -911,12 +866,21 @@
   ;; 	      (run-with-timer 300 300 'comint-truncate-buffer)
   ;; 	      ))
 
+  (add-hook 'ess-mode-hook
+	    '(lambda ()
+	       (outline-minor-mode)
+ 	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
+ 	       (defun outline-level ()
+ 		 (cond ((looking-at "#####") 1)
+ 		       ((looking-at "####") 2)
+ 		       ((looking-at "###") 3)
+ 		       ((looking-at ".*<- function(.*") 4)
+ 		       (t 1000)))
+	       ))
   )
 
 
-;; =========================================================
-;; Themes
-;; =========================================================
+;;;; Themes
 (use-package doom-themes
   :init
   ;; Global settings (defaults)
@@ -943,106 +907,94 @@
   (siliusmv/choose-theme init-theme)
   )
 
- ;; =========================================================
- ;; Wokspaces
- ;; =========================================================
- 
- (use-package eyebrowse
-   :init
-   (eyebrowse-mode)
-   :general
-   (:keymaps 'override
-    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
-    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
-    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
-    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
-    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
-    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
-    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
-    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
-    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
-    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
+;;;; Wokspaces
 
-    "M-w" '(:ignore t :wk "workspace cycling")
-    "M-w k" '(eyebrowse-next-window-config :wk "next")
-    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-    )
-   :config
-   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
-	 eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
-	 )
+(use-package eyebrowse
+  :init
+  (eyebrowse-mode)
+  :general
+  (:keymaps 'override
+	    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
+	    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
+	    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
+	    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
+	    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
+	    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
+	    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
+	    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
+	    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+	    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
+
+	    "M-w" '(:ignore t :wk "workspace cycling")
+	    "M-w k" '(eyebrowse-next-window-config :wk "next")
+	    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
+	    )
+  :config
+  (setq eyebrowse-new-workspace t ; Start new workspace with scratch
+	eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
+	)
+  )
+
+
+;;(use-package persp-mode
+;;  :init
+;;  (persp-mode 1)
+;;  :config
+;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
+;;  (setq wg-morph-on nil)
+;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
+;;
+;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
+;;	persp-auto-save-opt (if noninteractive 0 1)
+;;	persp-nil-name "main"
+;;	persp-auto-save-fname "autosave"
+;;	persp-auto-resume-time -1 ;; Do not autoresume
+;;	persp-remove-buffers-from-nil-persp-behaviour nil
+;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
+;;	)
+;;  )
+
+;;;; Tramp
+(use-package tramp
+
+  :config
+  (setq tramp-default-method "ssh"))
+
+;;;; Magit
+(use-package magit
+  :commands (magit-status)
+  :config
+  ;; Possible performance fix
+  (setq auto-revert-buffer-list-filter
+	'magit-auto-revert-repository-buffer-p)
+
+  (use-package evil-magit) ;; Evil-movements in magit
+  )
+
+
+;;;; Rainbow delimiters
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode)
+  :defer 5
+  )
+
+
+;;;; Jump to function definition
+(use-package imenu-anywhere)
+
+(use-package dumb-jump
+  :hook (prog-mode . dumb-jump-mode)
+  :general
+  (:states '(normal insert emacs)
+   :prefix "M-SPC"
+   "" nil
+   "j" '(:ignore t :wk "jump to text")
+   "j d" '(dumb-jump-go :wk "dumb-jump")
+   "j i" '(ivy-imenu-anywhere :wk "imenu")
    )
- 
- 
- ;;(use-package persp-mode
- ;;  :init
- ;;  (persp-mode 1)
- ;;  :config
- ;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
- ;;  (setq wg-morph-on nil)
- ;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
- ;;
- ;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
- ;;	persp-auto-save-opt (if noninteractive 0 1)
- ;;	persp-nil-name "main"
- ;;	persp-auto-save-fname "autosave"
- ;;	persp-auto-resume-time -1 ;; Do not autoresume
- ;;	persp-remove-buffers-from-nil-persp-behaviour nil
- ;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
- ;;	)
- ;;  )
- 
- ;; =========================================================
- ;; Tramp
- ;; =========================================================
- (use-package tramp
- 
-   :config
-   (setq tramp-default-method "ssh"))
- 
- ;; =========================================================
- ;; Magit
- ;; =========================================================
- (use-package magit
-   :commands (magit-status)
-   :config
-   ;; Possible performance fix
-   (setq auto-revert-buffer-list-filter
- 	'magit-auto-revert-repository-buffer-p)
- 
-   (use-package evil-magit) ;; Evil-movements in magit
-   )
- 
- 
- ;; =========================================================
- ;; Rainbow delimiters
- ;; =========================================================
- (use-package rainbow-delimiters
-   :hook (prog-mode . rainbow-delimiters-mode)
-   :defer 5
-   )
- 
- 
- ;; =========================================================
- ;; Jump to function definition
- ;; =========================================================
- (use-package imenu-anywhere)
- 
- (use-package dumb-jump
-   :hook (prog-mode . dumb-jump-mode)
-   :general
-   (:states '(normal insert emacs)
-    :prefix "M-SPC"
-    "" nil
-    "j" '(:ignore t :wk "jump to text")
-    "j d" '(dumb-jump-go :wk "dumb-jump")
-    "j i" '(ivy-imenu-anywhere :wk "imenu")
-    )
-   )
- 
-;; =========================================================
-;; Ivy++
-;; =========================================================
+  )
+
+;;;; Ivy++
 (use-package ivy
   :diminish ivy-mode
   :general
@@ -1054,9 +1006,10 @@
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
+   "C-M-l" 'ivy-immediate-done
    "C-M-k" 'ivy-scroll-down-command
    "C-M-j" 'ivy-scroll-up-command
-   "M-v" 'yank ; For pasting passwords into the minibuffer in tramp
+   "M-p" 'yank ; For pasting passwords into the minibuffer in tramp
    )
   :init
   ;; The default search is ivy--regex-plus
@@ -1102,27 +1055,47 @@
 (use-package amx)
 
 
-;; =========================================================
-;; Flycheck (linting)
-;; =========================================================
+;;;; Flycheck (linting)
 (use-package flycheck)
 
 
 
-;; =========================================================
-;; ouline stuff
-;; =========================================================
+;;;; outline stuff
+
 (use-package outline-magic
   :general
   (:keymaps 'outline-minor-mode-map
    "<C-tab>" 'outline-cycle
-   "M-g j" '(outline-next-heading :wk "next heading")
-   "M-g k" '(outline-previous-heading :wk "previous heading"))
+   "M-g h" '(outline-up-heading :wk "up heading level")
+   "M-g j" '(outline-forward-same-level :wk "forward same level")
+   "M-g k" '(outline-backward-same-level :wk "backward same level")
+   "M-g l" '(outline-next-visible-heading :wk "next heading")
+   )
+  :config
+  (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
+  (add-hook 'prog-mode 'outline-minor-mode)
   )
 
-;; =========================================================
-;; LaTeX-stuff (AuCTeX, refTeX and more)
-;; =========================================================
+;; (use-package outshine
+;;   :config
+;;   (add-hook 'outline-minor-mode-hook 'outshine-mode)
+;;   )
+
+
+; ;; ; Outline-minor-mode key map
+; ;;  (define-prefix-command 'cm-map nil "Outline-")
+; ;;  ; MOVE
+; ;;  (define-key cm-map "u" 'outline-up-heading)                ; Up
+; ;;  (define-key cm-map "n" 'outline-next-visible-heading)      ; Next
+; ;;  (define-key cm-map "p" 'outline-previous-visible-heading)  ; Previous
+; ;;  (define-key cm-map "f" 'outline-forward-same-level)        ; Forward - same level
+; ;;  (define-key cm-map "b" 'outline-backward-same-level)       ; Backward - same level
+; ;;  (global-set-key "\M-o" cm-map)
+; 
+; 
+;   )
+
+;;;; LaTeX-stuff (AuCTeX, refTeX and more)
 (use-package auctex
   ;; :straight (auctex :host github
   ;;                   :repo "emacsmirror/auctex"
@@ -1164,7 +1137,7 @@
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
-  (add-hook 'LaTeX-mode-hook #'outline-minor-mode) ; outline-mode for sections
+
   ;; Completion for latex macros
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
@@ -1245,7 +1218,7 @@
   ;; Syntax highlighting
   ;; (not sure if this is correct way to activate)
   (global-font-lock-mode t) 
-
+  (setq-default font-latex-script-display nil) ; Do not lower/lift subscripts/superscripts
 
   (setq LaTeX-includegraphics-read-file 'LaTeX-includegraphics-read-file-relative)
 
@@ -1305,9 +1278,7 @@
   )
 
 
-;; =========================================================
-;; Auto-fill texts
-;; =========================================================
+;;;; Auto-fill texts
 (setq-default fill-column 75)
 (add-hook 'text-mode-hook 'auto-fill-mode)
 (add-hook 'LaTeX-mode 'auto-fill-mode)
@@ -1316,9 +1287,8 @@
 (diminish 'undo-tree-mode)
 (diminish 'auto-fill-mode)
 (diminish 'auto-revert-mode)
-;; =========================================================
-;; Dictionary (flyspell)
-;; =========================================================
+
+;;;; Dictionary (flyspell)
 (use-package flyspell
   :diminish flyspell-mode
   :config
@@ -1363,9 +1333,7 @@
   )
 
 
-;; ;; =========================================================
-;; ;; PDF Tools
-;; ;; =========================================================
+;;;; PDF Tools
 (use-package tablist) ;; Apparently necessary for PDF Tools
 (if pdf-tools-p
     (use-package pdf-tools
@@ -1423,9 +1391,7 @@
       )
 )
 
-;; =========================================================
-;; which-key
-;; =========================================================
+;;;; which-key
 ;; Display a popup-buffer with the available key-combinations
 ;; whenever a keymap is pressed
 (use-package which-key
@@ -1442,9 +1408,7 @@
 
 
 
-;; =========================================================
-;; Project management
-;; =========================================================
+;;;; Project management
 (use-package projectile
 
   :diminish projectile-mode
@@ -1456,9 +1420,7 @@
 ;; Install ag or ripgrep!!!!
 
 
-;; ;; =========================================================
-;; ;; Terminal
-;; ;; =========================================================
+;;;; Terminal
 ;; (use-package multi-term
 ;;   :commands (multi-term)
 ;;   :general
@@ -1496,9 +1458,7 @@
   )
 
 
-;; =========================================================
-;; Pairing of parentheses
-;; =========================================================
+;;;; Pairing of parentheses
 (use-package elec-pair
   :init
   :defer 5
@@ -1517,10 +1477,7 @@
   )
 
 
-;; =========================================================
-;; Org-mode
-;; =========================================================
-;;(use-package org-mode
+;;;; Org-mode
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
@@ -1544,35 +1501,57 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
  :keymaps 'org-mode-map
  :states '(motion normal insert visual)
  "<tab>" 'org-cycle
- "C-<tab>" 'siliusmv/org-cycle-current-headline
+ "<C-tab>" 'org-previous-visible-heading
+ "M-SPC m TAB" '(org-global-cycle :wk "Cycle buffer")
+; "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(normal visual)
+ :states '(normal visual insert)
  "M-g" nil
  "M-g s" '(avy-org-goto-heading-timer :wk "avy heading")
- "M-g j" '(org-next-visible-heading :wk "next heading")
- "M-g k" '(org-previous-visible-heading :wk "prev heading")
- "M-g h" '(outline-up-heading :wk "up one heading")
+ "M-g j" '(org-forward-heading-same-level :wk "forward same level")
+ "M-g k" '(org-backward-heading-same-level :wk "backward same level")
+ "M-g h" '(org-up-heading-safe :wk "up one heading")
+ "M-g l" '(org-next-visible-heading :wk "next heading")
  "M-g M-j" '(org-next-block :wk "next block")
  "M-g M-k" '(org-previous-block :wk "next block")
  )
 
-(general-define-key
- :keymaps 'org-mode-map
- "C-M-j" '(org-next-visible-heading :wk "next heading")
- "C-M-k" '(org-prev-visible-heading :wk "prev heading")
- )
+(defun my-org-screenshot ()
+  "Take a screenshot into a time stamped unique-named file in the
+same directory as the org-buffer and insert a link to this file."
+  (interactive)
+  (org-display-inline-images)
+  (setq filename
+        (concat
+         (make-temp-name
+          (concat (file-name-nondirectory (buffer-file-name))
+                  "_imgs/"
+                  (format-time-string "%Y%m%d_%H%M%S_")) ) ".png"))
+  (unless (file-exists-p (file-name-directory filename))
+    (make-directory (file-name-directory filename)))
+  ; take screenshot
+  (if (eq system-type 'darwin)
+      (call-process "screencapture" nil nil nil "-i" filename))
+  (if (eq system-type 'gnu/linux)
+      (call-process "import" nil nil nil filename))
+  ; insert into file if correctly taken
+  (if (file-exists-p filename)
+    (insert (concat "[[file:" filename "]]"))))
 
-(setq org-export-use-babel nil)
+
+;(setq org-export-use-babel nil)
 
 ;; Necessary for exporting org to html
 (use-package htmlize)
 
 ;; Prettify pdf exports
 (require 'ox-latex)
+(require 'ox-beamer)
 (add-to-list 'org-latex-packages-alist '("" "minted"))
+
 (setq org-latex-listings 'minted)
 
 (setq org-latex-pdf-process
@@ -1598,12 +1577,13 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (use-package org-ref
   :init
-  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
-	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/notes.org"
-	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
-	org-ref-pdf-directory "~/OneDrive - NTNU/literature/articles/")
+  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
+	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/org_attempt/notes.org"
+	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
+	org-ref-pdf-directory "~/OneDrive - NTNU/literature/org_attempt/read/")
 
-
+  (setq org-ref-completion-library 'org-ref-ivy-cite)
+  
   ;; open pdf with system pdf viewer (works on mac)
   (setq bibtex-completion-pdf-open-function
 	(lambda (fpath)
@@ -1624,9 +1604,7 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
   )
 
 
-;; =========================================================================
-;; Modeline
-;; =========================================================================
+;;;; Modeline
 
 
 (use-package minions
@@ -1786,9 +1764,9 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 
 
-;; =========================================================
-;; Other stuff
-;; =========================================================
+;;;; Midnight mode
+(use-package midnight)
+;;;; Other stuff
 
 ;; Restore last emacs session
 (desktop-save-mode 1)
@@ -1801,9 +1779,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 
 
-;; =========================================================
-;; Mandatory stuff
-;; =========================================================
+;;; Mandatory stuff
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
