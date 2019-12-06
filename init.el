@@ -245,6 +245,7 @@
   :config
   (general-evil-setup t)
 
+  
   (general-define-key
    :keymaps 'override
    :states '(normal visual insert emacs)
@@ -272,8 +273,7 @@
   (general-define-key
    :keymaps 'minibuffer-local-map
    "M-p" '(yank :wk "copy from clipboard")
-   )
-  
+   ) 
 
   (general-define-key
    :states 'visual
@@ -343,21 +343,20 @@
    )
 
 
-
   ;; Space as leader
   (general-define-key
    :keymaps 'override
-   :states '(normal insert visual emacs)
-   :prefix "M-SPC"
+   :states '(normal visual)
+   :prefix "SPC"
    ;; Popular keybindings
    "" nil
    "ESC" '(:ignore t :wk t)
-   "M-SPC" '(counsel-find-file :wk "find file")
-   "," '(counsel-switch-buffer :wk "switch buffer")
-   "." '(save-buffer :wk "save buffer")
-   "-" '(counsel-grep-or-swiper :wk "search in buffer")
+   "SPC" '(counsel-find-file :wk "find file")
+;   "," '(counsel-switch-buffer :wk "switch buffer")
+;   "." '(save-buffer :wk "save buffer")
+;   "-" '(counsel-grep-or-swiper :wk "search in buffer")
    "g" '(magit-status :wk "git")
-   "l" '(org-store-link :wk "store org-link")
+;   "l" '(org-store-link :wk "store org-link")
    "~" '(siliusmv/go-to-config :wk "go home")
    "M-f" '(make-frame :wk "new frame")
 
@@ -464,6 +463,19 @@
    )
   )
 
+(use-package key-chord
+  :config
+  (key-chord-mode t)
+  (general-define-key
+   :states '(insert visual)
+   (general-chord "jk") 'evil-normal-state
+   (general-chord "kj") 'evil-normal-state
+   (general-chord "df") 'evil-normal-state
+   (general-chord "fd") 'evil-normal-state
+   )
+  )
+
+
 ;;;; Dired stuff
 (defun dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
@@ -477,11 +489,11 @@
  :states 'normal
  "l" 'dired-find-file
  "h" 'dired-up-directory
- "M-SPC m h" '(dired-hide-dotfiles :wk "hide dotfiles")
- "M-SPC m c" '(dired-do-copy :wk "copy")
- "M-SPC m m" '(dired-do-rename :wk "move")
- "M-SPC m d" '(dired-do-delete :wk "delete")
- "M-SPC m s" '(dired-do-symlink :wk "symlink")
+ "SPC m h" '(dired-hide-dotfiles :wk "hide dotfiles")
+ "SPC m c" '(dired-do-copy :wk "copy")
+ "SPC m m" '(dired-do-rename :wk "move")
+ "SPC m d" '(dired-do-delete :wk "delete")
+ "SPC m s" '(dired-do-symlink :wk "symlink")
  )
 
 
@@ -533,13 +545,14 @@
       :commands (mu4e)
       :general
       (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-       :states '(motion normal insert visual emacs)
-       :prefix "M-SPC m"
+       :states '(motion normal visual emacs)
+       :prefix "SPC m"
        "g" '(siliusmv/gmail-firefox :wk "gmail")
        "o" '(siliusmv/outlook-firefox :wk "outlook")
        )
       (:keymaps 'override
-       :prefix "M-SPC"
+       :prefix "SPC"
+       :states '(normal motion visual)
        "M-o m" '(mu4e :wk "email")
        )
       :init
@@ -720,10 +733,10 @@
    "M-l" 'company-complete-common
    "C-M-s" 'company-search-candidates
 
-   "M-SPC m o" '(company-other-backend :wk "other backend")
-   "M-SPC m d" '(company-diag :wk "diagnosis")
-   "M-SPC m c" '(counsel-company :wk "counsel-company")
-   "M-SPC m h" '(company-doc-buffer :wk "show documentation")
+   ;"SPC m o" '(company-other-backend :wk "other backend")
+   ;"SPC m d" '(company-diag :wk "diagnosis")
+   ;"SPC m c" '(counsel-company :wk "counsel-company")
+   ;"SPC m h" '(company-doc-buffer :wk "show documentation")
    )
 
   (general-define-key
@@ -775,8 +788,8 @@
   :defer 5
   :general
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-	    :prefix "M-SPC m"
-	    :states '(motion normal insert visual emacs)
+	    :prefix "SPC m"
+	    :states '(normal visual)
 	    "r" '(run-ess-r :wk "Open new R session")
 	    "s" '(ess-switch-process :wk "Switch R session")
 	    )
@@ -906,7 +919,6 @@
 
   (siliusmv/choose-theme init-theme)
   )
-
 ;;;; Wokspaces
 
 (use-package eyebrowse
@@ -985,8 +997,8 @@
 (use-package dumb-jump
   :hook (prog-mode . dumb-jump-mode)
   :general
-  (:states '(normal insert emacs)
-   :prefix "M-SPC"
+  (:states '(normal)
+   :prefix "SPC"
    "" nil
    "j" '(:ignore t :wk "jump to text")
    "j d" '(dumb-jump-go :wk "dumb-jump")
@@ -1104,7 +1116,8 @@
   ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
   (:keymaps 'TeX-mode-map
-   :prefix "M-SPC m"
+   :states '(normal motion visual)
+   :prefix "SPC m"
    "ESC" '(:ignore t :wk t)
    "v" '(TeX-view :wk "view pdf")
    "c" '(TeX-command-master :wk "compile document")
@@ -1372,6 +1385,7 @@
 
       (general-define-key
        :keymaps 'pdf-view-mode-map
+       :states '(normal visual)
        :prefix "M-SPC m"
        "t" '(pdf-outline :wk "toc") 
 
@@ -1426,7 +1440,7 @@
 ;;   :general
 ;;   (:keymaps 'term-mode-map
 ;;    :states '(motion normal insert visual emacs)
-;;    :prefix "M-SPC m"
+;;    :prefix "SPC m"
 ;; 
 ;;    "s" '(:ignore t :wk "send signal to shell")
 ;;    "s q" '(term-quit-subjob :wk "quit")
@@ -1499,10 +1513,10 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(motion normal insert visual)
+ :states '(normal visual)
  "<tab>" 'org-cycle
  "<C-tab>" 'org-previous-visible-heading
- "M-SPC m TAB" '(org-global-cycle :wk "Cycle buffer")
+ "SPC m TAB" '(org-global-cycle :wk "Cycle buffer")
 ; "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
 
@@ -1580,7 +1594,7 @@ same directory as the org-buffer and insert a link to this file."
   (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
 	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/org_attempt/notes.org"
 	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
-	org-ref-pdf-directory "~/OneDrive - NTNU/literature/org_attempt/read/")
+	org-ref-pdf-directory "~/OneDrive - NTNU/literature/org_attempt/*read/")
 
   (setq org-ref-completion-library 'org-ref-ivy-cite)
   
@@ -1601,6 +1615,15 @@ same directory as the org-buffer and insert a link to this file."
   (require 'org-ref-arxiv)
   (require 'org-ref-scopus)
 
+  (add-hook 'TeX-mode-hook
+	    (lambda ()
+	      (org-ref-latex-cite-on)))
+  (general-define-key
+   :keymaps 'TeX-mode-map
+   "<mouse-3>" 'org-ref-latex-click
+   )
+
+  
   )
 
 
@@ -1766,6 +1789,18 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 ;;;; Midnight mode
 (use-package midnight)
+;;;; Yasnippet
+(use-package yasnippet
+  ;; :general
+  ;; (:keymaps 'yas-minor-mode-map
+  ;;  "<tab>" 'yas-maybe-expand
+  ;;  )
+  :init
+  (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
+  :config
+  (yas-global-mode 1)
+  )
+
 ;;;; Other stuff
 
 ;; Restore last emacs session
@@ -1789,6 +1824,10 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
+ '(org-agenda-files
+   (quote
+    ("~/OneDrive - NTNU/literature/org_attempt/notes.org")))
+ '(pdf-tools-handle-upgrades nil)
  '(send-mail-function (quote mailclient-send-it)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
