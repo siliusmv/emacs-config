@@ -245,19 +245,15 @@
   :config
   (general-evil-setup t)
 
+
+  (defconst my-leader "SPC")
+  (defconst my-global-leader "M-SPC")
   
   (general-define-key
    :keymaps 'override
-   :states '(normal visual insert emacs)
-   "M-k" '(scroll-down-command :wk t)
-   "M-j" '(scroll-up-command :wk t)
-   "M-/" '(counsel-grep-or-swiper :wk "search in buffer")
+   :states '(normal visual insert)
    "M-?" '(which-key-show-top-level :wk "show all bindings")
-   "M-b" '(ivy-switch-buffer :wk "switch buffer")
-   "M-p" '(evil-paste-after :wk "copy from clipboard")
    "M-o" '(ace-window :wk "other window")
-   "C-M-f" '(toggle-fullscreen :wk "fullscreen")
-   "M-n" '(make-frame :wk "new frame")
    "M-s" '(save-buffer :wk "save buffer")
    "M-S" '(save-some-buffers :wk "save all buffers")
    "M-`" '(ns-next-frame :wk "switch frame")
@@ -268,21 +264,14 @@
    :keymaps 'override
    :states '(normal visual)
    "/" '(counsel-grep-or-swiper :wk "search in buffer")
+   "M-k" '(scroll-down-command :wk t)
+   "M-j" '(scroll-up-command :wk t)
    )
 
   (general-define-key
    :keymaps 'minibuffer-local-map
    "M-p" '(yank :wk "copy from clipboard")
    ) 
-
-  (general-define-key
-   :states 'visual
-   :keymaps 'override
-   "<tab>" 'indent-for-tab-command
-   ;; macOS stuff
-   "M-c" 'kill-ring-save
-   "M-x" 'kill-region
-   )
 
   ;; Editing commands
   (general-define-key
@@ -301,71 +290,54 @@
    ")" '(delete-pair :wk "delete pair")
    )
 
+
   (general-define-key
-   :states '(normal insert visual)
+   :states '(normal visual)
    :keymaps 'override
-   :prefix "M-g"
-   "" nil
-   ")" '(evil-next-close-paren :wk "next closing parenthesis")
-   "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
-   "}" '(evil-next-close-brace :wk "next closing brace")
-   "{" '(evil-previous-open-brace :wk "prev opening brace")
-   "]" '(evil-forward-section-begin :wk "next section")
-   "[" '(evil-backward-section-begin :wk "prev section")
-   "s" '(flyspell-correct-next :wk "next spelling error")
-   "S" '(flyspell-correct-previous :wk "prev spelling error")
-   "e" '(flymake-goto-next-error :wk "flymake: next error")
-   "E" '(flymake-goto-prev-error :wk "flymake: prev error")
-   "f" '(flycheck-next-error :wk "flycheck: next error")
-   "F" '(flycheck-previous-error :wk "flycheck: prev error")
-   "b" '(next-buffer :wk "next buffer")
-   "B" '(previous-buffer :wk "prev buffer")
+   :prefix "]"
+   "b" 'evil-next-buffer
    )
 
+  (general-define-key
+   :states '(normal visual)
+   :keymaps 'override
+   :prefix "["
+   "b" 'evil-prev-buffer
+   )
+
+  
   (general-define-key
    :states '(normal visual)
    :prefix "g"
    "" nil
-   ")" '(evil-next-close-paren :wk "next closing parenthesis")
-   "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
-   "}" '(evil-next-close-brace :wk "next closing brace")
-   "{" '(evil-previous-open-brace :wk "prev opening brace")
-   "]" '(evil-forward-section-begin :wk "next section")
-   "[" '(evil-backward-section-begin :wk "prev section")
    "s" '(flyspell-correct-next :wk "next spelling error")
    "S" '(flyspell-correct-previous :wk "prev spelling error")
    "e" '(flymake-goto-next-error :wk "flymake: next error")
    "E" '(flymake-goto-prev-error :wk "flymake: prev error")
    "f" '(flycheck-next-error :wk "flycheck: next error")
    "F" '(flycheck-previous-error :wk "flycheck: prev error")
-   "b" '(next-buffer :wk "next buffer")
-   "B" '(previous-buffer :wk "prev buffer")
+   "b" '(evil-next-buffer :wk "next buffer")
+   "B" '(evil-prev-buffer :wk "prev buffer")
    )
 
+;;  (defvar my-main-mode-map (make-sparse-keymap))
+;;  (define-prefix-command 'my-main-mode-map)
 
-  ;; Space as leader
   (general-define-key
    :keymaps 'override
-   :states '(normal visual)
-   :prefix "SPC"
+   :states '(normal visual motion insert emacs)
+   :prefix my-leader
+   :global-prefix my-global-leader
    ;; Popular keybindings
    "" nil
    "ESC" '(:ignore t :wk t)
+   "M-SPC" '(counsel-find-file :wk "find file")
    "SPC" '(counsel-find-file :wk "find file")
-;   "," '(counsel-switch-buffer :wk "switch buffer")
-;   "." '(save-buffer :wk "save buffer")
-;   "-" '(counsel-grep-or-swiper :wk "search in buffer")
-   "g" '(magit-status :wk "git")
-;   "l" '(org-store-link :wk "store org-link")
    "~" '(siliusmv/go-to-config :wk "go home")
-   "M-f" '(make-frame :wk "new frame")
 
    "m" '(:ignore t :wk "mode specific")
 
-   ;; Eval elisp
-   "e" '(:ignore t :wk "elisp")
-   "e o" '(eval-defun :wk "evaluate outer sexp")
-   "e i" '(eval-last-sexp :wk "evaluate inner sexp")
+   "c" '(compile :wk "compile")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
@@ -412,7 +384,10 @@
    ;; Project keymap
    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
 
-   ;; Toggle keymap
+   ;; Git stuff
+   "g" '(magit-status :wk "git")
+
+   ;; Variables keymap
    "v" '(:ignore t :wk "change variables")
    "v l" '(siliusmv/nlinum-cycle :wk "toggle line numbers")
    "v d" '(siliusmv/choose-dictionary :wk "spell-check dictionary")
@@ -461,19 +436,19 @@
    "M-w d" '(eyebrowse-close-window-config :wk "close current")
    "TAB" '(eyebrowse-switch-to-window-config :wk "switch workspace")
    )
-  )
 
-(use-package key-chord
-  :config
-  (key-chord-mode t)
-  (general-define-key
-   :states '(insert visual)
-   (general-chord "jk") 'evil-normal-state
-   (general-chord "kj") 'evil-normal-state
-   (general-chord "df") 'evil-normal-state
-   (general-chord "fd") 'evil-normal-state
-   )
   )
+ 
+;; ;;;; Keychords
+;; (use-package key-chord
+;;   :config
+;;   (key-chord-mode t)
+;;   (general-define-key
+;;    :states '(insert visual)
+;;    (general-chord "jk") 'evil-normal-state
+;;    (general-chord "kj") 'evil-normal-state
+;;    )
+;;   )
 
 
 ;;;; Dired stuff
@@ -489,14 +464,30 @@
  :states 'normal
  "l" 'dired-find-file
  "h" 'dired-up-directory
- "SPC m h" '(dired-hide-dotfiles :wk "hide dotfiles")
- "SPC m c" '(dired-do-copy :wk "copy")
- "SPC m m" '(dired-do-rename :wk "move")
- "SPC m d" '(dired-do-delete :wk "delete")
- "SPC m s" '(dired-do-symlink :wk "symlink")
  )
 
+(general-define-key
+ :keymaps 'dired-mode-map
+ :states '(normal visual)
+ :prefix my-leader
+ :global-prefix my-global-leader
+ "" nil
+ "m h" '(dired-hide-dotfiles :wk "hide dotfiles")
+ "m c" '(dired-do-copy :wk "copy")
+ "m m" '(dired-do-rename :wk "move")
+ "m d" '(dired-do-delete :wk "delete")
+ "m s" '(dired-do-symlink :wk "symlink")
+ )
 
+;;;; Elisp stuff
+(general-define-key
+ :keymaps 'emacs-lisp-mode-map
+ :states '(normal visual insert)
+ :prefix my-leader
+ :global-prefix my-global-leader
+ "m o" '(eval-defun :wk "evaluate outer sexp")
+ "m i" '(eval-last-sexp :wk "evaluate inner sexp")
+ )
 
 ;;;; Language servers
 (use-package eglot)
@@ -546,13 +537,15 @@
       :general
       (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
        :states '(motion normal visual emacs)
-       :prefix "SPC m"
-       "g" '(siliusmv/gmail-firefox :wk "gmail")
-       "o" '(siliusmv/outlook-firefox :wk "outlook")
+       :prefix my-leader
+       :global-prefix my-global-leader
+       "m g" '(siliusmv/gmail-firefox :wk "gmail")
+       "m o" '(siliusmv/outlook-firefox :wk "outlook")
        )
       (:keymaps 'override
-       :prefix "SPC"
-       :states '(normal motion visual)
+       :prefix my-leader
+       :global-prefix my-global-leader
+       :states '(normal motion visual insert)
        "M-o m" '(mu4e :wk "email")
        )
       :init
@@ -733,10 +726,10 @@
    "M-l" 'company-complete-common
    "C-M-s" 'company-search-candidates
 
-   ;"SPC m o" '(company-other-backend :wk "other backend")
-   ;"SPC m d" '(company-diag :wk "diagnosis")
-   ;"SPC m c" '(counsel-company :wk "counsel-company")
-   ;"SPC m h" '(company-doc-buffer :wk "show documentation")
+   ;"M-SPC m o" '(company-other-backend :wk "other backend")
+   ;"M-SPC m d" '(company-diag :wk "diagnosis")
+   ;"M-SPC m c" '(counsel-company :wk "counsel-company")
+   ;"M-SPC m h" '(company-doc-buffer :wk "show documentation")
    )
 
   (general-define-key
@@ -788,10 +781,11 @@
   :defer 5
   :general
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-	    :prefix "SPC m"
-	    :states '(normal visual)
-	    "r" '(run-ess-r :wk "Open new R session")
-	    "s" '(ess-switch-process :wk "Switch R session")
+	    :prefix my-leader
+	    :global-prefix my-global-leader
+	    :states '(normal visual insert)
+	    "m r" '(run-ess-r :wk "Open new R session")
+	    "m s" '(ess-switch-process :wk "Switch R session")
 	    )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
 	    :states '(motion normal insert visual emacs)
@@ -997,8 +991,9 @@
 (use-package dumb-jump
   :hook (prog-mode . dumb-jump-mode)
   :general
-  (:states '(normal)
-   :prefix "SPC"
+  (:states '(normal insert visual)
+   :prefix my-leader
+   :global-prefix my-global-leader
    "" nil
    "j" '(:ignore t :wk "jump to text")
    "j d" '(dumb-jump-go :wk "dumb-jump")
@@ -1117,25 +1112,26 @@
   :general
   (:keymaps 'TeX-mode-map
    :states '(normal motion visual)
-   :prefix "SPC m"
-   "ESC" '(:ignore t :wk t)
-   "v" '(TeX-view :wk "view pdf")
-   "c" '(TeX-command-master :wk "compile document")
-   "t" '(reftex-toc :wk "navigate document")
-   "r" '(reftex-toc-Rescan :wk "refresh reftex")
-   "e" '(TeX-next-error :wk "compilation errors")
-   "M-f" '(LaTeX-fill-buffer :wk "fill buffer")
+   :prefix my-leader
+   :global-prefix my-global-leader
+   "m ESC" '(:ignore t :wk t)
+   "m v" '(TeX-view :wk "view pdf")
+   "m c" '(TeX-command-master :wk "compile document")
+   "m t" '(reftex-toc :wk "navigate document")
+   "m r" '(reftex-toc-Rescan :wk "refresh reftex")
+   "m e" '(TeX-next-error :wk "compilation errors")
+   "m M-f" '(LaTeX-fill-buffer :wk "fill buffer")
 
-   "i" '(:ignore t :wk "insert")
-   "i m" '(TeX-insert-macro :wk "macro")
-   "i e" '(LaTeX-environment :wk "macro")
-   "i ]" '(LaTeX-close-environment :wk "close environment")
-   "i c" '(reftex-citation :wk "citation")
-   "i r" '(reftex-reference :wk "label")
+   "m i" '(:ignore t :wk "insert")
+   "m i m" '(TeX-insert-macro :wk "macro")
+   "m i e" '(LaTeX-environment :wk "macro")
+   "m i ]" '(LaTeX-close-environment :wk "close environment")
+   "m i c" '(reftex-citation :wk "citation")
+   "m i r" '(reftex-reference :wk "label")
 
-   "M-v" '(:ignore t :wk "change variables")
-   "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
-   "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
+   "m M-v" '(:ignore t :wk "change variables")
+   "m M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
+   "m M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
   )
   (:keymaps 'TeX-mode-map
    :prefix "M-i"
@@ -1386,16 +1382,19 @@
       (general-define-key
        :keymaps 'pdf-view-mode-map
        :states '(normal visual)
-       :prefix "M-SPC m"
-       "t" '(pdf-outline :wk "toc") 
+       :prefix my-leader
+       :global-prefix my-global-leader
+       "" nil
+       "m" nil
+       "m t" '(pdf-outline :wk "toc") 
 
-       "/" '(isearch-forward :wk "search in buffer")
+       "m /" '(isearch-forward :wk "search in buffer")
 
-       "a" '(:ignore t :wk "annotations")
-       "a t" '(pdf-annot-add-text-annotation :wk "text")
-       "a m" '(pdf-annot-add-markup-annotation :wk "markup")
-       "a d" '(pdf-annot-delete :wk "delete")
-       "a l" '(pdf-annot-list-annotations :wk "list annotations")
+       "m a" '(:ignore t :wk "annotations")
+       "m a t" '(pdf-annot-add-text-annotation :wk "text")
+       "m a m" '(pdf-annot-add-markup-annotation :wk "markup")
+       "m a d" '(pdf-annot-delete :wk "delete")
+       "m a l" '(pdf-annot-list-annotations :wk "list annotations")
        )
 
       ;; Stop the annoying blinking in the pdf
@@ -1440,7 +1439,7 @@
 ;;   :general
 ;;   (:keymaps 'term-mode-map
 ;;    :states '(motion normal insert visual emacs)
-;;    :prefix "SPC m"
+;;    :prefix "M-SPC m"
 ;; 
 ;;    "s" '(:ignore t :wk "send signal to shell")
 ;;    "s q" '(term-quit-subjob :wk "quit")
@@ -1513,10 +1512,10 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(normal visual)
+ :states '(normal visual insert)
  "<tab>" 'org-cycle
  "<C-tab>" 'org-previous-visible-heading
- "SPC m TAB" '(org-global-cycle :wk "Cycle buffer")
+ "M-SPC m TAB" '(org-global-cycle :wk "Cycle buffer")
 ; "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
 
