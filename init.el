@@ -1,8 +1,7 @@
-;;; =========================================================
-;;; %%%%%%%%%%%%%%%% My Emacs init file %%%%%%%%%%%%%%%%%%%%%
-;;; =========================================================
+;;; My Emacs init file
 
-;; TODO
+;;;; TODO
+;; Add midnight mode for cleaning up buffers
 ;; Add (when (on-macos)) or similar to the init
 ;; Something is wrong with ESS ans line-numbers, I think!
 ;; Remove use of Ctrl from ESS
@@ -10,9 +9,10 @@
 ;; Create a which-key map for magit
 ;; Get full control of which-key
 ;; Ensure that the dictionary in auctex is correct, and not "default"
+;; Start using outshine instead of outline
 
-
-;; Global variables
+;;; Non-package specific stuff
+;;;; Global variables
 (defvar mu4e-p nil)
 (defvar init-theme "dark")
 (defvar init-dict "british")
@@ -20,10 +20,8 @@
 (defvar pdf-tools-p t)
 (defvar macos-p (string-equal system-type "darwin"))
 
-;; =========================================================
-;; Startup optimisation
+;;;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
-;; =========================================================
 
 ;; Set garbage collection threshold
 ;; From https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
@@ -46,9 +44,7 @@
    (message "gc-cons-threshold and file-name-handler-alist restored")))
 
 
-;;; =========================================================
-;;; Bootstrap straight.el
-;;; =========================================================
+;;;; Bootstrap straight.el
 
 ;; https://github.com/raxod502/straight.el/issues/356
 (setq straight-recipes-emacsmirror-use-mirror t) ; Use a mirror for emacsmirror
@@ -78,10 +74,8 @@
 (server-start)
 
 
-;;;
-;;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
-;;; Import the shell environment
-;;;
+;;;; Import the shell environment
+;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
 ;; Import some shell environment variables into Emacs at launch. Steve
 ;; Purcell's exec-path-from-shell imports PATH and MANPATH by default;
 ;; LANG, TEXINPUTS and BIBINPUTS are added here. You can customize
@@ -117,9 +111,7 @@
 
 
  
-;; =========================================================
-;; %%%%%%%%%%%%%%%%%%% BASIC SETTINGS %%%%%%%%%%%%%%%%%%%%%%
-;; =========================================================
+;;;; BASIC SETTINGS
 ;; Remove menus and stuff
 (setq inhibit-startup-screen t) ;; Remove startup screen
 
@@ -136,7 +128,8 @@
   (select-frame frame)
   (progn
     (toggle-scroll-bar -1)
-    (menu-bar-mode -1)
+    (if (not macos-p)
+	(menu-bar-mode -1))
     (tool-bar-mode -1)))
 
 (add-hook 'after-make-frame-functions #'remove-all-bars)
@@ -144,7 +137,8 @@
 (if (display-graphic-p)
   (progn
     (toggle-scroll-bar -1)
-    (menu-bar-mode -1)
+    (if (not macos-p)
+	(menu-bar-mode -1))
     (tool-bar-mode -1)))
 
 ;; Backup files
@@ -219,12 +213,8 @@
   (find-file "~/.emacs.d/init.el"))
 
 
-;; =========================================================
-;; %%%%%%%%%%%%% PACKAGE SPECIFIC SETTINGS %%%%%%%%%%%%%%%%%
-;; =========================================================
-;; =========================================================
-;; Evil-mode
-;; =========================================================
+;;; Package specific settings
+;;;; Evil-mode
 
 (use-package evil
   :init
@@ -243,55 +233,48 @@
   )
 
 
-;; =========================================================
-;; Diminish
-;; =========================================================
+;;;; Diminish
 (use-package diminish)
 
-;; =========================================================
-;; General.el - keybindings
-;; =========================================================
+;;;; General.el - keybindings
 (use-package general
   :config
   (general-evil-setup t)
 
+
+  (defconst my-leader "SPC")
+  (defconst my-global-leader "M-SPC")
+  
   (general-define-key
    :keymaps 'override
-   :states '(normal visual insert emacs)
-   "M-k" '(scroll-down-command :wk t)
-   "M-j" '(scroll-up-command :wk t)
-   "M-/" '(counsel-grep-or-swiper :wk "search in buffer")
+   :states '(normal visual insert)
    "M-?" '(which-key-show-top-level :wk "show all bindings")
-   "M-b" '(ivy-switch-buffer :wk "switch buffer")
-   "M-p" '(evil-paste-after :wk "copy from clipboard")
    "M-o" '(ace-window :wk "other window")
-   "C-M-f" '(toggle-fullscreen :wk "fullscreen")
-   "M-n" '(make-frame :wk "new frame")
    "M-s" '(save-buffer :wk "save buffer")
    "M-S" '(save-some-buffers :wk "save all buffers")
    "M-`" '(ns-next-frame :wk "switch frame")
+   "M-d" '(evil-delete :wk "evil-delete")
    )
 
   (general-define-key
    :keymaps 'override
    :states '(normal visual)
    "/" '(counsel-grep-or-swiper :wk "search in buffer")
+   "M-k" '(scroll-down-command :wk t)
+   "M-j" '(scroll-up-command :wk t)
+   "M-h" '(evil-jump-backward :wk "jump backward")
+   "M-l" '(evil-jump-forward :wk "jump forward")
    )
 
   (general-define-key
    :keymaps 'minibuffer-local-map
    "M-p" '(yank :wk "copy from clipboard")
-   )
-  
+   ) 
 
   (general-define-key
    :states 'visual
    :keymaps 'override
-   "<tab>" 'indent-for-tab-command
-   ;; macOS stuff
-   "M-c" 'kill-ring-save
-   "M-x" 'kill-region
-   )
+   "TAB" 'indent-for-tab-command)
 
   ;; Editing commands
   (general-define-key
@@ -310,55 +293,59 @@
    ")" '(delete-pair :wk "delete pair")
    )
 
+
   (general-define-key
-   :states '(normal insert visual emacs)
+   :states '(normal visual)
    :keymaps 'override
+   :prefix "]"
+   "b" 'evil-next-buffer
+   )
+
+  (general-define-key
+   :states '(normal visual)
+   :keymaps 'override
+   :prefix "["
+   "b" 'evil-prev-buffer
+   )
+
+  
+  (general-define-key
+   :states '(normal visual)
    :prefix "g"
-   :non-normal-prefix "M-g"
    "" nil
-   ")" '(evil-next-close-paren :wk "next closing parenthesis")
-   "(" '(evil-previous-open-paren :wk "prev opening parenthesis")
-   "}" '(evil-next-close-brace :wk "next closing brace")
-   "{" '(evil-previous-open-brace :wk "prev opening brace")
-   "]" '(evil-forward-section-begin :wk "next section")
-   "[" '(evil-backward-section-begin :wk "prev section")
    "s" '(flyspell-correct-next :wk "next spelling error")
    "S" '(flyspell-correct-previous :wk "prev spelling error")
    "e" '(flymake-goto-next-error :wk "flymake: next error")
    "E" '(flymake-goto-prev-error :wk "flymake: prev error")
    "f" '(flycheck-next-error :wk "flycheck: next error")
    "F" '(flycheck-previous-error :wk "flycheck: prev error")
-   "b" '(next-buffer :wk "next buffer")
-   "B" '(previous-buffer :wk "prev buffer")
+   "b" '(evil-next-buffer :wk "next buffer")
+   "B" '(evil-prev-buffer :wk "prev buffer")
    )
 
-  ;; Space as leader
+;;  (defvar my-main-mode-map (make-sparse-keymap))
+;;  (define-prefix-command 'my-main-mode-map)
+
   (general-define-key
    :keymaps 'override
-   :states '(normal insert visual emacs)
-   :prefix "M-SPC"
+   :states '(normal visual motion insert emacs)
+   :prefix my-leader
+   :global-prefix my-global-leader
    ;; Popular keybindings
    "" nil
    "ESC" '(:ignore t :wk t)
    "M-SPC" '(counsel-find-file :wk "find file")
-   "," '(counsel-switch-buffer :wk "switch buffer")
-   "." '(save-buffer :wk "save buffer")
-   "-" '(counsel-grep-or-swiper :wk "search in buffer")
-   "g" '(magit-status :wk "git")
-   "l" '(org-store-link :wk "store org-link")
+   "SPC" '(counsel-find-file :wk "find file")
    "~" '(siliusmv/go-to-config :wk "go home")
-   "M-f" '(make-frame :wk "new frame")
 
    "m" '(:ignore t :wk "mode specific")
 
-   ;; Eval elisp
-   "e" '(:ignore t :wk "elisp")
-   "e o" '(eval-defun :wk "evaluate outer sexp")
-   "e i" '(eval-last-sexp :wk "evaluate inner sexp")
+   "c" '(compile :wk "compile")
 
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
    "b k" '(siliusmv/kill-this-buffer :wk "kill buffer")
+   "b K" '(kill-buffer :wk "kill some buffer")
    "b s" '(save-buffer :wk "save buffer")
    "b SPC" '(persp-switch-to-buffer :wk "switch buffer in persp")
    "b n" '(next-buffer :wk "next buffer")
@@ -400,7 +387,10 @@
    ;; Project keymap
    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
 
-   ;; Toggle keymap
+   ;; Git stuff
+   "g" '(magit-status :wk "git")
+
+   ;; Variables keymap
    "v" '(:ignore t :wk "change variables")
    "v l" '(siliusmv/nlinum-cycle :wk "toggle line numbers")
    "v d" '(siliusmv/choose-dictionary :wk "spell-check dictionary")
@@ -430,7 +420,7 @@
    "w f" '(delete-other-windows :wk "focus on window")
    "w v" '(split-window-right :wk "split vertical")
    "w s" '(split-window-below :wk "split")
-   "w o" '(ace-window :wk "jump to other window")
+   "w o" '(ace-window :wk "other window")
 
    ;; "Open programs" - keymap
    "o" '(:ignore t :wk "open program")
@@ -444,16 +434,38 @@
    "M-w n" '(eyebrowse-create-window-config :wk "new")
    "M-w k" '(eyebrowse-next-window-config :wk "next")
    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-   "M-w s" '(eyebrowse-switch-to-window-config :wk "switch to other")
+   "M-w o" '(eyebrowse-switch-to-window-config :wk "other workspace")
    "M-w r" '(eyebrowse-rename-window-config :wk "rename")
    "M-w d" '(eyebrowse-close-window-config :wk "close current")
    "TAB" '(eyebrowse-switch-to-window-config :wk "switch workspace")
    )
+
+  )
+ 
+;;;; Keychords
+(use-package key-chord
+  :config
+  (key-chord-mode t)
+  (general-define-key
+   :states '(insert visual)
+   (general-chord "jk") 'evil-normal-state
+   (general-chord "kj") 'evil-normal-state
+   )
   )
 
-;;; ========================================================
-;;; Dired stuff
-;;; ========================================================
+
+;;;; Polymode
+(use-package polymode)
+
+(use-package poly-org
+  :init
+  (add-hook 'org-mode-hook 'poly-org-mode) 
+  )
+
+(use-package poly-R)
+(use-package poly-markdown)
+
+;;;; Dired stuff
 (defun dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
   (interactive)
@@ -466,18 +478,32 @@
  :states 'normal
  "l" 'dired-find-file
  "h" 'dired-up-directory
- "M-SPC m h" '(dired-hide-dotfiles :wk "hide dotfiles")
- "M-SPC m c" '(dired-do-copy :wk "copy")
- "M-SPC m m" '(dired-do-rename :wk "move")
- "M-SPC m d" '(dired-do-delete :wk "delete")
- "M-SPC m s" '(dired-do-symlink :wk "symlink")
  )
 
+(general-define-key
+ :keymaps 'dired-mode-map
+ :states '(normal visual)
+ :prefix my-leader
+ :global-prefix my-global-leader
+ "" nil
+ "m h" '(dired-hide-dotfiles :wk "hide dotfiles")
+ "m c" '(dired-do-copy :wk "copy")
+ "m m" '(dired-do-rename :wk "move")
+ "m d" '(dired-do-delete :wk "delete")
+ "m s" '(dired-do-symlink :wk "symlink")
+ )
 
+;;;; Elisp stuff
+(general-define-key
+ :keymaps 'emacs-lisp-mode-map
+ :states '(normal visual insert)
+ :prefix my-leader
+ :global-prefix my-global-leader
+ "m o" '(eval-defun :wk "evaluate outer sexp")
+ "m i" '(eval-last-sexp :wk "evaluate inner sexp")
+ )
 
-;; =========================================================
-;; Language servers
-;; =========================================================
+;;;; Language servers
 (use-package eglot)
 
 
@@ -492,19 +518,14 @@
 	      :filter-return #'flymake--transform-mode-line-format)
   )
 
-;; =========================================================
-;; Relative nlinum mode
-;; =========================================================
+;;;; Relative nlinum mode
 (use-package nlinum-relative
-
   :diminish nlinum-relative-mode
   :config
   (setq nlinum-highlight-current-line t)
   ;(nlinum-relative-setup-evil)             ;; setup for evil
   (setq nlinum-relative-redisplay-delay 0)      ;; delay
   (setq nlinum-relative-current-symbol "")
-  (add-hook 'text-mode-hook 'nlinum-relative-mode)
-  (add-hook 'prog-mode-hook 'nlinum-relative-mode)
 
   (defun siliusmv/nlinum-off ()
     (nlinum-relative-mode 0)
@@ -522,22 +543,23 @@
     )
   )
 
-;; =========================================================
-;; Email
-;; =========================================================
+;;;; Email
 (if mu4e-p
     (use-package mu4e
       :after evil
       :commands (mu4e)
       :general
       (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-       :states '(motion normal insert visual emacs)
-       :prefix "M-SPC m"
-       "g" '(siliusmv/gmail-firefox :wk "gmail")
-       "o" '(siliusmv/outlook-firefox :wk "outlook")
+       :states '(motion normal visual emacs)
+       :prefix my-leader
+       :global-prefix my-global-leader
+       "m g" '(siliusmv/gmail-firefox :wk "gmail")
+       "m o" '(siliusmv/outlook-firefox :wk "outlook")
        )
       (:keymaps 'override
-       :prefix "M-SPC"
+       :prefix my-leader
+       :global-prefix my-global-leader
+       :states '(normal motion visual insert)
        "M-o m" '(mu4e :wk "email")
        )
       :init
@@ -677,15 +699,13 @@
 
 
 
-;; =========================================================
-;; Text navigation
-;; =========================================================
+;;;; Text navigation
 
 (use-package avy
-
   :general
   (:states '(normal visual)
-   "s" 'avy-goto-char-timer
+   "s" 'avy-goto-char-2
+   "S" 'avy-goto-line
    )
   :config
   (setq avy-style 'at-full
@@ -700,9 +720,7 @@
   (setq aw-background nil) ; Don't remove colour around the letters
   )
 
-;; =========================================================
-;; Company
-;; =========================================================
+;;;; Company
 (use-package company
   :delight
   :diminish company-mode
@@ -720,12 +738,12 @@
    "C-M-j" 'company-next-page
    "C-M-k" 'company-previous-page
    "M-l" 'company-complete-common
-   "M-s" 'company-search-candidates
+   "C-M-s" 'company-search-candidates
 
-   "M-SPC m o" '(company-other-backend :wk "other backend")
-   "M-SPC m d" '(company-diag :wk "diagnosis")
-   "M-SPC m c" '(counsel-company :wk "counsel-company")
-   "M-SPC m h" '(company-doc-buffer :wk "show documentation")
+   ;"M-SPC m o" '(company-other-backend :wk "other backend")
+   ;"M-SPC m d" '(company-diag :wk "diagnosis")
+   ;"M-SPC m c" '(counsel-company :wk "counsel-company")
+   ;"M-SPC m h" '(company-doc-buffer :wk "show documentation")
    )
 
   (general-define-key
@@ -754,7 +772,7 @@
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t
 	company-tooltip-align-annotations t
-	company-idle-delay 0.1
+	company-idle-delay 0.5
 	company-minimum-prefix-length 1
 	company-tooltip-limit 10)
 
@@ -771,18 +789,17 @@
 
 
 
-;; =========================================================
-;; ESS (Emacs Speaks Statistics)
-;; =========================================================
+;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
   :commands (run-ess-r)
   :defer 5
   :general
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-	    :prefix "M-SPC m"
-	    :states '(motion normal insert visual emacs)
-	    "r" '(run-ess-r :wk "Open new R session")
-	    "s" '(ess-switch-process :wk "Switch R session")
+	    :prefix my-leader
+	    :global-prefix my-global-leader
+	    :states '(normal visual insert)
+	    "m r" '(run-ess-r :wk "Open new R session")
+	    "m s" '(ess-switch-process :wk "Switch R session")
 	    )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
 	    :states '(motion normal insert visual emacs)
@@ -810,21 +827,8 @@
   :config
   (add-hook 'inferior-ess-r-mode-hook
 	    (lambda ()
-	      (nlinum-relative-mode -1)
+	      (setq-local nlinum-relative-mode nil)
 	      (electric-pair-local-mode -1)))
-
-  ;; outline-minor-mode for R
-  (add-hook 'ess-mode-hook
-	    '(lambda ()
-	       (outline-minor-mode)
-	       (setq outline-regexp "\\(^#\\{3,4\\} \\)\\|\\(^.*<- function(.*{\\)")
-	       (defun outline-level ()
-		 (cond ((looking-at "^#### ") 1)
-		       ((looking-at "^### ") 2)
-		       ((looking-at "^.*<- function(.*{") 3)
-		       (t 1000)))
-	       ))
-
 
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
@@ -883,12 +887,21 @@
   ;; 	      (run-with-timer 300 300 'comint-truncate-buffer)
   ;; 	      ))
 
+  (add-hook 'ess-mode-hook
+	    '(lambda ()
+	       (outline-minor-mode)
+ 	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
+ 	       (defun outline-level ()
+ 		 (cond ((looking-at "#####") 1)
+ 		       ((looking-at "####") 2)
+ 		       ((looking-at "###") 3)
+ 		       ((looking-at ".*<- function(.*") 4)
+ 		       (t 1000)))
+	       ))
   )
 
 
-;; =========================================================
-;; Themes
-;; =========================================================
+;;;; Themes
 (use-package doom-themes
   :init
   ;; Global settings (defaults)
@@ -914,107 +927,95 @@
 
   (siliusmv/choose-theme init-theme)
   )
+;;;; Wokspaces
 
- ;; =========================================================
- ;; Wokspaces
- ;; =========================================================
- 
- (use-package eyebrowse
-   :init
-   (eyebrowse-mode)
-   :general
-   (:keymaps 'override
-    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
-    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
-    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
-    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
-    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
-    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
-    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
-    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
-    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
-    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
+(use-package eyebrowse
+  :init
+  (eyebrowse-mode)
+  :general
+  (:keymaps 'override
+	    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
+	    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
+	    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
+	    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
+	    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
+	    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
+	    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
+	    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
+	    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+	    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
 
-    "M-w" '(:ignore t :wk "workspace cycling")
-    "M-w k" '(eyebrowse-next-window-config :wk "next")
-    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-    )
-   :config
-   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
-	 eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
-	 )
+	    "M-w" '(:ignore t :wk "workspace cycling")
+	    "M-w k" '(eyebrowse-next-window-config :wk "next")
+	    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
+	    )
+  :config
+  (setq eyebrowse-new-workspace t ; Start new workspace with scratch
+	eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
+	)
+  )
+
+
+;;(use-package persp-mode
+;;  :init
+;;  (persp-mode 1)
+;;  :config
+;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
+;;  (setq wg-morph-on nil)
+;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
+;;
+;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
+;;	persp-auto-save-opt (if noninteractive 0 1)
+;;	persp-nil-name "main"
+;;	persp-auto-save-fname "autosave"
+;;	persp-auto-resume-time -1 ;; Do not autoresume
+;;	persp-remove-buffers-from-nil-persp-behaviour nil
+;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
+;;	)
+;;  )
+
+;;;; Tramp
+(use-package tramp
+
+  :config
+  (setq tramp-default-method "ssh"))
+
+;;;; Magit
+(use-package magit
+  :commands (magit-status)
+  :config
+  ;; Possible performance fix
+  (setq auto-revert-buffer-list-filter
+	'magit-auto-revert-repository-buffer-p)
+
+  (use-package evil-magit) ;; Evil-movements in magit
+  )
+
+
+;;;; Rainbow delimiters
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode)
+  :defer 5
+  )
+
+
+;;;; Jump to function definition
+(use-package imenu-anywhere)
+
+(use-package dumb-jump
+  :hook (prog-mode . dumb-jump-mode)
+  :general
+  (:states '(normal insert visual)
+   :prefix my-leader
+   :global-prefix my-global-leader
+   "" nil
+   "j" '(:ignore t :wk "jump to text")
+   "j d" '(dumb-jump-go :wk "dumb-jump")
+   "j i" '(ivy-imenu-anywhere :wk "imenu")
    )
- 
- 
- ;;(use-package persp-mode
- ;;  :init
- ;;  (persp-mode 1)
- ;;  :config
- ;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
- ;;  (setq wg-morph-on nil)
- ;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
- ;;
- ;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
- ;;	persp-auto-save-opt (if noninteractive 0 1)
- ;;	persp-nil-name "main"
- ;;	persp-auto-save-fname "autosave"
- ;;	persp-auto-resume-time -1 ;; Do not autoresume
- ;;	persp-remove-buffers-from-nil-persp-behaviour nil
- ;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
- ;;	)
- ;;  )
- 
- ;; =========================================================
- ;; Tramp
- ;; =========================================================
- (use-package tramp
- 
-   :config
-   (setq tramp-default-method "ssh"))
- 
- ;; =========================================================
- ;; Magit
- ;; =========================================================
- (use-package magit
-   :commands (magit-status)
-   :config
-   ;; Possible performance fix
-   (setq auto-revert-buffer-list-filter
- 	'magit-auto-revert-repository-buffer-p)
- 
-   (use-package evil-magit) ;; Evil-movements in magit
-   )
- 
- 
- ;; =========================================================
- ;; Rainbow delimiters
- ;; =========================================================
- (use-package rainbow-delimiters
-   :hook (prog-mode . rainbow-delimiters-mode)
-   :defer 5
-   )
- 
- 
- ;; =========================================================
- ;; Jump to function definition
- ;; =========================================================
- (use-package imenu-anywhere)
- 
- (use-package dumb-jump
-   :hook (prog-mode . dumb-jump-mode)
-   :general
-   (:states '(normal insert emacs)
-    :prefix "M-SPC"
-    "" nil
-    "j" '(:ignore t :wk "jump to text")
-    "j d" '(dumb-jump-go :wk "dumb-jump")
-    "j i" '(ivy-imenu-anywhere :wk "imenu")
-    )
-   )
- 
-;; =========================================================
-;; Ivy++
-;; =========================================================
+  )
+
+;;;; Ivy++
 (use-package ivy
   :diminish ivy-mode
   :general
@@ -1026,9 +1027,10 @@
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
+   "C-M-l" 'ivy-immediate-done
    "C-M-k" 'ivy-scroll-down-command
    "C-M-j" 'ivy-scroll-up-command
-   "M-v" 'yank ; For pasting passwords into the minibuffer in tramp
+   "M-p" 'yank ; For pasting passwords into the minibuffer in tramp
    )
   :init
   ;; The default search is ivy--regex-plus
@@ -1074,25 +1076,47 @@
 (use-package amx)
 
 
-;; =========================================================
-;; Flycheck (linting)
-;; =========================================================
+;;;; Flycheck (linting)
 (use-package flycheck)
 
 
 
-;; =========================================================
-;; ouline stuff
-;; =========================================================
+;;;; outline stuff
+
 (use-package outline-magic
   :general
   (:keymaps 'outline-minor-mode-map
-   "<C-tab>" 'outline-cycle)
+   "<C-tab>" 'outline-cycle
+   "M-g h" '(outline-up-heading :wk "up heading level")
+   "M-g j" '(outline-forward-same-level :wk "forward same level")
+   "M-g k" '(outline-backward-same-level :wk "backward same level")
+   "M-g l" '(outline-next-visible-heading :wk "next heading")
+   )
+  :config
+  (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
+  (add-hook 'prog-mode 'outline-minor-mode)
   )
 
-;; =========================================================
-;; LaTeX-stuff (AuCTeX, refTeX and more)
-;; =========================================================
+;; (use-package outshine
+;;   :config
+;;   (add-hook 'outline-minor-mode-hook 'outshine-mode)
+;;   )
+
+
+; ;; ; Outline-minor-mode key map
+; ;;  (define-prefix-command 'cm-map nil "Outline-")
+; ;;  ; MOVE
+; ;;  (define-key cm-map "u" 'outline-up-heading)                ; Up
+; ;;  (define-key cm-map "n" 'outline-next-visible-heading)      ; Next
+; ;;  (define-key cm-map "p" 'outline-previous-visible-heading)  ; Previous
+; ;;  (define-key cm-map "f" 'outline-forward-same-level)        ; Forward - same level
+; ;;  (define-key cm-map "b" 'outline-backward-same-level)       ; Backward - same level
+; ;;  (global-set-key "\M-o" cm-map)
+; 
+; 
+;   )
+
+;;;; LaTeX-stuff (AuCTeX, refTeX and more)
 (use-package auctex
   ;; :straight (auctex :host github
   ;;                   :repo "emacsmirror/auctex"
@@ -1101,25 +1125,27 @@
   ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
   (:keymaps 'TeX-mode-map
-   :prefix "M-SPC m"
-   "ESC" '(:ignore t :wk t)
-   "v" '(TeX-view :wk "view pdf")
-   "c" '(TeX-command-master :wk "compile document")
-   "t" '(reftex-toc :wk "navigate document")
-   "r" '(reftex-toc-Rescan :wk "refresh reftex")
-   "e" '(TeX-next-error :wk "compilation errors")
-   "M-f" '(LaTeX-fill-buffer :wk "fill buffer")
+   :states '(normal motion visual)
+   :prefix my-leader
+   :global-prefix my-global-leader
+   "m ESC" '(:ignore t :wk t)
+   "m v" '(TeX-view :wk "view pdf")
+   "m c" '(TeX-command-master :wk "compile document")
+   "m t" '(reftex-toc :wk "navigate document")
+   "m r" '(reftex-toc-Rescan :wk "refresh reftex")
+   "m e" '(TeX-next-error :wk "compilation errors")
+   "m M-f" '(LaTeX-fill-buffer :wk "fill buffer")
 
-   "i" '(:ignore t :wk "insert")
-   "i m" '(TeX-insert-macro :wk "macro")
-   "i e" '(LaTeX-environment :wk "macro")
-   "i ]" '(LaTeX-close-environment :wk "close environment")
-   "i c" '(reftex-citation :wk "citation")
-   "i r" '(reftex-reference :wk "label")
+   "m i" '(:ignore t :wk "insert")
+   "m i m" '(TeX-insert-macro :wk "macro")
+   "m i e" '(LaTeX-environment :wk "macro")
+   "m i ]" '(LaTeX-close-environment :wk "close environment")
+   "m i c" '(reftex-citation :wk "citation")
+   "m i r" '(reftex-reference :wk "label")
 
-   "M-v" '(:ignore t :wk "change variables")
-   "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
-   "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
+   "m M-v" '(:ignore t :wk "change variables")
+   "m M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
+   "m M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
   )
   (:keymaps 'TeX-mode-map
    :prefix "M-i"
@@ -1134,7 +1160,7 @@
   :init
 
   (add-hook 'LaTeX-mode-hook 'latex-math-mode)
-  (add-hook 'LaTeX-mode-hook #'outline-minor-mode) ; outline-mode for sections
+
   ;; Completion for latex macros
   (setq 
    TeX-auto-global "~/.emacs.d/auctex/auto-global"
@@ -1215,7 +1241,7 @@
   ;; Syntax highlighting
   ;; (not sure if this is correct way to activate)
   (global-font-lock-mode t) 
-
+  (setq-default font-latex-script-display nil) ; Do not lower/lift subscripts/superscripts
 
   (setq LaTeX-includegraphics-read-file 'LaTeX-includegraphics-read-file-relative)
 
@@ -1275,9 +1301,7 @@
   )
 
 
-;; =========================================================
-;; Auto-fill texts
-;; =========================================================
+;;;; Auto-fill texts
 (setq-default fill-column 75)
 (add-hook 'text-mode-hook 'auto-fill-mode)
 (add-hook 'LaTeX-mode 'auto-fill-mode)
@@ -1286,9 +1310,8 @@
 (diminish 'undo-tree-mode)
 (diminish 'auto-fill-mode)
 (diminish 'auto-revert-mode)
-;; =========================================================
-;; Dictionary (flyspell)
-;; =========================================================
+
+;;;; Dictionary (flyspell)
 (use-package flyspell
   :diminish flyspell-mode
   :config
@@ -1299,15 +1322,22 @@
   ;; Flyspell for comments and strings in prog-mode
   (add-hook 'prog-mode 'flyspell-prog-mode)
 
+;;  (setq-default ispell-program-name "/usr/local/bin/aspell")
+
+  (when (executable-find "hunspell")
+    (setq-default ispell-program-name "/usr/local/bin/hunspell")
+    (setq ispell-really-hunspell t)
+    (setenv "DICTIONARY" "english_british")
+    (setq ispell-dictionary "english_british"))
+  
   ;; ;; Not sure that this works
   ;; (setq-default ispell-program-name "hunspell")
   ;; (setq ispell-really-hunspell t)
-  (setq-default ispell-program-name "/usr/local/bin/aspell")
 
   (defvar siliusmv/my-dictionaries
     (list
-     '("british" "en_GB")
-     '("norwegian" "norsk7-tex")))
+     '("british" "english_british")
+     '("norwegian" "norsk_bokmaal")))
 
   (defun siliusmv/choose-dictionary (&optional dict-name)
     (interactive)
@@ -1326,9 +1356,7 @@
   )
 
 
-;; ;; =========================================================
-;; ;; PDF Tools
-;; ;; =========================================================
+;;;; PDF Tools
 (use-package tablist) ;; Apparently necessary for PDF Tools
 (if pdf-tools-p
     (use-package pdf-tools
@@ -1367,16 +1395,20 @@
 
       (general-define-key
        :keymaps 'pdf-view-mode-map
-       :prefix "M-SPC m"
-       "t" '(pdf-outline :wk "toc") 
+       :states '(normal visual)
+       :prefix my-leader
+       :global-prefix my-global-leader
+       "" nil
+       "m" nil
+       "m t" '(pdf-outline :wk "toc") 
 
-       "/" '(isearch-forward :wk "search in buffer")
+       "m /" '(isearch-forward :wk "search in buffer")
 
-       "a" '(:ignore t :wk "annotations")
-       "a t" '(pdf-annot-add-text-annotation :wk "text")
-       "a m" '(pdf-annot-add-markup-annotation :wk "markup")
-       "a d" '(pdf-annot-delete :wk "delete")
-       "a l" '(pdf-annot-list-annotations :wk "list annotations")
+       "m a" '(:ignore t :wk "annotations")
+       "m a t" '(pdf-annot-add-text-annotation :wk "text")
+       "m a m" '(pdf-annot-add-markup-annotation :wk "markup")
+       "m a d" '(pdf-annot-delete :wk "delete")
+       "m a l" '(pdf-annot-list-annotations :wk "list annotations")
        )
 
       ;; Stop the annoying blinking in the pdf
@@ -1386,9 +1418,7 @@
       )
 )
 
-;; =========================================================
-;; which-key
-;; =========================================================
+;;;; which-key
 ;; Display a popup-buffer with the available key-combinations
 ;; whenever a keymap is pressed
 (use-package which-key
@@ -1405,9 +1435,7 @@
 
 
 
-;; =========================================================
-;; Project management
-;; =========================================================
+;;;; Project management
 (use-package projectile
 
   :diminish projectile-mode
@@ -1419,9 +1447,7 @@
 ;; Install ag or ripgrep!!!!
 
 
-;; ;; =========================================================
-;; ;; Terminal
-;; ;; =========================================================
+;;;; Terminal
 ;; (use-package multi-term
 ;;   :commands (multi-term)
 ;;   :general
@@ -1448,14 +1474,18 @@
 ;;   )
 
 ;; Eshell stuff
-(add-hook 'eshell-mode-hook
-	  (lambda ()
-	    (setq company-idle-delay nil)))
+(use-package eshell
+  :config
+  (add-hook 'eshell-mode-hook
+	    (lambda ()
+	      (setq-local company-idle-delay nil)
+	      (add-to-list 'eshell-visual-commands "tmux")
+	      (add-to-list 'eshell-visual-commands "htop")
+	    ))
+  )
 
 
-;; =========================================================
-;; Pairing of parentheses
-;; =========================================================
+;;;; Pairing of parentheses
 (use-package elec-pair
   :init
   :defer 5
@@ -1474,10 +1504,7 @@
   )
 
 
-;; =========================================================
-;; Org-mode
-;; =========================================================
-;;(use-package org-mode
+;;;; Org-mode
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
@@ -1488,7 +1515,7 @@
 
 (add-hook 'org-mode-hook
 	  (lambda ()
-	    (nlinum-mode -1)))
+	    (auto-fill-mode)))
 
 (defun siliusmv/org-cycle-current-headline ()
   "Cycle the current headline. Taken from
@@ -1499,37 +1526,67 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(motion normal insert visual)
+ :states '(normal visual insert)
  "<tab>" 'org-cycle
- "C-<tab>" 'siliusmv/org-cycle-current-headline
+ "<C-tab>" 'org-previous-visible-heading
+; "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(normal visual)
- "g" nil
- "g s" '(avy-org-goto-heading-timer :wk "avy heading")
- "g j" '(org-next-visible-heading :wk "next heading")
- "g k" '(org-previous-visible-heading :wk "prev heading")
- "g h" '(outline-up-heading :wk "up one heading")
- "g M-j" '(org-next-block :wk "next block")
- "g M-k" '(org-previous-block :wk "next block")
+ :states '(normal visual insert)
+ :prefix my-leader
+ :global-prefix my-global-leader
+ "m TAB" '(org-global-cycle :wk "Cycle buffer")
  )
+
 
 (general-define-key
  :keymaps 'org-mode-map
- "C-M-j" '(org-next-visible-heading :wk "next heading")
- "C-M-k" '(org-prev-visible-heading :wk "prev heading")
+ :states '(normal visual insert)
+ "M-g" nil
+ "M-g s" '(avy-org-goto-heading-timer :wk "avy heading")
+ "M-g j" '(org-forward-heading-same-level :wk "forward same level")
+ "M-g k" '(org-backward-heading-same-level :wk "backward same level")
+ "M-g h" '(org-up-heading-safe :wk "up one heading")
+ "M-g l" '(org-next-visible-heading :wk "next heading")
+ "M-g M-j" '(org-next-block :wk "next block")
+ "M-g M-k" '(org-previous-block :wk "next block")
  )
 
-(setq org-export-use-babel nil)
+(defun my-org-screenshot ()
+  "Take a screenshot into a time stamped unique-named file in the
+same directory as the org-buffer and insert a link to this file."
+  (interactive)
+  (org-display-inline-images)
+  (setq filename
+        (concat
+         (make-temp-name
+          (concat (file-name-nondirectory (buffer-file-name))
+                  "_imgs/"
+                  (format-time-string "%Y%m%d_%H%M%S_")) ) ".png"))
+  (unless (file-exists-p (file-name-directory filename))
+    (make-directory (file-name-directory filename)))
+  ; take screenshot
+  (if (eq system-type 'darwin)
+      (call-process "screencapture" nil nil nil "-i" filename))
+  (if (eq system-type 'gnu/linux)
+      (call-process "import" nil nil nil filename))
+  ; insert into file if correctly taken
+  (if (file-exists-p filename)
+    (insert (concat "[[file:" filename "]]"))))
+
+
+;(setq org-export-use-babel nil)
 
 ;; Necessary for exporting org to html
 (use-package htmlize)
 
 ;; Prettify pdf exports
 (require 'ox-latex)
+(require 'ox-beamer)
 (add-to-list 'org-latex-packages-alist '("" "minted"))
+
 (setq org-latex-listings 'minted)
 
 (setq org-latex-pdf-process
@@ -1553,9 +1610,45 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 
-;; =========================================================================
-;; Modeline
-;; =========================================================================
+(use-package org-ref
+  :init
+  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
+	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/org_attempt/notes.org"
+	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
+	org-ref-pdf-directory "~/OneDrive - NTNU/literature/org_attempt/*read/")
+
+  (setq org-ref-completion-library 'org-ref-ivy-cite)
+  
+  ;; open pdf with system pdf viewer (works on mac)
+  (setq bibtex-completion-pdf-open-function
+	(lambda (fpath)
+	  (start-process "open" "*open*" "open" fpath)))
+
+  ;; https://github.com/jkitchin/org-ref
+  (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
+
+  (require 'org-ref)
+  (require 'org-ref-latex)
+  (require 'org-ref-bibtex)
+  (require 'org-ref-pdf)
+  (require 'org-ref-url-utils)
+  (require 'doi-utils)
+  (require 'org-ref-arxiv)
+  (require 'org-ref-scopus)
+
+  (add-hook 'TeX-mode-hook
+	    (lambda ()
+	      (org-ref-latex-cite-on)))
+  (general-define-key
+   :keymaps 'TeX-mode-map
+   "<mouse-3>" 'org-ref-latex-click
+   )
+
+  
+  )
+
+
+;;;; Modeline
 
 
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
@@ -1711,9 +1804,21 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 
 
-;; =========================================================
-;; Other stuff
-;; =========================================================
+;;;; Midnight mode
+(use-package midnight)
+;;;; Yasnippet
+(use-package yasnippet
+  ;; :general
+  ;; (:keymaps 'yas-minor-mode-map
+  ;;  "<tab>" 'yas-maybe-expand
+  ;;  )
+  :init
+  (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
+  :config
+  (yas-global-mode 1)
+  )
+
+;;;; Other stuff
 
 ;; Restore last emacs session
 (desktop-save-mode 1)
@@ -1726,9 +1831,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 
 
-;; =========================================================
-;; Mandatory stuff
-;; =========================================================
+;;; Mandatory stuff
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1738,6 +1841,10 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
+ '(org-agenda-files
+   (quote
+    ("~/OneDrive - NTNU/literature/org_attempt/notes.org")))
+ '(pdf-tools-handle-upgrades nil)
  '(send-mail-function (quote mailclient-send-it)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
