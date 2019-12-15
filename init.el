@@ -266,12 +266,19 @@
    "/" '(counsel-grep-or-swiper :wk "search in buffer")
    "M-k" '(scroll-down-command :wk t)
    "M-j" '(scroll-up-command :wk t)
+   "M-h" '(evil-jump-backward :wk "jump backward")
+   "M-l" '(evil-jump-forward :wk "jump forward")
    )
 
   (general-define-key
    :keymaps 'minibuffer-local-map
    "M-p" '(yank :wk "copy from clipboard")
    ) 
+
+  (general-define-key
+   :states 'visual
+   :keymaps 'override
+   "TAB" 'indent-for-tab-command)
 
   ;; Editing commands
   (general-define-key
@@ -417,7 +424,7 @@
    "w f" '(delete-other-windows :wk "focus on window")
    "w v" '(split-window-right :wk "split vertical")
    "w s" '(split-window-below :wk "split")
-   "w o" '(ace-window :wk "jump to other window")
+   "w o" '(ace-window :wk "other window")
 
    ;; "Open programs" - keymap
    "o" '(:ignore t :wk "open program")
@@ -431,7 +438,7 @@
    "M-w n" '(eyebrowse-create-window-config :wk "new")
    "M-w k" '(eyebrowse-next-window-config :wk "next")
    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-   "M-w s" '(eyebrowse-switch-to-window-config :wk "switch to other")
+   "M-w o" '(eyebrowse-switch-to-window-config :wk "other workspace")
    "M-w r" '(eyebrowse-rename-window-config :wk "rename")
    "M-w d" '(eyebrowse-close-window-config :wk "close current")
    "TAB" '(eyebrowse-switch-to-window-config :wk "switch workspace")
@@ -439,17 +446,28 @@
 
   )
  
-;; ;;;; Keychords
-;; (use-package key-chord
-;;   :config
-;;   (key-chord-mode t)
-;;   (general-define-key
-;;    :states '(insert visual)
-;;    (general-chord "jk") 'evil-normal-state
-;;    (general-chord "kj") 'evil-normal-state
-;;    )
-;;   )
+;;;; Keychords
+(use-package key-chord
+  :config
+  (key-chord-mode t)
+  (general-define-key
+   :states '(insert visual)
+   (general-chord "jk") 'evil-normal-state
+   (general-chord "kj") 'evil-normal-state
+   )
+  )
 
+
+;;;; Polymode
+(use-package polymode)
+
+(use-package poly-org
+  :init
+  (add-hook 'org-mode-hook 'poly-org-mode) 
+  )
+
+(use-package poly-R)
+(use-package poly-markdown)
 
 ;;;; Dired stuff
 (defun dired-hide-dotfiles ()
@@ -688,10 +706,10 @@
 ;;;; Text navigation
 
 (use-package avy
-
   :general
   (:states '(normal visual)
-   "s" 'avy-goto-char-timer
+   "s" 'avy-goto-char-2
+   "S" 'avy-goto-line
    )
   :config
   (setq avy-style 'at-full
@@ -1515,9 +1533,17 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
  :states '(normal visual insert)
  "<tab>" 'org-cycle
  "<C-tab>" 'org-previous-visible-heading
- "M-SPC m TAB" '(org-global-cycle :wk "Cycle buffer")
 ; "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
+
+(general-define-key
+ :keymaps 'org-mode-map
+ :states '(normal visual insert)
+ :prefix my-leader
+ :global-prefix my-global-leader
+ "m TAB" '(org-global-cycle :wk "Cycle buffer")
+ )
+
 
 (general-define-key
  :keymaps 'org-mode-map
