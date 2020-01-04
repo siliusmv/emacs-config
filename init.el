@@ -274,7 +274,7 @@
   (general-define-key
    :states 'visual
    :keymaps 'override
-   "TAB" 'indent-for-tab-command)
+   "<tab>" 'indent-for-tab-command)
 
   ;; Editing commands
   (general-define-key
@@ -321,6 +321,7 @@
    "F" '(flycheck-previous-error :wk "flycheck: prev error")
    "b" '(evil-next-buffer :wk "next buffer")
    "B" '(evil-prev-buffer :wk "prev buffer")
+   "l" '(avy-goto-line :wk "choose line")
    )
 
 ;;  (defvar my-main-mode-map (make-sparse-keymap))
@@ -424,34 +425,31 @@
 
    ;; "Open programs" - keymap
    "o" '(:ignore t :wk "open program")
-   "o t" '(multi-term :wk "terminal")
+   "o e" '(eshell :wk "eshell")
    "o r" '(run-ess-r :wk "R session")
-   "o f" '(make-frame-command :wk "frame")
    "o d" '(dired :wk "dired")
 
-   ;; "Workspaces"
-   "M-w" '(:ignore t :wk "workspaces")
-   "M-w n" '(eyebrowse-create-window-config :wk "new")
-   "M-w k" '(eyebrowse-next-window-config :wk "next")
-   "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-   "M-w o" '(eyebrowse-switch-to-window-config :wk "other workspace")
-   "M-w r" '(eyebrowse-rename-window-config :wk "rename")
-   "M-w d" '(eyebrowse-close-window-config :wk "close current")
-   "TAB" '(eyebrowse-switch-to-window-config :wk "switch workspace")
+   ;; "Workspaces (tabs)"
+   "t" '(:ignore t :wk "workspaces")
+   "t k" '(eyebrowse-next-window-config :wk "next")
+   "t j" '(eyebrowse-prev-window-config :wk "prev")
+   "t o" '(eyebrowse-switch-to-window-config :wk "other workspace")
+   "t r" '(eyebrowse-rename-window-config :wk "rename")
+   "t d" '(eyebrowse-close-window-config :wk "close current")
    )
 
   )
  
 ;;;; Keychords
-(use-package key-chord
-  :config
-  (key-chord-mode t)
-  (general-define-key
-   :states '(insert visual)
-   (general-chord "jk") 'evil-normal-state
-   (general-chord "kj") 'evil-normal-state
-   )
-  )
+;; (use-package key-chord
+;;   :config
+;;   (key-chord-mode t)
+;;   (general-define-key
+;;    :states '(insert visual)
+;;    (general-chord "jk") 'evil-normal-state
+;;    (general-chord "kj") 'evil-normal-state
+;;    )
+;;   )
 
 
 ;;;; Polymode
@@ -462,7 +460,7 @@
   (add-hook 'org-mode-hook 'poly-org-mode) 
   )
 
-(use-package poly-R)
+;(use-package poly-R)
 (use-package poly-markdown)
 
 ;;;; Dired stuff
@@ -482,7 +480,7 @@
 
 (general-define-key
  :keymaps 'dired-mode-map
- :states '(normal visual)
+ :states '(normal visual motion)
  :prefix my-leader
  :global-prefix my-global-leader
  "" nil
@@ -491,7 +489,15 @@
  "m m" '(dired-do-rename :wk "move")
  "m d" '(dired-do-delete :wk "delete")
  "m s" '(dired-do-symlink :wk "symlink")
+ "m +" '(dired-create-directory :wk "mkdir")
+ "m R" '(dired-do-rename-regexp :wk "rename regexp")
  )
+
+;; Set dired ls arguments
+;; A: all elements, but . and ..
+;; l: required
+;; h: human readable
+(setq dired-listing-switches "-Alh")
 
 ;;;; Elisp stuff
 (general-define-key
@@ -704,13 +710,12 @@
 (use-package avy
   :general
   (:states '(normal visual)
-   "s" 'avy-goto-char-2
-   "S" 'avy-goto-line
+   "s" 'avy-goto-char-timer
    )
   :config
   (setq avy-style 'at-full
 	avy-all-windows t
-	avy-timeout-seconds 0.2)
+	avy-timeout-seconds 0.5)
   )
 
 (use-package ace-window
@@ -730,8 +735,10 @@
 
   (general-define-key
    :keymaps 'company-active-map
-   "<tab>" 'company-complete-common-or-cycle
-   "<backtab>" 'company-select-previous
+   ;"<tab>" 'company-complete-common-or-cycle
+   ;"<backtab>" 'company-select-previous
+   "<tab>" '(:ignore t)
+   "<backtab>" '(:ignore t)
    "<return>" '(:ignore t)
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
@@ -869,11 +876,21 @@
 	     company-R-library :separate)
 	    company-files
 	    )))
+
+  (defun my-inferior-ess-company-function ()
+    (set (make-local-variable 'company-backends)
+	 '( (company-R-args
+	     company-R-objects
+	     company-R-library :separate)
+	    company-files
+	    company-capf
+	    )))
+
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
 					; Company settings for ess
   (add-hook 'ess-mode-hook 'my-ess-company-function)
-  (add-hook 'inferior-ess-mode-hook 'my-ess-company-function)
+  (add-hook 'inferior-ess-mode-hook 'my-inferior-ess-company-function)
 
 					; Eglot stuff
   (add-hook 'ess-mode-hook 'eglot-ensure)
@@ -980,6 +997,19 @@
   :config
   (setq tramp-default-method "ssh"))
 
+;;;; Undo-tree
+(use-package undo-tree
+  :diminish
+  :config
+  ;; Always have it on
+  (global-undo-tree-mode)
+
+  ;; Each node in the undo tree should have a timestamp
+  (setq undo-tree-visualizer-timestamps t)
+
+  ;; Show a diff window displaying changes
+  (setq undo-tree-visualizer-diff t)
+  )
 ;;;; Magit
 (use-package magit
   :commands (magit-status)
@@ -1020,8 +1050,8 @@
   :diminish ivy-mode
   :general
    (:keymaps 'ivy-minibuffer-map
-   "<tab>" 'ivy-next-line
-   "<backtab>" 'ivy-previous-line
+   ;"<tab>" 'ivy-next-line
+   ;"<backtab>" 'ivy-previous-line
    "M-j" 'ivy-next-line
    "M-k" 'ivy-previous-line
    "M-l" 'ivy-alt-done
@@ -1094,7 +1124,8 @@
    )
   :config
   (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
-  (add-hook 'prog-mode 'outline-minor-mode)
+  (add-hook 'prog-mode-hook 'outline-minor-mode)
+  (add-hook 'org-mode-hook (lambda () (outline-minor-mode -1)))
   )
 
 ;; (use-package outshine
@@ -1307,7 +1338,6 @@
 (add-hook 'LaTeX-mode 'auto-fill-mode)
 (diminish 'auto-fill-function)
 
-(diminish 'undo-tree-mode)
 (diminish 'auto-fill-mode)
 (diminish 'auto-revert-mode)
 
@@ -1482,6 +1512,10 @@
 	      (add-to-list 'eshell-visual-commands "tmux")
 	      (add-to-list 'eshell-visual-commands "htop")
 	    ))
+  (setq eshell-cmpl-ignore-case t
+	eshell-cmpl-autolist t
+	eshell-cmpl-cycle-completions nil)
+
   )
 
 
@@ -1513,9 +1547,12 @@
    (shell . t)
    (C . t)))
 
+;; auto-fill mode
 (add-hook 'org-mode-hook
 	  (lambda ()
 	    (auto-fill-mode)))
+
+(add-hook 'org-mode-hook 'org-indent-mode)
 
 (defun siliusmv/org-cycle-current-headline ()
   "Cycle the current headline. Taken from
@@ -1526,11 +1563,20 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (general-define-key
  :keymaps 'org-mode-map
- :states '(normal visual insert)
- "<tab>" 'org-cycle
+ :states '(normal)
+ "<tab>" 'org-cycle ; Evil-collection is stupid
  "<C-tab>" 'org-previous-visible-heading
 ; "C-<tab>" 'siliusmv/org-cycle-current-headline
  )
+
+;(general-define-key
+; :keymaps 'org-mode-map
+; :states '(insert visual)
+; "<tab>" 'indent-for-tab-command
+; )
+
+
+(setq org-src-tab-acts-natively t)
 
 (general-define-key
  :keymaps 'org-mode-map
@@ -1554,29 +1600,6 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
  "M-g M-k" '(org-previous-block :wk "next block")
  )
 
-(defun my-org-screenshot ()
-  "Take a screenshot into a time stamped unique-named file in the
-same directory as the org-buffer and insert a link to this file."
-  (interactive)
-  (org-display-inline-images)
-  (setq filename
-        (concat
-         (make-temp-name
-          (concat (file-name-nondirectory (buffer-file-name))
-                  "_imgs/"
-                  (format-time-string "%Y%m%d_%H%M%S_")) ) ".png"))
-  (unless (file-exists-p (file-name-directory filename))
-    (make-directory (file-name-directory filename)))
-  ; take screenshot
-  (if (eq system-type 'darwin)
-      (call-process "screencapture" nil nil nil "-i" filename))
-  (if (eq system-type 'gnu/linux)
-      (call-process "import" nil nil nil filename))
-  ; insert into file if correctly taken
-  (if (file-exists-p filename)
-    (insert (concat "[[file:" filename "]]"))))
-
-
 ;(setq org-export-use-babel nil)
 
 ;; Necessary for exporting org to html
@@ -1589,10 +1612,11 @@ same directory as the org-buffer and insert a link to this file."
 
 (setq org-latex-listings 'minted)
 
-(setq org-latex-pdf-process
-      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+;(setq org-latex-pdf-process
+;      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+;        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+;        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+(setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
 
 ;; Do asynchronous org-babel calls in an R session
 (use-package ob-session-async
@@ -1612,10 +1636,10 @@ same directory as the org-buffer and insert a link to this file."
 
 (use-package org-ref
   :init
-  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
-	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/org_attempt/notes.org"
-	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/org_attempt/sources.bib")
-	org-ref-pdf-directory "~/OneDrive - NTNU/literature/org_attempt/*read/")
+  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
+	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/bibliography.org"
+	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
+	org-ref-pdf-directory "~/OneDrive - NTNU/literature/*read/")
 
   (setq org-ref-completion-library 'org-ref-ivy-cite)
   
@@ -1625,7 +1649,6 @@ same directory as the org-buffer and insert a link to this file."
 	  (start-process "open" "*open*" "open" fpath)))
 
   ;; https://github.com/jkitchin/org-ref
-  (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
 
   (require 'org-ref)
   (require 'org-ref-latex)
@@ -1843,7 +1866,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
  '(evil-search-module (quote evil-search))
  '(org-agenda-files
    (quote
-    ("~/OneDrive - NTNU/literature/org_attempt/notes.org")))
+    ("~/OneDrive - NTNU/literature/bibliography.org" "~/OneDrive - NTNU/literature/org_attempt/notes.org")))
  '(pdf-tools-handle-upgrades nil)
  '(send-mail-function (quote mailclient-send-it)))
 (custom-set-faces
