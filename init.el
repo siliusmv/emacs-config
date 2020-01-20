@@ -14,7 +14,7 @@
 ;;; Non-package specific stuff
 ;;;; Global variables
 (defvar mu4e-p nil)
-(defvar init-theme "dark")
+(defvar init-theme "light")
 (defvar init-dict "british")
 (defvar my-gc-cons-threshold (* 1024 1024 5))
 (defvar pdf-tools-p t)
@@ -428,6 +428,7 @@
    "o e" '(eshell :wk "eshell")
    "o r" '(run-ess-r :wk "R session")
    "o d" '(dired :wk "dired")
+   "o t" '(vterm :wk "terminal")
 
    ;; "Workspaces (tabs)"
    "t" '(:ignore t :wk "workspaces")
@@ -451,17 +452,6 @@
 ;;    )
 ;;   )
 
-
-;;;; Polymode
-(use-package polymode)
-
-(use-package poly-org
-  :init
-  (add-hook 'org-mode-hook 'poly-org-mode) 
-  )
-
-;(use-package poly-R)
-(use-package poly-markdown)
 
 ;;;; Dired stuff
 (defun dired-hide-dotfiles ()
@@ -909,9 +899,9 @@
 	       (outline-minor-mode)
  	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
  	       (defun outline-level ()
- 		 (cond ((looking-at "#####") 1)
+ 		 (cond ((looking-at "###") 1)
  		       ((looking-at "####") 2)
- 		       ((looking-at "###") 3)
+ 		       ((looking-at "#####") 3)
  		       ((looking-at ".*<- function(.*") 4)
  		       (t 1000)))
 	       ))
@@ -1125,7 +1115,6 @@
   :config
   (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
   (add-hook 'prog-mode-hook 'outline-minor-mode)
-  (add-hook 'org-mode-hook (lambda () (outline-minor-mode -1)))
   )
 
 ;; (use-package outshine
@@ -1511,6 +1500,8 @@
 	      (setq-local company-idle-delay nil)
 	      (add-to-list 'eshell-visual-commands "tmux")
 	      (add-to-list 'eshell-visual-commands "htop")
+	      (add-to-list 'eshell-visual-commands "top")
+	      (add-to-list 'eshell-visual-commands "screen")
 	    ))
   (setq eshell-cmpl-ignore-case t
 	eshell-cmpl-autolist t
@@ -1518,6 +1509,9 @@
 
   )
 
+;; Libvterm
+(use-package vterm)
+;; Consider vterm-toggle as well. Seems nice
 
 ;;;; Pairing of parentheses
 (use-package elec-pair
@@ -1840,6 +1834,17 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
   :config
   (yas-global-mode 1)
   )
+
+
+;;;; Polymode
+(use-package polymode)
+
+(use-package poly-org
+  :init
+  (add-hook 'org-mode-hook 'poly-org-mode))
+
+(use-package poly-R) ;; This one must run after ESS
+;(use-package poly-markdown)
 
 ;;;; Other stuff
 
