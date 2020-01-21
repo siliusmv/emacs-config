@@ -19,6 +19,7 @@
 (defvar my-gc-cons-threshold (* 1024 1024 5))
 (defvar pdf-tools-p t)
 (defvar macos-p (string-equal system-type "darwin"))
+;; (setq tab-always-indent 'complete)
 
 ;;;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
@@ -214,6 +215,7 @@
 
 
 ;;; Package specific settings
+
 ;;;; Evil-mode
 
 (use-package evil
@@ -452,7 +454,6 @@
 ;;    )
 ;;   )
 
-
 ;;;; Dired stuff
 (defun dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
@@ -500,7 +501,9 @@
  )
 
 ;;;; Language servers
-(use-package eglot)
+(use-package eglot
+  :config
+  (setq eglot-stay-out-of '(company))
 
 
 (use-package flymake
@@ -749,7 +752,6 @@
    "C-M-k" 'company-search-repeat-backward
    )
 
-  
   (general-define-key
    :states 'insert
    :keymaps 'company-mode-map
@@ -783,7 +785,6 @@
 (use-package company-statistics
   :config
   (add-hook 'after-init-hook 'company-statistics-mode))
-
 
 
 ;;;; ESS (Emacs Speaks Statistics)
@@ -853,36 +854,40 @@
        ;; *R*, *shell* buffers above prompt:
        (setq comint-scroll-to-bottom-on-input 'this)))
 
+
+
   (defun my-ess-company-function ()
     (set (make-local-variable 'company-backends)
-	 '( (company-capf ; Works together with eglot
-	     company-files
-	     company-R-args
-	     company-R-objects
-	     company-R-library
-	     company-dabbrev-code :separate)
-	    (company-R-args
-	     company-R-objects
-	     company-R-library :separate)
+	 '(
+	   company-capf
+	   company-files
+	   (company-R-args
+	    company-R-objects
+	    company-R-library :separate)
+	   company-dabbrev-code
+	   (company-capf ; Works together with eglot
 	    company-files
-	    )))
+	    company-R-args
+	    company-R-objects
+	    company-R-library
+	    company-dabbrev-code :separate)
+	   ))))
 
   (defun my-inferior-ess-company-function ()
     (set (make-local-variable 'company-backends)
-	 '( (company-R-args
-	     company-R-objects
-	     company-R-library :separate)
-	    company-files
-	    company-capf
-	    )))
+  	 '( (company-R-args
+  	     company-R-objects
+  	     company-R-library :separate)
+  	    company-files
+  	    company-capf
+  	    )))
 
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
-					; Company settings for ess
+  ;; Company stuff
   (add-hook 'ess-mode-hook 'my-ess-company-function)
   (add-hook 'inferior-ess-mode-hook 'my-inferior-ess-company-function)
 
-					; Eglot stuff
   (add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
 
@@ -894,17 +899,17 @@
   ;; 	      (run-with-timer 300 300 'comint-truncate-buffer)
   ;; 	      ))
 
-  (add-hook 'ess-mode-hook
-	    '(lambda ()
-	       (outline-minor-mode)
- 	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
- 	       (defun outline-level ()
- 		 (cond ((looking-at "###") 1)
- 		       ((looking-at "####") 2)
- 		       ((looking-at "#####") 3)
- 		       ((looking-at ".*<- function(.*") 4)
- 		       (t 1000)))
-	       ))
+  ;; (add-hook 'ess-mode-hook
+  ;; 	    '(lambda ()
+  ;; 	       (outline-minor-mode)
+  ;; 	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
+  ;; 	       (defun outline-level ()
+  ;; 		 (cond ((looking-at "###") 1)
+  ;; 		       ((looking-at "####") 2)
+  ;; 		       ((looking-at "#####") 3)
+  ;; 		       ((looking-at ".*<- function(.*") 4)
+  ;; 		       (t 1000)))
+  ;; 	       ))
   )
 
 
@@ -1103,38 +1108,32 @@
 
 ;;;; outline stuff
 
-(use-package outline-magic
-  :general
-  (:keymaps 'outline-minor-mode-map
-   "<C-tab>" 'outline-cycle
-   "M-g h" '(outline-up-heading :wk "up heading level")
-   "M-g j" '(outline-forward-same-level :wk "forward same level")
-   "M-g k" '(outline-backward-same-level :wk "backward same level")
-   "M-g l" '(outline-next-visible-heading :wk "next heading")
-   )
-  :config
-  (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
-  (add-hook 'prog-mode-hook 'outline-minor-mode)
-  )
-
-;; (use-package outshine
+;; (use-package outline-magic
+;; ;;  :general
+;; ;;  (:keymaps 'outline-minor-mode-map
+;; ;;   "<C-tab>" 'outline-cycle
+;; ;;   "M-g h" '(outline-up-heading :wk "up heading level")
+;; ;;   "M-g j" '(outline-forward-same-level :wk "forward same level")
+;; ;;   "M-g k" '(outline-backward-same-level :wk "backward same level")
+;; ;;   "M-g l" '(outline-next-visible-heading :wk "next heading")
+;; ;;   )
 ;;   :config
-;;   (add-hook 'outline-minor-mode-hook 'outshine-mode)
+;;   (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
+;;   (add-hook 'prog-mode-hook 'outline-minor-mode)
 ;;   )
 
 
-; ;; ; Outline-minor-mode key map
-; ;;  (define-prefix-command 'cm-map nil "Outline-")
-; ;;  ; MOVE
-; ;;  (define-key cm-map "u" 'outline-up-heading)                ; Up
-; ;;  (define-key cm-map "n" 'outline-next-visible-heading)      ; Next
-; ;;  (define-key cm-map "p" 'outline-previous-visible-heading)  ; Previous
-; ;;  (define-key cm-map "f" 'outline-forward-same-level)        ; Forward - same level
-; ;;  (define-key cm-map "b" 'outline-backward-same-level)       ; Backward - same level
-; ;;  (global-set-key "\M-o" cm-map)
-; 
-; 
-;   )
+(use-package outshine
+  :init (outshine-mode) ;; For some reason this is necessary
+  :general
+  (:keymaps 'outshine-mode-map
+   "<C-tab>" 'outshine-cycle
+   )
+  :config
+  (add-hook 'LaTeX-mode-hook 'outshine-mode)
+  (add-hook 'prog-mode-hook 'outshine-mode)
+  )
+
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
 (use-package auctex
@@ -1670,9 +1669,9 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
 
-(use-package fancy-battery
-  :config
-  (fancy-battery-mode))
+;; (use-package fancy-battery
+;;   :config
+;;   (fancy-battery-mode))
 
 (use-package doom-modeline
   :config
@@ -1736,7 +1735,7 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
   
   (doom-modeline-def-modeline 'main
     '(bar workspace-name window-number modals matches buffer-info remote-host buffer-position parrot selection-info)
-    '(objed-state misc-info persp-name fancy-battery my-time grip irc mu4e github debug lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs checker))
+    '(objed-state misc-info persp-name battery my-time grip irc mu4e github debug lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs checker))
 
   (doom-modeline-def-modeline 'minimal
     '(bar matches buffer-info-simple)
@@ -1744,11 +1743,11 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
   (doom-modeline-def-modeline 'special
     '(bar window-number modals matches buffer-info buffer-position parrot selection-info)
-    '(objed-state misc-info fancy-battery my-time irc-buffers debug lsp minor-modes input-method indent-info buffer-encoding major-mode process checker))
+    '(objed-state misc-info battery my-time irc-buffers debug lsp minor-modes input-method indent-info buffer-encoding major-mode process checker))
 
   (doom-modeline-def-modeline 'project
     '(bar window-number buffer-default-directory)
-    '(misc-info fancy-battery my-time mu4e github debug major-mode process))
+    '(misc-info battery my-time mu4e github debug major-mode process))
 
   (doom-modeline-def-modeline 'package
     '(bar window-number package)
@@ -1772,7 +1771,7 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
   (doom-modeline-def-modeline 'timemachine
     '(bar window-number matches git-timemachine buffer-position parrot selection-info)
-    '(misc-info fancy-battery my-time mu4e github debug minor-modes indent-info buffer-encoding major-mode))
+    '(misc-info battery my-time mu4e github debug minor-modes indent-info buffer-encoding major-mode))
 
 
   (defun doom-modeline-set-main-modeline (&optional default)
