@@ -215,7 +215,6 @@
 
 
 ;;; Package specific settings
-
 ;;;; Evil-mode
 
 (use-package evil
@@ -428,9 +427,10 @@
    ;; "Open programs" - keymap
    "o" '(:ignore t :wk "open program")
    "o e" '(eshell :wk "eshell")
-   "o r" '(run-ess-r :wk "R session")
+   "o R" '(run-ess-r :wk "R session")
    "o d" '(dired :wk "dired")
-   "o t" '(vterm :wk "terminal")
+   "o r" '(ranger :wk "ranger")
+   "o t" '(vterm-toggle-cd :wk "terminal")
 
    ;; "Workspaces (tabs)"
    "t" '(:ignore t :wk "workspaces")
@@ -489,6 +489,13 @@
 ;; l: required
 ;; h: human readable
 (setq dired-listing-switches "-Alh")
+
+(use-package ranger
+  :general
+  (:keymaps 'ranger-mode-map
+   "q" 'ranger-disable
+   ))
+
 
 ;;;; Elisp stuff
 (general-define-key
@@ -1510,7 +1517,7 @@
 
 ;; Libvterm
 (use-package vterm)
-;; Consider vterm-toggle as well. Seems nice
+(use-package vterm-toggle)
 
 ;;;; Pairing of parentheses
 (use-package elec-pair
