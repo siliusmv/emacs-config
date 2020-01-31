@@ -72,7 +72,7 @@
 
 
 ;; Use daemon
-(server-start)
+;; (server-start)
 
 
 ;;;; Import the shell environment
@@ -93,20 +93,24 @@
 
        (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
        (exec-path-from-shell-initialize)
-       )
+       )))
 
-     ;; macOS stuff
+
+;; macOS stuff
+(if macos-p
+    (progn
      (setq mac-option-modifier nil ;; do not use the option key
 	   mac-command-modifier 'meta) ;; command is meta
 
+     (setq dired-use-ls-dired nil)
      ))
 
 (defun toggle-fullscreen ()
   "Toggle full screen"
   (interactive)
   (set-frame-parameter
-     nil 'fullscreen
-     (when (not (frame-parameter nil 'fullscreen)) 'fullboth)))
+   nil 'fullscreen
+   (when (not (frame-parameter nil 'fullscreen)) 'fullboth)))
 
 
 
@@ -455,6 +459,7 @@
 ;;   )
 
 ;;;; Dired stuff
+
 (defun dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
   (interactive)
@@ -469,20 +474,25 @@
  "h" 'dired-up-directory
  )
 
-(general-define-key
- :keymaps 'dired-mode-map
- :states '(normal visual motion)
- :prefix my-leader
- :global-prefix my-global-leader
- "" nil
- "m h" '(dired-hide-dotfiles :wk "hide dotfiles")
- "m c" '(dired-do-copy :wk "copy")
- "m m" '(dired-do-rename :wk "move")
- "m d" '(dired-do-delete :wk "delete")
- "m s" '(dired-do-symlink :wk "symlink")
- "m +" '(dired-create-directory :wk "mkdir")
- "m R" '(dired-do-rename-regexp :wk "rename regexp")
- )
+;; Emacs refuses to allow this in normal mode if the code is run immediately
+(run-with-idle-timer
+ 5 nil
+ (lambda ()
+   (general-define-key
+    :keymaps 'dired-mode-map
+    :states '(normal visual motion)
+    :prefix my-leader
+    :global-prefix my-global-leader
+    "" nil
+    "m" '(:ignore t :wk "mode specific")
+    "m h" '(dired-hide-dotfiles :wk "hide dotfiles")
+    "m c" '(dired-do-copy :wk "copy")
+    "m m" '(dired-do-rename :wk "move")
+    "m d" '(dired-do-delete :wk "delete")
+    "m s" '(dired-do-symlink :wk "symlink")
+    "m +" '(dired-create-directory :wk "mkdir")
+    "m R" '(dired-do-rename-regexp :wk "rename regexp")
+    )))
 
 ;; Set dired ls arguments
 ;; A: all elements, but . and ..
@@ -906,9 +916,6 @@
   ;; 	      (run-with-timer 300 300 'comint-truncate-buffer)
   ;; 	      ))
 
-  ;; (add-hook 'ess-mode-hook
-  ;; 	    '(lambda ()
-  ;; 	       (outline-minor-mode)
   ;; 	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
   ;; 	       (defun outline-level ()
   ;; 		 (cond ((looking-at "###") 1)
@@ -1852,11 +1859,16 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 (use-package poly-R) ;; This one must run after ESS
 ;(use-package poly-markdown)
 
-;;;; Other stuff
+;;;; Desktop-save-mode
 
 ;; Restore last emacs session
-(desktop-save-mode 1)
-(setq desktop-save 'ask)
+;; This is done after-init to not load desktop eagerly
+(add-hook 'after-init-hook 
+	  (lambda ()
+	    (desktop-save-mode 1)
+	    (setq desktop-save 'ask)))
+
+;;;; Other stuff
 
 
 
