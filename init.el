@@ -9,7 +9,6 @@
 ;; Create a which-key map for magit
 ;; Get full control of which-key
 ;; Ensure that the dictionary in auctex is correct, and not "default"
-;; Start using outshine instead of outline
 
 ;;; Non-package specific stuff
 ;;;; Global variables
@@ -367,11 +366,12 @@
    "h i" '(info :wk "read the manual")
    "h m" '(describe-mode :wk "modes")
    "h f" '(describe-function :wk "functions")
-
+ 
    ;; Files keymap
    "f" '(:ignore t :wk "files")
-   "f d" '(dired :wk "open directory")
+   "f d" '(counsel-fzf :wk "open directory")
    "f f" '(counsel-find-file :wk "find files")
+   "f o" '(siliusmv/fuzzy :wk "onedrive files")
 
    ;; Quit
    "q" '(:ignore t :wk "quit")
@@ -1101,6 +1101,11 @@
    "<f2> u" 'counsel-unicode-char
    )
 
+  :init
+
+  (defun siliusmv/fuzzy ()
+    (interactive)
+    (counsel-fzf "" "~/OneDrive - NTNU"))
 
   ;; ;; Ivy-based interface to shell and system tools
   ;; (global-set-key (kbd "C-c c") 'counsel-compile)
