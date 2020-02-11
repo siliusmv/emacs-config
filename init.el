@@ -366,12 +366,12 @@
    "h i" '(info :wk "read the manual")
    "h m" '(describe-mode :wk "modes")
    "h f" '(describe-function :wk "functions")
- 
+
    ;; Files keymap
-   "f" '(:ignore t :wk "files")
-   "f d" '(counsel-fzf :wk "open directory")
-   "f f" '(counsel-find-file :wk "find files")
-   "f o" '(siliusmv/fuzzy :wk "onedrive files")
+   "f" '(:ignore t :wk "find file")
+   "f d" '(counsel-fzf :wk "directory-files")
+   "f f" '(counsel-find-file :wk "files")
+   "f o" '(siliusmv/fuzzy :wk "onedrive-files")
 
    ;; Quit
    "q" '(:ignore t :wk "quit")
@@ -385,16 +385,12 @@
    "s" '(:ignore t :wk "search")
    "s b" '(counsel-grep-or-swiper :wk "search in buffer")
    "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
-   "s SPC" '(counsel-grep-or-swiper :wk "search in buffer")
    "s d" '(counsel-ag :wk "search in directory")
    "s g" '(counsel-git-grep :wk "search in git repository")
    ;; "s p" '(projectile-ripgrep :wk "search in project")
 
    ;; Project keymap
    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
-
-   ;; Git stuff
-   "g" '(magit-status :wk "git")
 
    ;; Variables keymap
    "v" '(:ignore t :wk "change variables")
@@ -430,11 +426,10 @@
 
    ;; "Open programs" - keymap
    "o" '(:ignore t :wk "open program")
-   "o e" '(eshell :wk "eshell")
-   "o R" '(run-ess-r :wk "R session")
    "o d" '(dired :wk "dired")
-   "o r" '(ranger :wk "ranger")
    "o t" '(vterm-toggle-cd :wk "terminal")
+   "o g" '(magit-status :wk "git")
+   "o e" '(eshell :wk "eshell")
 
    ;; "Workspaces (tabs)"
    "t" '(:ignore t :wk "workspaces")
@@ -444,7 +439,6 @@
    "t r" '(eyebrowse-rename-window-config :wk "rename")
    "t d" '(eyebrowse-close-window-config :wk "close current")
    )
-
   )
  
 ;;;; Keychords
@@ -499,12 +493,6 @@
 ;; l: required
 ;; h: human readable
 (setq dired-listing-switches "-Alh")
-
-(use-package ranger
-  :general
-  (:keymaps 'ranger-mode-map
-   "q" 'ranger-disable
-   ))
 
 
 ;;;; Elisp stuff
@@ -1194,6 +1182,11 @@
    "c" '(reftex-citation :wk "citation")
    "r" '(reftex-reference :wk "label")
    )
+  (:keymaps 'bibtex-mode-map
+   :prefix my-leader
+   :global-prefix my-global-leader
+   "m t" '(org-ref-clean-bibtex-entry :wk "tidy entry")
+   )
 
   :init
 
@@ -1873,6 +1866,12 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 	    (desktop-save-mode 1)
 	    (setq desktop-save 'ask)))
 
+;;;; Openwith external programs
+(use-package openwith
+  :config
+  (setq openwith-associations
+	'(("\\.pdf\\'" "open" (file))))
+  )
 ;;;; Other stuff
 
 
