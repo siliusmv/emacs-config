@@ -1867,11 +1867,13 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 	    (setq desktop-save 'ask)))
 
 ;;;; Openwith external programs
-(use-package openwith
-  :config
-  (setq openwith-associations
-	'(("\\.pdf\\'" "open" (file))))
-  )
+(if macos-p
+    (progn
+      (use-package openwith
+	:config
+	(setq openwith-associations
+	      '(("\\.pdf\\'" "open" (file))))
+	)))
 ;;;; Other stuff
 
 
