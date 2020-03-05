@@ -508,8 +508,11 @@
 ;;;; Language servers
 (use-package eglot
   :config
-  (setq eglot-stay-out-of '(company))
+  ;; Avoid annoying highlighting of sverything
+  (setq eglot-ignored-server-capabilites '(:documentHighlightProvider))
 
+  (setq eglot-stay-out-of '(company)) ; Don't mess with company backends
+  )
 
 (use-package flymake
   :init
@@ -876,7 +879,7 @@
 	    company-R-objects
 	    company-R-library
 	    company-dabbrev-code :separate)
-	   ))))
+	   )))
 
   (defun my-inferior-ess-company-function ()
     (set (make-local-variable 'company-backends)
@@ -912,7 +915,7 @@
   ;; 		       ((looking-at ".*<- function(.*") 4)
   ;; 		       (t 1000)))
   ;; 	       ))
-  )
+)
 
 
 ;;;; Themes
@@ -1544,6 +1547,8 @@
 
 
 ;;;; Org-mode
+(straight-use-package '(org :type built-in))
+
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
@@ -1871,6 +1876,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
   :config
   (setq openwith-associations
 	'(("\\.pdf\\'" "open" (file))))
+  (openwith-mode 1)
   )
 ;;;; Other stuff
 
