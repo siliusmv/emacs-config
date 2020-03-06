@@ -164,7 +164,7 @@
 
 ;; Add the themes-folder to load-path
 (add-to-list 'custom-theme-load-path
-	     (expand-file-name "~/.emacs.d/themes/"))
+	     (expand-file-name (concat user-emacs-directory "themes/")))
 
 (xterm-mouse-mode t) ;; Enable mouse in terminal
 
@@ -214,7 +214,7 @@
 (defun siliusmv/go-to-config ()
   "Go to the emacs config-file"
   (interactive)
-  (find-file "~/.emacs.d/init.el"))
+  (find-file (concat user-emacs-directory "init.el")))
 
 
 ;;; Package specific settings
@@ -1197,7 +1197,7 @@
 
   ;; Completion for latex macros
   (setq 
-   TeX-auto-global "~/.emacs.d/auctex/auto-global"
+   TeX-auto-global (concat user-emacs-directory "auctex/auto-global")
    TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
 
   
@@ -1267,7 +1267,7 @@
 
   (setq TeX-auto-regexp-list 'TeX-auto-full-regexp-list
 	TeX-auto-parse-length 999999
-	TeX-auto-global '("/Users/siliusmv/.emacs.d/auctex/auto-global/" "~/.emacs.d/auctex/auto-global/"))
+	TeX-auto-global (concat user-emacs-directory "auctex/auto-global/"))
   
   ;; automatically insert braces after sub/superscript in math mode
   (setq TeX-electric-sub-and-superscript t)
@@ -1846,7 +1846,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
   ;;  "<tab>" 'yas-maybe-expand
   ;;  )
   :init
-  (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
+  (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
   :config
   (yas-global-mode 1)
   )
@@ -1870,6 +1870,9 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 	  (lambda ()
 	    (desktop-save-mode 1)
 	    (setq desktop-save 'ask)))
+
+(setq desktop-dirname (concat user-emacs-directory "desktops/")
+      desktop-path (list (concat user-emacs-directory "desktops/")))
 
 ;;;; Openwith external programs
 (if macos-p
