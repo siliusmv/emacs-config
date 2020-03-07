@@ -1,8 +1,6 @@
 ;;; My Emacs init file
 
 ;;;; TODO
-;; Add midnight mode for cleaning up buffers
-;; Add (when (on-macos)) or similar to the init
 ;; Something is wrong with ESS ans line-numbers, I think!
 ;; Remove use of Ctrl from ESS
 ;; Get working functionality for workspaces
@@ -12,12 +10,12 @@
 
 ;;; Non-package specific stuff
 ;;;; Global variables
-(defvar mu4e-p nil)
-(defvar init-theme "light")
-(defvar init-dict "british")
-(defvar my-gc-cons-threshold (* 1024 1024 5))
-(defvar pdf-tools-p t)
-(defvar macos-p (string-equal system-type "darwin"))
+(defvar mu4e-p nil) ; Activate mu4e
+(defvar init-theme "light") ; Default theme
+(defvar init-dict "british") ; Default language
+(defvar my-gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
+(defvar pdf-tools-p t) ; Activate pdf-tools
+(defvar macos-p (string-equal system-type "darwin")) ; Is this a mac?
 ;; (setq tab-always-indent 'complete)
 
 ;;;; Startup optimisation
@@ -246,8 +244,17 @@
   (general-evil-setup t)
 
 
-  (defconst my-leader "SPC")
-  (defconst my-global-leader "M-SPC")
+  (general-create-definer my-leader-def
+    :prefix "SPC"
+    :global-prefix "M-SPC"
+    :states '(normal visual motion insert emacs)
+    :keymaps 'override)
+
+  (general-create-definer my-local-leader-def
+    :prefix "SPC m"
+    :global-prefix "M-SPC m"
+    :states '(normal visual motion insert emacs))
+
   
   (general-define-key
    :keymaps 'override
@@ -328,15 +335,8 @@
    "l" '(avy-goto-line :wk "choose line")
    )
 
-;;  (defvar my-main-mode-map (make-sparse-keymap))
-;;  (define-prefix-command 'my-main-mode-map)
 
-  (general-define-key
-   :keymaps 'override
-   :states '(normal visual motion insert emacs)
-   :prefix my-leader
-   :global-prefix my-global-leader
-   ;; Popular keybindings
+  (my-leader-def
    "" nil
    "ESC" '(:ignore t :wk t)
    "M-SPC" '(counsel-find-file :wk "find file")
@@ -468,25 +468,26 @@
  "h" 'dired-up-directory
  )
 
-;; Emacs refuses to allow this in normal mode if the code is run immediately
+;; This is necessary for letting us use SPC in dired
 (run-with-idle-timer
- 5 nil
+ 2 nil
  (lambda ()
-   (general-define-key
-    :keymaps 'dired-mode-map
-    :states '(normal visual motion)
-    :prefix my-leader
-    :global-prefix my-global-leader
-    "" nil
-    "m" '(:ignore t :wk "mode specific")
-    "m h" '(dired-hide-dotfiles :wk "hide dotfiles")
-    "m c" '(dired-do-copy :wk "copy")
-    "m m" '(dired-do-rename :wk "move")
-    "m d" '(dired-do-delete :wk "delete")
-    "m s" '(dired-do-symlink :wk "symlink")
-    "m +" '(dired-create-directory :wk "mkdir")
-    "m R" '(dired-do-rename-regexp :wk "rename regexp")
-    )))
+   (general-def
+     :keymaps 'dired-mode-map
+     :states '(normal visual insert motion emacs)
+     "SPC" nil
+     "SPC m" nil
+     )
+   (my-local-leader-def
+     :keymaps 'dired-mode-map
+     "h" '(dired-hide-dotfiles :wk "hide dotfiles")
+     "c" '(dired-do-copy :wk "copy")
+     "m" '(dired-do-rename :wk "move")
+     "d" '(dired-do-delete :wk "delete")
+     "s" '(dired-do-symlink :wk "symlink")
+     "+" '(dired-create-directory :wk "mkdir")
+     "R" '(dired-do-rename-regexp :wk "rename regexp")
+     )))
 
 ;; Set dired ls arguments
 ;; A: all elements, but . and ..
@@ -496,13 +497,10 @@
 
 
 ;;;; Elisp stuff
-(general-define-key
+(my-local-leader-def
  :keymaps 'emacs-lisp-mode-map
- :states '(normal visual insert)
- :prefix my-leader
- :global-prefix my-global-leader
- "m o" '(eval-defun :wk "evaluate outer sexp")
- "m i" '(eval-last-sexp :wk "evaluate inner sexp")
+ "o" '(eval-defun :wk "evaluate outer sexp")
+ "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
 
 ;;;; Language servers
@@ -556,18 +554,13 @@
       :after evil
       :commands (mu4e)
       :general
-      (:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-       :states '(motion normal visual emacs)
-       :prefix my-leader
-       :global-prefix my-global-leader
-       "m g" '(siliusmv/gmail-firefox :wk "gmail")
-       "m o" '(siliusmv/outlook-firefox :wk "outlook")
-       )
-      (:keymaps 'override
-       :prefix my-leader
-       :global-prefix my-global-leader
-       :states '(normal motion visual insert)
-       "M-o m" '(mu4e :wk "email")
+      (my-local-leader-def
+	:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
+	"g" '(siliusmv/gmail-firefox :wk "gmail")
+	"o" '(siliusmv/outlook-firefox :wk "outlook")
+	)
+      (my-leader-def
+	"o m" '(mu4e :wk "email")
        )
       :init
 
@@ -800,13 +793,11 @@
   :commands (run-ess-r)
   :defer 5
   :general
-  (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-	    :prefix my-leader
-	    :global-prefix my-global-leader
-	    :states '(normal visual insert)
-	    "m r" '(run-ess-r :wk "Open new R session")
-	    "m s" '(ess-switch-process :wk "Switch R session")
-	    )
+  (my-local-leader-def
+    :keymaps '(ess-r-mode-map inferior-ess-mode-map)
+    "r" '(run-ess-r :wk "Open new R session")
+    "s" '(ess-switch-process :wk "Switch R session")
+    )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
 	    :states '(motion normal insert visual emacs)
 	    "M-e" 'ess-eval-region-or-line-visibly-and-step
@@ -1035,10 +1026,7 @@
 (use-package dumb-jump
   :hook (prog-mode . dumb-jump-mode)
   :general
-  (:states '(normal insert visual)
-   :prefix my-leader
-   :global-prefix my-global-leader
-   "" nil
+  (my-leader-def
    "j" '(:ignore t :wk "jump to text")
    "j d" '(dumb-jump-go :wk "dumb-jump")
    "j i" '(ivy-imenu-anywhere :wk "imenu")
@@ -1153,29 +1141,27 @@
   ;; :hook 
   ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
-  (:keymaps 'TeX-mode-map
-   :states '(normal motion visual)
-   :prefix my-leader
-   :global-prefix my-global-leader
-   "m ESC" '(:ignore t :wk t)
-   "m v" '(TeX-view :wk "view pdf")
-   "m c" '(TeX-command-master :wk "compile document")
-   "m t" '(reftex-toc :wk "navigate document")
-   "m r" '(reftex-toc-Rescan :wk "refresh reftex")
-   "m e" '(TeX-next-error :wk "compilation errors")
-   "m M-f" '(LaTeX-fill-buffer :wk "fill buffer")
+  (my-local-leader-def
+    :keymaps 'TeX-mode-map
+    "ESC" '(:ignore t :wk t)
+    "v" '(TeX-view :wk "view pdf")
+    "c" '(TeX-command-master :wk "compile document")
+    "t" '(reftex-toc :wk "navigate document")
+    "r" '(reftex-toc-Rescan :wk "refresh reftex")
+    "e" '(TeX-next-error :wk "compilation errors")
+    "M-f" '(LaTeX-fill-buffer :wk "fill buffer")
 
-   "m i" '(:ignore t :wk "insert")
-   "m i m" '(TeX-insert-macro :wk "macro")
-   "m i e" '(LaTeX-environment :wk "macro")
-   "m i ]" '(LaTeX-close-environment :wk "close environment")
-   "m i c" '(reftex-citation :wk "citation")
-   "m i r" '(reftex-reference :wk "label")
+    "i" '(:ignore t :wk "insert")
+    "i m" '(TeX-insert-macro :wk "macro")
+    "i e" '(LaTeX-environment :wk "macro")
+    "i ]" '(LaTeX-close-environment :wk "close environment")
+    "i c" '(reftex-citation :wk "citation")
+    "i r" '(reftex-reference :wk "label")
 
-   "m M-v" '(:ignore t :wk "change variables")
-   "m M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
-   "m M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
-  )
+    "M-v" '(:ignore t :wk "change variables")
+    "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
+    "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
+    )
   (:keymaps 'TeX-mode-map
    :prefix "M-i"
    "" '(:ignore t :wk "insert")
@@ -1185,11 +1171,10 @@
    "c" '(reftex-citation :wk "citation")
    "r" '(reftex-reference :wk "label")
    )
-  (:keymaps 'bibtex-mode-map
-   :prefix my-leader
-   :global-prefix my-global-leader
-   "m t" '(org-ref-clean-bibtex-entry :wk "tidy entry")
-   )
+  (my-local-leader-def
+    :keymaps 'bibtex-mode-map
+    "t" '(org-ref-clean-bibtex-entry :wk "tidy entry")
+    )
 
   :init
 
@@ -1199,7 +1184,6 @@
   (setq 
    TeX-auto-global (concat user-emacs-directory "auctex/auto-global")
    TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
-
   
 
   ;;; Functions for changing PDF viewers
@@ -1410,6 +1394,9 @@
       (setq-default pdf-view-display-size 'fit-page)
       ;; automatically annotate highlights
       (setq pdf-annot-activate-created-annotations t)
+
+
+      :init
       ;; use normal isearch
       (general-define-key
        :keymaps 'pdf-view-mode-map
@@ -1426,22 +1413,17 @@
        "M-k" 'pdf-view-previous-page-command
        )
 
-      (general-define-key
+      (my-local-leader-def
        :keymaps 'pdf-view-mode-map
-       :states '(normal visual)
-       :prefix my-leader
-       :global-prefix my-global-leader
-       "" nil
-       "m" nil
-       "m t" '(pdf-outline :wk "toc") 
+       "t" '(pdf-outline :wk "toc") 
 
-       "m /" '(isearch-forward :wk "search in buffer")
+       "/" '(isearch-forward :wk "search in buffer")
 
-       "m a" '(:ignore t :wk "annotations")
-       "m a t" '(pdf-annot-add-text-annotation :wk "text")
-       "m a m" '(pdf-annot-add-markup-annotation :wk "markup")
-       "m a d" '(pdf-annot-delete :wk "delete")
-       "m a l" '(pdf-annot-list-annotations :wk "list annotations")
+       "a" '(:ignore t :wk "annotations")
+       "a t" '(pdf-annot-add-text-annotation :wk "text")
+       "a m" '(pdf-annot-add-markup-annotation :wk "markup")
+       "a d" '(pdf-annot-delete :wk "delete")
+       "a l" '(pdf-annot-list-annotations :wk "list annotations")
        )
 
       ;; Stop the annoying blinking in the pdf
@@ -1481,31 +1463,6 @@
 
 
 ;;;; Terminal
-;; (use-package multi-term
-;;   :commands (multi-term)
-;;   :general
-;;   (:keymaps 'term-mode-map
-;;    :states '(motion normal insert visual emacs)
-;;    :prefix "M-SPC m"
-;; 
-;;    "s" '(:ignore t :wk "send signal to shell")
-;;    "s q" '(term-quit-subjob :wk "quit")
-;;    "s k" '(term-kill-subjob :wk "kill")
-;;    "s s" '(term-stop-subjob :wk "stop")
-;;    "s c" '(term-continue-subjob :wk "continue")
-;;    "s i" '(term-interrupt-subjob :wk "interupt")
-;; 
-;;    "b" '(:ignore t :wk "terminal buffer commands")
-;;    "b n" '(multi-term-next :wk "next buffer")
-;;    "b p" '(multi-term-prev :wk "previous buffer")
-;;    "b k" '(kill-this-buffer :wk "kill buffer")
-;; 
-;;    "q" '(siliusmv/kill-buffer-and-frame :wk "kill buffer, close frame")
-;;    )
-;;   :config
-;;   (setq multi-term-program "/bin/bash")
-;;   )
-
 ;; Eshell stuff
 (use-package eshell
   :config
@@ -1588,12 +1545,9 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (setq org-src-tab-acts-natively t)
 
-(general-define-key
+(my-local-leader-def
  :keymaps 'org-mode-map
- :states '(normal visual insert)
- :prefix my-leader
- :global-prefix my-global-leader
- "m TAB" '(org-global-cycle :wk "Cycle buffer")
+ "TAB" '(org-global-cycle :wk "Cycle buffer")
  )
 
 
