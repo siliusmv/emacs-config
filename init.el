@@ -1834,7 +1834,10 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
       (use-package openwith
 	:config
 	(setq openwith-associations
-	      '(("\\.pdf\\'" "open" (file))))
+	      '(("\\.pdf\\'" "open" (file))
+		("\\.png\\'" "open" (file))
+		("\\.jpg\\'" "open" (file))
+		))
 	(openwith-mode 1)
 	)))
 ;;;; Other stuff
