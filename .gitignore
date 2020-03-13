@@ -1,1 +1,17 @@
+# Ignore everything
 *
+
+# Track init-file
+!init.el
+
+# Track yasnippets-snippets
+!snippets
+!snippets/**
+
+# Track the version of all packages through straigh.el
+!straight
+!straight/versions
+!straight/versions/**
+
+# Track the gitignore
+!.gitignore
