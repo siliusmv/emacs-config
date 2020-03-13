@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: R source code block
+# key: !r
+# --
+
+#+header: :exports ${1:$$(yas-choose-value '("results" "code" "both" "none"))}
+#+header: :async
+#+header: :results ${2:$$(yas-choose-value '("value" "output graphics" "output" "silent"))}
+#+BEGIN_SRC R
+  $0
+#+END_SRC
+
