@@ -1,11 +1,8 @@
 # -*- mode: snippet -*-
 # name: Org setup
-# key: !setup
+# key: !rsetup
 # --
 
-#+TITLE: $1
-#+AUTHOR: Silius M. Vandeskog
-#+date: \today
 #+PROPERTY: header-args: :eval never-export
 #+PROPERTY: header-args:R :session *R-org* :eval never-export
 $0

@@ -321,6 +321,12 @@
 
    "c" '(compile :wk "compile")
 
+   ;; Yasnippet keymap
+   "y" '(:ignore t :wk "yasnippet")
+   "y i" '(yas-insert-snippet :wk "insert")
+   "y c" '(yas-new-snippet :wk "create")
+   "y r" '(yas-reload-all :wk "reload")
+   
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
    "b k" '(siliusmv/kill-this-buffer :wk "kill buffer")
@@ -1769,10 +1775,6 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 (use-package midnight)
 ;;;; Yasnippet
 (use-package yasnippet
-  ;; :general
-  ;; (:keymaps 'yas-minor-mode-map
-  ;;  "<tab>" 'yas-maybe-expand
-  ;;  )
   :init
   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
   :config

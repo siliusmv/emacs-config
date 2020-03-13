@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: includegraphics
+# key: !gr
+# --
+
+\includegraphics[width=${1:.9}\linewidth]{$0}
