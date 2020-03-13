@@ -1,12 +1,11 @@
 ;;; My Emacs init file
 
 ;;;; TODO
-;; Something is wrong with ESS ans line-numbers, I think!
-;; Remove use of Ctrl from ESS
 ;; Get working functionality for workspaces
-;; Create a which-key map for magit
 ;; Get full control of which-key
 ;; Ensure that the dictionary in auctex is correct, and not "default"
+;; Add expand-region
+;; Add writegood-mode
 
 ;;; Non-package specific stuff
 ;;;; Global variables
@@ -68,10 +67,6 @@
 
 
 
-;; Use daemon
-;; (server-start)
-
-
 ;;;; Import the shell environment
 ;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
 ;; Import some shell environment variables into Emacs at launch. Steve
@@ -79,26 +74,21 @@
 ;; LANG, TEXINPUTS and BIBINPUTS are added here. You can customize
 ;; 'exec-env-from-shell-variables' in site-start.el or the user's
 ;; config file.
-(if macos-p
-    (progn
-     (use-package exec-path-from-shell
-       :config
+(use-package exec-path-from-shell
+  :config
+  ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
+  (exec-path-from-shell-copy-env "LC_ALL")
+  (exec-path-from-shell-copy-env "LANG")
 
-       ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
-       (exec-path-from-shell-copy-env "LC_ALL")
-       (exec-path-from-shell-copy-env "LANG")
-
-       (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
-       (exec-path-from-shell-initialize)
-       )))
-
+  (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
+  (exec-path-from-shell-initialize)
+  )
 
 ;; macOS stuff
 (if macos-p
     (progn
      (setq mac-option-modifier nil ;; do not use the option key
 	   mac-command-modifier 'meta) ;; command is meta
-
      (setq dired-use-ls-dired nil)
      ))
 
@@ -114,57 +104,41 @@
 
  
 ;;;; BASIC SETTINGS
-;; Remove menus and stuff
-(setq inhibit-startup-screen t) ;; Remove startup screen
 
-(setq column-number-mode t) ;; Display column numbers
-
-(global-hl-line-mode) ;; Highlight current line
-
+(setq inhibit-startup-screen t) ; Remove startup screen
+(setq column-number-mode t) ; Display column numbers
+(global-hl-line-mode) ; Highlight current line
+(setq ring-bell-function 'ignore) ; Stop the error bell sound
+(fset 'yes-or-no-p 'y-or-n-p) ; Change all prompts to y or n
 
 ;; Allow enclosing a marked region with $$
 (add-to-list 'insert-pair-alist (list ?\$ ?\$))
 
-;; This must be done after loading GUI elements
-(defun remove-all-bars (frame)
-  (select-frame frame)
-  (progn
-    (toggle-scroll-bar -1)
-    (if (not macos-p)
-	(menu-bar-mode -1))
-    (tool-bar-mode -1)))
-
-(add-hook 'after-make-frame-functions #'remove-all-bars)
-
-(if (display-graphic-p)
-  (progn
-    (toggle-scroll-bar -1)
-    (if (not macos-p)
-	(menu-bar-mode -1))
-    (tool-bar-mode -1)))
+(scroll-bar-mode -1) ; Remove scroll bar
+(tool-bar-mode -1) ; Remove tool bar
+(if (not macos-p) (menu-bar-mode -1)) ; Sometimes remove menu bar
 
 ;; Backup files
-(setq make-backup-files nil) ;; Do not create backup files
-;; Move all temporary backup files to /tmp
-(setq backup-directory-alist
-      `((".*" . ,temporary-file-directory)))
-(setq auto-save-file-name-transforms
-      `((".*" ,temporary-file-directory t)))
+(setq backup-directory-alist `(("." . ,(concat user-emacs-directory "backup")))
+    backup-by-copying t    ; Don't delink hardlinks
+    version-control t      ; Use version numbers on backups
+    delete-old-versions t  ; Automatically delete excess backups
+    kept-new-versions 20   ; how many of the newest versions to keep
+    kept-old-versions 5    ; and how many of the old
+    )
 
-;; Change all prompts to y or n
-(fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Ignore case in completion
-(setq completion-ignore-case t)
-(setq case-fold-search nil)
-(setq read-buffer-completion-ignore-case t)
-(setq read-file-name-completion-ignore-case t)
+(setq completion-ignore-case t
+      case-fold-search nil
+      read-buffer-completion-ignore-case t
+      read-file-name-completion-ignore-case t)
 
 ;; Add the themes-folder to load-path
 (add-to-list 'custom-theme-load-path
 	     (expand-file-name (concat user-emacs-directory "themes/")))
 
-(xterm-mouse-mode t) ;; Enable mouse in terminal
+(xterm-mouse-mode t) ; Enable mouse in terminal
 
 (defun siliusmv/kill-buffer-and-frame ()
   "Kill the current buffer and delete the selected frame."
