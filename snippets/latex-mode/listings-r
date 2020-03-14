@@ -1,0 +1,47 @@
+# -*- mode: snippet -*-
+# name: listings-r
+# key: !listings-r
+# --
+
+\usepackage{listings} % Package for creating code-snippets
+
+% Define listings colour
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codebackground}{rgb}{0.95,0.95,0.92}
+
+% Define listings style for R
+\lstdefinestyle{mystyle}{%
+  commentstyle=\ttfamily\small\color{codegreen},
+  keywordstyle=\ttfamily\small\color{magenta},
+  numberstyle=\ttfamily\small\color{codegray},
+  stringstyle=\ttfamily\small\color{codepurple},
+  backgroundcolor=\color{codebackground},   
+  tabsize=2,
+  inputencoding=utf8,
+  extendedchars=\true,
+  language=R,
+  basicstyle=\ttfamily\small,
+  breakatwhitespace=false,         
+  breaklines=true,                 
+  captionpos=b,                    
+  keepspaces=true,                 
+  numbersep=5pt,                  
+  showspaces=false,                
+  showstringspaces=false,
+  showtabs=false
+}
+
+% Add support for Norwegian letters
+\lstset{literate=%
+{æ}{{\ae}}1
+{å}{{\aa}}1
+{ø}{{\o}}1
+{Æ}{{\AE}}1
+{Å}{{\AA}}1
+{Ø}{{\O}}1
+}
+
+\lstset{style=mystyle}
+

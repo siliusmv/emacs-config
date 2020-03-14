@@ -1,0 +1,30 @@
+# -*- mode: snippet -*-
+# name: Beamer
+# key: !beamer
+# --
+
+\documentclass{beamer} % Article with font size 11
+\usepackage[utf8]{inputenc} % Support for special characters
+\usepackage[T1]{fontenc} % Support for special characters
+\usepackage{graphicx} % Add nice figures (includegraphics, etc.)
+\usepackage{amsmath} % Better math support
+\usepackage{amssymb} % Fancy math symbols
+\usepackage{hyperref} % Turn references, etc into clickable links
+\usepackage{bm} % Bold math symbols
+\usepackage{xcolor} % Add fancy color to text
+
+\author{Silius M. Vandeskog}
+\date{\today}
+\title{${1:Title}}
+
+
+\begin{document}
+\maketitle
+
+$0
+
+\end{document}
+
+
+
+

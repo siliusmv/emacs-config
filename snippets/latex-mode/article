@@ -1,0 +1,46 @@
+# -*- mode: snippet -*-
+# name: Article
+# key: !article
+# --
+
+\documentclass[11pt]{article} % Article with font size 11
+
+\usepackage[utf8]{inputenc} % Support for special characters
+\usepackage[T1]{fontenc} % Support for special characters
+\usepackage{graphicx} % Add nice figures (includegraphics, etc.)
+\usepackage{amsmath} % Better math support
+\usepackage{amssymb} % Fancy math symbols
+\usepackage{hyperref} % Turn references, etc into clickable links
+\usepackage{bm} % Bold math symbols
+\usepackage{xcolor} % Add fancy color to text
+\usepackage[a4paper]{geometry} % Margins of the document
+\usepackage[%
+  citestyle=authoryear, 
+  bibstyle=apa,
+  natbib=true
+  ]{biblatex} % Bibliography management
+\usepackage{algorithm} % Write fancy algorithms
+\usepackage{algpseudocode} % Write fancy algorithms
+\usepackage{amsthm} % Write theorems
+
+%% Settings for hyperref
+\hypersetup{%
+  colorlinks = true, % false: boxed links; true: coloured links
+  linktoc = true % Prettier links in the table of contents
+}
+
+\author{Silius M. Vandeskog}
+\date{\today}
+\title{${1:Title}}
+
+
+\begin{document}
+\maketitle
+
+$0
+
+
+\printbibliography
+
+\end{document}
+

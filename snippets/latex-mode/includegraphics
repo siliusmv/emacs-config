@@ -3,4 +3,4 @@
 # key: !gr
 # --
 
-\includegraphics[width=${1:.9}\linewidth]{$0}
+\includegraphics[width=.${1:9}\linewidth]{$0}

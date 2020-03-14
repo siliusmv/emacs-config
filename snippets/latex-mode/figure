@@ -1,0 +1,12 @@
+# -*- mode: snippet -*-
+# name: figure
+# key: !fig
+# --
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.${1:9}\linewidth]{${2:filename}}
+  \caption{${3:caption}}
+  \label{fig:${4:label}}
+\end{figure}
+$0
