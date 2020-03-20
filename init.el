@@ -6,6 +6,10 @@
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Add expand-region
 ;; Add writegood-mode
+;; Remove outshine-mode, it sucks. Go back to outline-mode!!! Use the two packages below for better outline-minor-mode
+;;; https://github.com/tarsius/bicycle
+;;; https://github.com/tarsius/outline-minor-faces
+;;; Also, start using counsel-outline
 
 ;;; Non-package specific stuff
 ;;;; Global variables
@@ -13,8 +17,9 @@
 (defvar init-theme "light") ; Default theme
 (defvar init-dict "british") ; Default language
 (defvar my-gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
-(defvar pdf-tools-p t) ; Activate pdf-tools
+(defvar pdf-tools-p nil) ; Activate pdf-tools
 (defvar macos-p (string-equal system-type "darwin")) ; Is this a mac?
+(defvar fzf-home-dir "~/OneDrive - NTNU/")
 ;; (setq tab-always-indent 'complete)
 
 ;;;; Startup optimisation
@@ -145,6 +150,7 @@
   (interactive)
   (let ((frame-to-delete (selected-frame))
 	(buffer-to-kill (current-buffer))
+	(kill-buffer-query-functions nil)
 	(delete-frame-functions (lambda () (ignore-errors (delete-frame)))))
     (unwind-protect
 	(progn
@@ -319,7 +325,7 @@
 
    "m" '(:ignore t :wk "mode specific")
 
-   "c" '(compile :wk "compile")
+   "c" '(counsel-compile :wk "compile")
 
    ;; Yasnippet keymap
    "y" '(:ignore t :wk "yasnippet")
@@ -407,9 +413,10 @@
    ;; "Open programs" - keymap
    "o" '(:ignore t :wk "open program")
    "o d" '(dired :wk "dired")
-   "o t" '(vterm-toggle-cd :wk "terminal")
+   "o t" '(vterm-other-window :wk "terminal")
    "o g" '(magit-status :wk "git")
    "o e" '(eshell :wk "eshell")
+   "o r" '(run-ess-r :wk "R")
 
    ;; "Workspaces (tabs)"
    "t" '(:ignore t :wk "workspaces")
@@ -421,17 +428,6 @@
    )
   )
  
-;;;; Keychords
-;; (use-package key-chord
-;;   :config
-;;   (key-chord-mode t)
-;;   (general-define-key
-;;    :states '(insert visual)
-;;    (general-chord "jk") 'evil-normal-state
-;;    (general-chord "kj") 'evil-normal-state
-;;    )
-;;   )
-
 ;;;; Dired stuff
 
 (defun dired-hide-dotfiles ()
@@ -482,6 +478,7 @@
  "o" '(eval-defun :wk "evaluate outer sexp")
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
+
 
 ;;;; Language servers
 (use-package eglot
@@ -711,9 +708,11 @@
    :keymaps 'company-active-map
    ;"<tab>" 'company-complete-common-or-cycle
    ;"<backtab>" 'company-select-previous
-   "<tab>" '(:ignore t)
-   "<backtab>" '(:ignore t)
-   "<return>" '(:ignore t)
+   "<tab>" nil
+   "TAB" nil
+   "<backtab>" nil
+   "S-TAB" nil
+   "<return>" nil
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "C-M-j" 'company-next-page
@@ -743,8 +742,6 @@
   (setq company-backends
 	'(company-capf
 	  company-files          ; files & directory
-	  (company-keywords       ; keywords (I don't know what this does...)
-	   company-yasnippet :separate)
 	  (company-abbrev company-dabbrev :separate)
 	  ))
 
@@ -1053,26 +1050,13 @@
   ( 
    "M-x" 'counsel-M-x
    "C-x C-f" 'counsel-find-file
-   "<f1> f" 'counsel-describe-function
-   "<f1> v" 'counsel-describe-variable
-   "<f1> l" 'counsel-find-library
-   "<f2> i" 'counsel-info-lookup-symbol
-   "<f2> u" 'counsel-unicode-char
    )
 
   :init
-
   (defun siliusmv/fuzzy ()
+    "Fuzzy find files from the OneDrive directory"
     (interactive)
-    (counsel-fzf "" "~/OneDrive - NTNU"))
-
-  ;; ;; Ivy-based interface to shell and system tools
-  ;; (global-set-key (kbd "C-c c") 'counsel-compile)
-  ;; (global-set-key (kbd "C-c g") 'counsel-git)
-  ;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
-  ;; (global-set-key (kbd "C-c k") 'counsel-ag)
-  ;; (global-set-key (kbd "C-x l") 'counsel-locate)
-  ;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+    (counsel-fzf "" fzf-home-dir))
   )
 
 ;; Show last used functions in M-x
@@ -1083,23 +1067,7 @@
 (use-package flycheck)
 
 
-
 ;;;; outline stuff
-
-;; (use-package outline-magic
-;; ;;  :general
-;; ;;  (:keymaps 'outline-minor-mode-map
-;; ;;   "<C-tab>" 'outline-cycle
-;; ;;   "M-g h" '(outline-up-heading :wk "up heading level")
-;; ;;   "M-g j" '(outline-forward-same-level :wk "forward same level")
-;; ;;   "M-g k" '(outline-backward-same-level :wk "backward same level")
-;; ;;   "M-g l" '(outline-next-visible-heading :wk "next heading")
-;; ;;   )
-;;   :config
-;;   (add-hook 'LaTeX-mode-hook 'outline-minor-mode)
-;;   (add-hook 'prog-mode-hook 'outline-minor-mode)
-;;   )
-
 
 (use-package outshine
   :init (outshine-mode) ;; For some reason this is necessary
@@ -1115,11 +1083,6 @@
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
 (use-package auctex
-  ;; :straight (auctex :host github
-  ;;                   :repo "emacsmirror/auctex"
-  ;;                   :files (:defaults (:exclude "*.el.in")))
-  ;; :hook 
-  ;; (LaTeX-mode . 'LaTeX-math-mode)
   :general
   (my-local-leader-def
     :keymaps 'TeX-mode-map
@@ -1262,13 +1225,13 @@
   :init
   ;; Pass the -pdf flag when TeX-PDF-mode is active
   (setq auctex-latexmk-inherit-TeX-PDF-mode t)
+
   (add-hook 'LaTeX-mode-hook (lambda ()
-			       (setq TeX-command-default "LatexMk")
-			       (setq TeX-command-force "LatexMk")
+			       (setq TeX-command-default "LatexMk"
+				     TeX-command-force "LatexMk")
 			       (TeX-source-correlate-mode t)))
   :config
   (auctex-latexmk-setup)
-  ;; (add-hook 'LaTeX-mode-hook (lambda () (auctex-latexmk-setup)))
   )
 
 
@@ -1393,6 +1356,11 @@
        "M-k" 'pdf-view-previous-page-command
        )
 
+      (general-define-key
+       :keymaps 'pdf-view-mode-map
+       "SPC" nil
+       )
+
       (my-local-leader-def
        :keymaps 'pdf-view-mode-map
        "t" '(pdf-outline :wk "toc") 
@@ -1463,6 +1431,18 @@
 ;; Libvterm
 (use-package vterm)
 (use-package vterm-toggle)
+(use-package multi-libvterm
+  :straight
+  (:type git
+   :host github
+   :repo "suonlight/multi-libvterm")
+  :general
+  (my-local-leader-def
+    :keymaps 'vterm-mode-map
+    "n" '(multi-libvterm-next :wk "next")
+    "p" '(multi-libvterm-prev :wk "previous")
+    )
+  )
 
 ;;;; Pairing of parentheses
 (use-package elec-pair
@@ -1484,7 +1464,6 @@
 
 
 ;;;; Org-mode
-(straight-use-package '(org :type built-in))
 
 (org-babel-do-load-languages
  'org-babel-load-languages
@@ -1794,7 +1773,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 
 ;;;; Desktop-save-mode
 
-;; Restore last emacs session
+;; Activate desktop-save-mode
 ;; This is done after-init to not load desktop eagerly
 (add-hook 'after-init-hook 
 	  (lambda ()
@@ -1818,11 +1797,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 	)))
 ;;;; Other stuff
 
-
-
-(require 'iso-transl)
-
-
+(require 'iso-transl) ; I don't know what this does
 
 
 ;;; Mandatory stuff
@@ -1835,9 +1810,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
- '(org-agenda-files
-   (quote
-    ("~/OneDrive - NTNU/literature/bibliography.org" "~/OneDrive - NTNU/literature/org_attempt/notes.org")))
+ '(org-agenda-files nil)
  '(pdf-tools-handle-upgrades nil)
  '(send-mail-function (quote mailclient-send-it)))
 (custom-set-faces
