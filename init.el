@@ -353,12 +353,24 @@
    "h m" '(describe-mode :wk "modes")
    "h f" '(describe-function :wk "functions")
 
-   ;; Files keymap
+   ;; Find files
    "f" '(:ignore t :wk "find file")
-   "f d" '(counsel-fzf :wk "directory-files")
-   "f f" '(counsel-find-file :wk "files")
-   "f o" '(siliusmv/fuzzy :wk "onedrive-files")
+   "f d" '(counsel-fzf :wk "in dir or subdirs")
+   "f f" '(counsel-find-file :wk "find file")
+   "f o" '(siliusmv/fuzzy :wk "in onedrive")
 
+   ;; Frame manipulation
+   "F" '(:ignore t :wk "frame manipulation")
+   "F |" '(tile-frames-horizontally :wk "tile horisontally")
+   "F -" '(tile-frames-vertically :wk "tile vertically")
+   "F F" '(toggle-max-frame :wk "toggle full-screen")
+   "F K" '(toggle-max-frame-vertically :wk "toggle vertical full-screen")
+   "F H" '(toggle-max-frame-horizontally :wk "toggle horisontal full-screen")
+   "F l" '(move-frame-to-screen-right :wk "move to right side")
+   "F h" '(move-frame-to-screen-left :wk "move to left side")
+   "F k" '(move-frame-to-screen-up :wk "move to top")
+   "F j" '(move-frame-to-screen-down :wk "move to bottom")
+   
    ;; Quit
    "q" '(:ignore t :wk "quit")
    "q f" '(delete-frame :wk "close frame")
@@ -959,6 +971,8 @@
 ;;	)
 ;;  )
 
+;;;; Resize frames
+(use-package frame-cmds)
 ;;;; Tramp
 (use-package tramp
 
