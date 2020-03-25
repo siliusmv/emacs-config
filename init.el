@@ -353,11 +353,14 @@
    "h m" '(describe-mode :wk "modes")
    "h f" '(describe-function :wk "functions")
 
-   ;; Find files
-   "f" '(:ignore t :wk "find file")
-   "f d" '(counsel-fzf :wk "in dir or subdirs")
-   "f f" '(counsel-find-file :wk "find file")
-   "f o" '(siliusmv/fuzzy :wk "in onedrive")
+   ;; Fuzzy search
+   "f" '(:ignore t :wk "fuzzy search")
+   "f o" '(:ignore t :wk "frome onedrive")
+   "f o d" '(siliusmv/fzf-home-dir :wk "for directories")
+   "f o f" '(siliusmv/fzf-home :wk "for files")
+   "f h" '(:ignore t :wk "from here")
+   "f h f" '(counsel-fzf :wk "for files")
+   "f h d" '(siliusmv/fzf-dir-here "for directories")
 
    ;; Frame manipulation
    "F" '(:ignore t :wk "frame manipulation")
@@ -718,30 +721,24 @@
 
   (general-define-key
    :keymaps 'company-active-map
-   ;"<tab>" 'company-complete-common-or-cycle
-   ;"<backtab>" 'company-select-previous
    "<tab>" nil
    "TAB" nil
    "<backtab>" nil
    "S-TAB" nil
    "<return>" nil
+   "M-l" 'company-complete-common
+   "M-s" 'company-search-candidates
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
-   "C-M-j" 'company-next-page
-   "C-M-k" 'company-previous-page
-   "M-l" 'company-complete-common
-   "C-M-s" 'company-search-candidates
-
-   ;"M-SPC m o" '(company-other-backend :wk "other backend")
-   ;"M-SPC m d" '(company-diag :wk "diagnosis")
-   ;"M-SPC m c" '(counsel-company :wk "counsel-company")
-   ;"M-SPC m h" '(company-doc-buffer :wk "show documentation")
+   "M-J" 'company-next-page
+   "M-K" 'company-previous-page
+   "M-S" '(counsel-company :wk "counsel-company")
    )
 
   (general-define-key
    :keymaps 'company-search-map
-   "C-M-j" 'company-search-repeat-forward
-   "C-M-k" 'company-search-repeat-backward
+   "M-J" 'company-search-repeat-forward
+   "M-K" 'company-search-repeat-backward
    )
 
   (general-define-key
@@ -879,6 +876,7 @@
   (add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
 
+
   ;; ;; Try to limit max buffer size
   ;; ;;(add-hook 'inferior-ess-mode-hook 'comint-truncate-buffer)
   ;; (add-hook 'inferior-ess-mode-hook
@@ -1015,13 +1013,14 @@
 (use-package imenu-anywhere)
 
 (use-package dumb-jump
-  :hook (prog-mode . dumb-jump-mode)
   :general
   (my-leader-def
    "j" '(:ignore t :wk "jump to text")
    "j d" '(dumb-jump-go :wk "dumb-jump")
    "j i" '(ivy-imenu-anywhere :wk "imenu")
    )
+  :init
+  (add-hook 'prog-mode-hook 'dumb-jump-mode)
   )
 
 ;;;; Ivy++
@@ -1029,8 +1028,6 @@
   :diminish ivy-mode
   :general
    (:keymaps 'ivy-minibuffer-map
-   ;"<tab>" 'ivy-next-line
-   ;"<backtab>" 'ivy-previous-line
    "M-j" 'ivy-next-line
    "M-k" 'ivy-previous-line
    "M-l" 'ivy-alt-done
@@ -1042,7 +1039,6 @@
    "M-p" 'yank ; For pasting passwords into the minibuffer in tramp
    )
   :init
-  ;; The default search is ivy--regex-plus
   (setq ivy-re-builders-alist
 	'((t . ivy--regex-ignore-order))) ;; Regexps can interchange order
 
@@ -1054,11 +1050,6 @@
   (setq ivy-count-format "(%d/%d) ") ;; Proposed from the Ivy wiki
   )
 
-(use-package swiper
-  :config
-  :commands (swiper)
-  )
-
 (use-package counsel
   :general
   ( 
@@ -1067,11 +1058,29 @@
    )
 
   :init
-  (defun siliusmv/fuzzy ()
-    "Fuzzy find files from the OneDrive directory"
+  (defun siliusmv/fzf-home ()
+    "Fuzzy find files from the home directory"
     (interactive)
     (counsel-fzf "" fzf-home-dir))
+
+  (defun siliusmv/fzf-dir (start-dir)
+    "Fuzzy search for directories"
+    (interactive)
+    (let ((counsel-fzf-cmd "find . -type d | fzf -f \"%s\""))
+      (counsel-fzf "" start-dir)))
+
+  (defun siliusmv/fzf-home-dir ()
+    "Fuzzy search for all directories in the home directory"
+    (interactive)
+    (siliusmv/fzf-dir fzf-home-dir))
+
+  (defun siliusmv/fzf-dir-here ()
+    "Fuzzy search from all directories from current location"
+    (interactive)
+    (counsel-fzf "" default-directory))
+  
   )
+
 
 ;; Show last used functions in M-x
 (use-package amx)
@@ -1774,7 +1783,6 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
   (yas-global-mode 1)
   )
 
-
 ;;;; Polymode
 (use-package polymode)
 
@@ -1792,7 +1800,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
 (add-hook 'after-init-hook 
 	  (lambda ()
 	    (desktop-save-mode 1)
-	    (setq desktop-save 'ask)))
+	    (setq desktop-save 'nil)))
 
 (setq desktop-dirname (concat user-emacs-directory "desktops/")
       desktop-path (list (concat user-emacs-directory "desktops/")))
