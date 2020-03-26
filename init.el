@@ -13,7 +13,6 @@
 
 ;;; Non-package specific stuff
 ;;;; Global variables
-(defvar mu4e-p nil) ; Activate mu4e
 (defvar init-theme "light") ; Default theme
 (defvar init-dict "british") ; Default language
 (defvar my-gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
@@ -538,155 +537,6 @@
 	  (nlinum-relative-mode)
 	(nlinum-mode)))
     )
-  )
-
-;;;; Email
-(if mu4e-p
-    (use-package mu4e
-      :after evil
-      :commands (mu4e)
-      :general
-      (my-local-leader-def
-	:keymaps '(mu4e-headers-mode-map mu4e-view-mode-map mu4e-main-mode-map)
-	"g" '(siliusmv/gmail-firefox :wk "gmail")
-	"o" '(siliusmv/outlook-firefox :wk "outlook")
-	)
-      (my-leader-def
-	"o m" '(mu4e :wk "email")
-       )
-      :init
-
-      (defun siliusmv/gmail-firefox ()
-	"Open gmail in firefox"
-	(interactive)
-	(browse-url-firefox "https://gmail.com" t)
-	)
-
-      (defun siliusmv/outlook-firefox ()
-	"Open outlook in firefox"
-	(interactive)
-	(browse-url-firefox "https://mail.ntnu.no/owa/silius.m.vandeskog@ntnu.no" t)
-	)
-
-      (setq-default
-       message-send-mail-function 'message-send-mail-with-sendmail
-       sendmail-program "/usr/bin/msmtp"
-       user-full-name "Silius Mortensønn Vandeskog"
-       user-mail-address "siliusv@gmail.com"
-       )
-
-      ;; Set mu4e as default mail agent
-      (setq mail-user-agent 'mu4e-user-agent)
-
-      :config
-      (defvar base-signature
-	(concat
-	 "Silius M. Vandeskog\n"
-	 "Phone: +47 93 68 49 45"))
-      (setq-default
-       mu4e-maildir "~/.mail"
-       mu4e-sent-folder "/gmail/sent"
-       mu4e-drafts-folder "/gmail/drafts"
-       mu4e-trash-folder "/gmail/trash"
-       mu4e-refile-folder "/gmail/all_mail"
-       mu4e-compose-signature base-signature
-       )
-
-      ;; https://www.djcbsoftware.nl/code/mu/mu4e/Reading-messages.html
-      (add-to-list 'mu4e-view-actions
-		   '("ViewInBrowser" . mu4e-action-view-in-browser) t)
-
-					; http://www.djcbsoftware.nl/code/mu/mu4e/Viewing-images-inline.html#Viewing-images-inline
-					; enable inline images
-      (setq mu4e-view-show-images t)
-      ;; use imagemagick, if available
-      (when (fboundp 'imagemagick-register-types)
-	(imagemagick-register-types))
-
-
-      ;; HTML settings
-      ;; (require 'shr)
-      ;; (defun shr-render-current-buffer ()
-      ;;   (shr-render-region (point-min) (point-max)))
-      ;; (setq mu4e-html2text-command 'shr-render-current-buffer)
-
-      ;;(setq mu4e-html2text-command "html2text -utf8 -width 72")
-      ;;(setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
-      ;;(setq mu4e-html2text-command "pandoc -f html --pdf-engine=pdflatex")
-      (setq mu4e-html2text-command "w3m -dump -T text/html -cols 72 -o display_link_number=true -o auto_image=false -o display_image=false -o ignore_null_img_alt=true")
-
-      (setq browse-url-browser-function 'browse-url-generic)
-      (setq browse-url-generic-program "qutebrowser")
-      ;; (setq browse-url-generic-args '("--target window"))
-
-      (setq mu4e-compose-dont-reply-to-self t)
-
-      ;; http://cachestocaches.com/2017/3/complete-guide-email-emacs-using-mu-and-/?fbclid=IwAR2Udao8s5OrwCSPs9_NgHI1fjxdJJXwZhnaMWKuMhTvcdZxaNzINCi6tq4
-      (setq mu4e-contexts
-	    `( ,(make-mu4e-context
-		 :name "gmail"
-		 :match-func (lambda (msg) (when msg
-					     (string-prefix-p "/gmail" (mu4e-message-field msg :maildir))))
-		 :vars '((user-mail-address . "siliusv@gmail.com")
-			 (mu4e-sent-folder . "/gmail/sent")
-			 (mu4e-drafts-folder . "/gmail/drafts")
-			 (mu4e-trash-folder . "/gmail/trash")
-			 (mu4e-refile-folder . "/gmail/all_mail")
-			 (mu4e-compose-signature . (concat
-						    base-signature
-						    "\nEmail: siliusv@gmail.com"))
-			 ))
-	       ,(make-mu4e-context
-		 :name "work"
-		 :match-func (lambda (msg) (when msg
-					     (string-prefix-p "/work" (mu4e-message-field msg :maildir))))
-		 :vars '(
-			 (user-mail-address ."siliusmv@stud.ntnu.no")
-			 (mu4e-sent-folder . "/work/sent")
-			 (mu4e-drafts-folder . "/work/drafts")
-			 (mu4e-trash-folder . "/work/trash")
-			 (mu4e-refile-folder . "/work/Archive1")
-			 (mu4e-compose-signature .
-						 (concat
-						  base-signature
-						  "\nEmail: "
-						  "siliusmv@stud.ntnu.no"))
-			 ))
-	       ))
-
-      (add-to-list 'mu4e-bookmarks
-		   (make-mu4e-bookmark
-		    :name "All Inboxes"
-		    :query "maildir:/work/inbox OR maildir:/gmail/inbox"
-		    :key ?i))
-
-      
-
-      ;; Why would I want to leave my message open after I've sent it?
-      (setq message-kill-buffer-on-exit t)
-      ;; Don't ask for a 'context' upon opening mu4e
-      (setq mu4e-context-policy 'pick-first)
-      ;; Don't ask to quit... why is this the default?
-      (setq mu4e-confirm-quit nil)
-
-      
-      (setq-default mu4e-get-mail-command "mbsync -a"
-		    mu4e-update-interval nil ;; This is handled by another script
-		    mu4e-change-filenames-when-moving t)
-
-      ;; Don't get duplicate mails. gmail takes care of copying mails
-      (setq mu4e-sent-messages-behavior 'delete)
-      
-      ;; Shortcuts
-      (setq mu4e-maildir-shortcuts 
-	    '(("/gmail/inbox" . ?g)
-	      ("/work/inbox" . ?w))
-	    )
-      ;; This is needed to allow msmtp to do its magic:
-      (setq message-sendmail-f-is-evil 't)
-      ;;need to tell msmtp which account we're using
-      (setq message-sendmail-extra-arguments '("--read-envelope-from"))
-      ) 
   )
 
 
@@ -1833,8 +1683,7 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
  '(org-agenda-files nil)
- '(pdf-tools-handle-upgrades nil)
- '(send-mail-function (quote mailclient-send-it)))
+ '(pdf-tools-handle-upgrades nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
