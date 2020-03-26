@@ -7,9 +7,7 @@
 ;; Add expand-region
 ;; Add writegood-mode
 ;; Remove outshine-mode, it sucks. Go back to outline-mode!!! Use the two packages below for better outline-minor-mode
-;;; https://github.com/tarsius/bicycle
-;;; https://github.com/tarsius/outline-minor-faces
-;;; Also, start using counsel-outline
+;; Also, start using counsel-outline
 
 ;;; Non-package specific stuff
 ;;;; Global variables
@@ -83,7 +81,7 @@
   ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
   (exec-path-from-shell-copy-env "LC_ALL")
   (exec-path-from-shell-copy-env "LANG")
-
+  (setq exec-path-from-shell-check-startup-files nil) ; Some variables should be set in .bashrc
   (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
   (exec-path-from-shell-initialize)
   )
@@ -243,7 +241,6 @@
    "M-s" '(save-buffer :wk "save buffer")
    "M-S" '(save-some-buffers :wk "save all buffers")
    "M-`" '(ns-next-frame :wk "switch frame")
-   "M-d" '(evil-delete :wk "evil-delete")
    )
 
   (general-define-key
@@ -325,6 +322,9 @@
    "m" '(:ignore t :wk "mode specific")
 
    "c" '(counsel-compile :wk "compile")
+
+   ;; create one for g (go to)
+   ;; add counsel-outline, and some other movement commands
 
    ;; Yasnippet keymap
    "y" '(:ignore t :wk "yasnippet")
@@ -414,10 +414,6 @@
    "w j" '(evil-window-down :wk t)
    "w k" '(evil-window-up :wk t)
    "w l" '(evil-window-right :wk t)
-   "w H" '(evil-window-move-far-left :wk t)
-   "w J" '(evil-window-move-far-down :wk t)
-   "w K" '(evil-window-move-far-up :wk t)
-   "w L" '(evil-window-move-far-right :wk t)
    "w d" '(delete-window :wk "delete window")
    "w f" '(delete-other-windows :wk "focus on window")
    "w v" '(split-window-right :wk "split vertical")
@@ -492,6 +488,8 @@
  "o" '(eval-defun :wk "evaluate outer sexp")
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
+
+(add-hook 'emacs-lisp-mode-hook 'siliusmv/outline-minor-activate)
 
 
 ;;;; Language servers
@@ -580,15 +578,15 @@
    "M-s" 'company-search-candidates
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
-   "M-J" 'company-next-page
-   "M-K" 'company-previous-page
+   "M-d" 'company-next-page
+   "M-u" 'company-previous-page
    "M-S" '(counsel-company :wk "counsel-company")
    )
 
   (general-define-key
    :keymaps 'company-search-map
-   "M-J" 'company-search-repeat-forward
-   "M-K" 'company-search-repeat-backward
+   "M-d" 'company-search-repeat-forward
+   "M-u" 'company-search-repeat-backward
    )
 
   (general-define-key
@@ -734,15 +732,15 @@
   ;; 	      (setq comint-buffer-maximum-size 1000)
   ;; 	      (run-with-timer 300 300 'comint-truncate-buffer)
   ;; 	      ))
-
-  ;; 	       (setq outline-regexp "\\(#\\{3,5\\} \\)\\|\\(.*<- function(.*\\)")
-  ;; 	       (defun outline-level ()
-  ;; 		 (cond ((looking-at "###") 1)
-  ;; 		       ((looking-at "####") 2)
-  ;; 		       ((looking-at "#####") 3)
-  ;; 		       ((looking-at ".*<- function(.*") 4)
-  ;; 		       (t 1000)))
-  ;; 	       ))
+  (add-hook 'ess-mode-hook 'siliusmv/outline-minor-activate)
+  (add-hook 'ess-mode-hook
+  	    '(lambda ()
+  	       (setq outline-regexp "^#\\{1,2\\} ----")
+  	       (defun outline-level ()
+  		 (cond ((looking-at "^# ---- ") 1)
+  		       ((looking-at "^## ---- ") 1)
+  		       (t 1000)))
+  	       ))
 )
 
 
@@ -779,21 +777,21 @@
   (eyebrowse-mode)
   :general
   (:keymaps 'override
-	    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
-	    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
-	    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
-	    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
-	    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
-	    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
-	    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
-	    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
-	    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
-	    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
+   "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
+   "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
+   "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
+   "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
+   "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
+   "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
+   "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
+   "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
+   "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+   "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
 
-	    "M-w" '(:ignore t :wk "workspace cycling")
-	    "M-w k" '(eyebrowse-next-window-config :wk "next")
-	    "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-	    )
+   "M-w" '(:ignore t :wk "workspace cycling")
+   "M-w k" '(eyebrowse-next-window-config :wk "next")
+   "M-w j" '(eyebrowse-prev-window-config :wk "prev")
+   )
   :config
   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
 	eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
@@ -883,9 +881,8 @@
    "M-l" 'ivy-alt-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
-   "C-M-l" 'ivy-immediate-done
-   "C-M-k" 'ivy-scroll-down-command
-   "C-M-j" 'ivy-scroll-up-command
+   "M-d" 'ivy-scroll-down-command
+   "M-u" 'ivy-scroll-up-command
    "M-p" 'yank ; For pasting passwords into the minibuffer in tramp
    )
   :init
@@ -942,16 +939,39 @@
 
 ;;;; outline stuff
 
-(use-package outshine
-  :init (outshine-mode) ;; For some reason this is necessary
+;; (use-package outshine
+;;   :init (outshine-mode) ;; For some reason this is necessary
+;;   :general
+;;   (:keymaps 'outshine-mode-map
+;;    "<C-tab>" 'outshine-cycle
+;;    )
+;;   :config
+;;   (add-hook 'LaTeX-mode-hook 'outshine-mode)
+;;   (add-hook 'prog-mode-hook 'outshine-mode)
+;;   )
+
+(use-package outline-magic
+  :init
+  (defun siliusmv/outline-minor-activate ()
+    (interactive)
+    (outline-minor-mode)
+    (outline-minor-faces-add-font-lock-keywords))
   :general
-  (:keymaps 'outshine-mode-map
-   "<C-tab>" 'outshine-cycle
-   )
+  (:keymaps 'outline-minor-mode-map
+   "<C-tab>" 'outline-cycle)
   :config
-  (add-hook 'LaTeX-mode-hook 'outshine-mode)
-  (add-hook 'prog-mode-hook 'outshine-mode)
+  (add-hook 'LaTeX-mode-hook 'siliusmv/outline-minor-activate)
+  (add-hook 'prog-mode-hook 'siliusmv/outline-minor-activate)
   )
+
+(use-package outline-minor-faces
+  :custom-face
+  ;; Adjusting some face options from 'outline-minor-faces', to bring it
+  ;; closer to the usual Org experience.
+  (outline-minor-0 ((t (:weight bold :underline t :background nil))))
+  (outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil))))
+  )
+
 
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
@@ -1218,8 +1238,8 @@
        :keymaps 'pdf-view-mode-map
        :states 'normal
        "f" 'pdf-links-action-perform
-       "J" 'pdf-view-next-page-command
-       "K" 'pdf-view-previous-page-command
+       "d" 'pdf-view-next-page-command
+       "u" 'pdf-view-previous-page-command
        )
 
       ;; This does not seem to work
