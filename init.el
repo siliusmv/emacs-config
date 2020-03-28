@@ -6,15 +6,13 @@
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Add expand-region
 ;; Add writegood-mode
-;; Remove outshine-mode, it sucks. Go back to outline-mode!!! Use the two packages below for better outline-minor-mode
-;; Also, start using counsel-outline
 
 ;;; Non-package specific stuff
 ;;;; Global variables
 (defvar init-theme "light") ; Default theme
 (defvar init-dict "british") ; Default language
 (defvar my-gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
-(defvar pdf-tools-p nil) ; Activate pdf-tools
+(defvar pdf-tools-p t) ; Activate pdf-tools
 (defvar macos-p (string-equal system-type "darwin")) ; Is this a mac?
 (defvar fzf-home-dir "~/OneDrive - NTNU/")
 ;; (setq tab-always-indent 'complete)
@@ -280,38 +278,6 @@
    ")" '(delete-pair :wk "delete pair")
    )
 
-
-  (general-define-key
-   :states '(normal visual)
-   :keymaps 'override
-   :prefix "]"
-   "b" 'evil-next-buffer
-   )
-
-  (general-define-key
-   :states '(normal visual)
-   :keymaps 'override
-   :prefix "["
-   "b" 'evil-prev-buffer
-   )
-
-  
-  (general-define-key
-   :states '(normal visual)
-   :prefix "g"
-   "" nil
-   "s" '(flyspell-correct-next :wk "next spelling error")
-   "S" '(flyspell-correct-previous :wk "prev spelling error")
-   "e" '(flymake-goto-next-error :wk "flymake: next error")
-   "E" '(flymake-goto-prev-error :wk "flymake: prev error")
-   "f" '(flycheck-next-error :wk "flycheck: next error")
-   "F" '(flycheck-previous-error :wk "flycheck: prev error")
-   "b" '(evil-next-buffer :wk "next buffer")
-   "B" '(evil-prev-buffer :wk "prev buffer")
-   "l" '(avy-goto-line :wk "choose line")
-   )
-
-
   (my-leader-def
    "" nil
    "ESC" '(:ignore t :wk t)
@@ -323,8 +289,18 @@
 
    "c" '(counsel-compile :wk "compile")
 
-   ;; create one for g (go to)
-   ;; add counsel-outline, and some other movement commands
+   "g" '(:ignore t :wk "go to...")
+   "g h" '(counsel-outline :wk "outline header")
+   "g l" '(avy-goto-line :wk "line")
+   "g e" '(flymake-goto-next-error :wk "next error (flymake)")
+   "g E" '(flymake-goto-prev-error :wk "prev error (flymake)")
+   "g b" '(evil-next-buffer :wk "next buffer")
+   "g B" '(evil-prev-buffer :wk "prev buffer")
+   "g s" '(flyspell-correct-next :wk "next spelling error")
+   "g S" '(flyspell-correct-previous :wk "prev spelling error")
+   "g d" '(:ignore t :wk "definition")
+   "g d i" '(ivy-imenu-anywhere :wk "with imenu")
+   "g d d" '(dumb-jump-go :wk "with dumb-jump")
 
    ;; Yasnippet keymap
    "y" '(:ignore t :wk "yasnippet")
@@ -337,11 +313,8 @@
    "b k" '(siliusmv/kill-this-buffer :wk "kill buffer")
    "b K" '(kill-buffer :wk "kill some buffer")
    "b s" '(save-buffer :wk "save buffer")
-   "b SPC" '(persp-switch-to-buffer :wk "switch buffer in persp")
-   "b n" '(next-buffer :wk "next buffer")
-   "b p" '(previous-buffer :wk "previous buffer")
    "b r" '(rename-buffer :wk "rename buffer")
-   "b b" '(ivy-switch-buffer :wk "switch buffer")
+   "b b" '(counsel-switch-buffer :wk "switch buffer")
 
    ;; Help keymap
    "h" '(:ignore t :wk "help")
@@ -421,7 +394,7 @@
    "w o" '(ace-window :wk "other window")
 
    ;; "Open programs" - keymap
-   "o" '(:ignore t :wk "open program")
+   "o" '(:ignore t :wk "open ...")
    "o d" '(dired :wk "dired")
    "o t" '(vterm-other-window :wk "terminal")
    "o g" '(magit-status :wk "git")
@@ -430,11 +403,16 @@
 
    ;; "Workspaces (tabs)"
    "t" '(:ignore t :wk "workspaces")
-   "t k" '(eyebrowse-next-window-config :wk "next")
-   "t j" '(eyebrowse-prev-window-config :wk "prev")
-   "t o" '(eyebrowse-switch-to-window-config :wk "other workspace")
-   "t r" '(eyebrowse-rename-window-config :wk "rename")
-   "t d" '(eyebrowse-close-window-config :wk "close current")
+   "t o" '(persp-switch :wk "other workspace")
+   "t n" '(persp-next :wk "next")
+   "t p" '(persp-prev :wk "prev")
+   "t r" '(persp-rename :wk "rename")
+   "t k" '(persp-kill :wk "kill")
+   ;; "t k" '(eyebrowse-next-window-config :wk "next")
+   ;; "t j" '(eyebrowse-prev-window-config :wk "prev")
+   ;; "t o" '(eyebrowse-switch-to-window-config :wk "other workspace")
+   ;; "t r" '(eyebrowse-rename-window-config :wk "rename")
+   ;; "t d" '(eyebrowse-close-window-config :wk "close current")
    )
   )
  
@@ -772,31 +750,27 @@
   )
 ;;;; Wokspaces
 
-(use-package eyebrowse
-  :init
-  (eyebrowse-mode)
-  :general
-  (:keymaps 'override
-   "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
-   "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
-   "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
-   "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
-   "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
-   "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
-   "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
-   "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
-   "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
-   "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
-
-   "M-w" '(:ignore t :wk "workspace cycling")
-   "M-w k" '(eyebrowse-next-window-config :wk "next")
-   "M-w j" '(eyebrowse-prev-window-config :wk "prev")
-   )
-  :config
-  (setq eyebrowse-new-workspace t ; Start new workspace with scratch
-	eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
-	)
-  )
+;; (use-package eyebrowse
+;;   :init
+;;   (eyebrowse-mode)
+;;   :general
+;;   (:keymaps 'override
+;;    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
+;;    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
+;;    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
+;;    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
+;;    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
+;;    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
+;;    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
+;;    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
+;;    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
+;;    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
+;;    )
+;;   :config
+;;   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
+;; 	eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
+;; 	)
+;;   )
 
 
 ;;(use-package persp-mode
@@ -816,6 +790,19 @@
 ;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
 ;;	)
 ;;  )
+
+(use-package perspective
+  :init (persp-mode))
+
+(use-package persp-projectile
+  :after perspective
+  :general
+  (:keymaps 'projectile-command-map
+   "p" '(projectile-persp-switch-project :wk "switch project"))
+  (my-leader-def
+    "b b" '(persp-counsel-switch-buffer :wk "switch buffer"))
+  )
+
 
 ;;;; Resize frames
 (use-package frame-cmds)
@@ -861,12 +848,6 @@
 (use-package imenu-anywhere)
 
 (use-package dumb-jump
-  :general
-  (my-leader-def
-   "j" '(:ignore t :wk "jump to text")
-   "j d" '(dumb-jump-go :wk "dumb-jump")
-   "j i" '(ivy-imenu-anywhere :wk "imenu")
-   )
   :init
   (add-hook 'prog-mode-hook 'dumb-jump-mode)
   )
@@ -893,7 +874,6 @@
 
   (ivy-mode 1)
   :config
-  (setq ivy-use-virtual-buffers t) ;; Proposed from the Ivy wiki
   (setq ivy-count-format "(%d/%d) ") ;; Proposed from the Ivy wiki
   )
 
@@ -903,8 +883,8 @@
    "M-x" 'counsel-M-x
    "C-x C-f" 'counsel-find-file
    )
-
   :init
+  (counsel-mode +1)
   (defun siliusmv/fzf-home ()
     "Fuzzy find files from the home directory"
     (interactive)
@@ -925,7 +905,6 @@
     "Fuzzy search from all directories from current location"
     (interactive)
     (counsel-fzf "" default-directory))
-  
   )
 
 
@@ -1293,11 +1272,10 @@
 
 ;;;; Project management
 (use-package projectile
-
-  :diminish projectile-mode
   :config
   (projectile-mode +1)
   (setq projectile-completion-system 'ivy)
+  (setq projectile-switch-project-action #'projectile-dired) ; go to top level directory
   )
 
 ;; Install ag or ripgrep!!!!
@@ -1676,17 +1654,17 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
       desktop-path (list (concat user-emacs-directory "desktops/")))
 
 ;;;; Openwith external programs
-(if macos-p
-    (progn
-      (use-package openwith
-	:config
-	(setq openwith-associations
-	      '(("\\.pdf\\'" "open" (file))
-		("\\.png\\'" "open" (file))
-		("\\.jpg\\'" "open" (file))
-		))
-	(openwith-mode 1)
-	)))
+;; (if macos-p
+;;     (progn
+;;       (use-package openwith
+;; 	:config
+;; 	(setq openwith-associations
+;; 	      '(("\\.pdf\\'" "open" (file))
+;; 		("\\.png\\'" "open" (file))
+;; 		("\\.jpg\\'" "open" (file))
+;; 		))
+;; 	(openwith-mode 1)
+;; 	)))
 ;;;; Other stuff
 
 (require 'iso-transl) ; I don't know what this does
