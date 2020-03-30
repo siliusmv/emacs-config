@@ -1,11 +1,8 @@
 ;;; My Emacs init file
 
 ;;;; TODO
-;; Get working functionality for workspaces
-;; Get full control of which-key
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Add expand-region
-;; Add writegood-mode
 
 ;;; Non-package specific stuff
 ;;;; Global variables
@@ -327,12 +324,12 @@
 
    ;; Fuzzy search
    "f" '(:ignore t :wk "fuzzy search")
-   "f o" '(:ignore t :wk "frome onedrive")
-   "f o d" '(siliusmv/fzf-home-dir :wk "for directories")
-   "f o f" '(siliusmv/fzf-home :wk "for files")
-   "f h" '(:ignore t :wk "from here")
-   "f h f" '(counsel-fzf :wk "for files")
-   "f h d" '(siliusmv/fzf-dir-here "for directories")
+   "f h" '(:ignore t :wk "frome home")
+   "f h d" '(siliusmv/fzf-home-dir :wk "for directories")
+   "f h f" '(siliusmv/fzf-home :wk "for files")
+   "f" '(:ignore t :wk "from here")
+   "f f" '(counsel-fzf :wk "for files")
+   "f d" '(siliusmv/fzf-dir-here :wk "for directories")
 
    ;; Frame manipulation
    "F" '(:ignore t :wk "frame manipulation")
@@ -951,6 +948,11 @@
   (outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil))))
   )
 
+;;;; Writegood-mode
+;; Give comments on badly written text
+(use-package writegood-mode
+  :init
+  (add-hook 'LaTeX-mode-hook 'writegood-mode))
 
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
@@ -1124,8 +1126,7 @@
 	    :separate)
 	   company-files
 	   (company-dabbrev-code
-	    company-abbrev
-	    company-dabbrev :separate)
+	    company-abbrev :separate)
 	   ))
     (company-auctex-init))
 
@@ -1219,6 +1220,7 @@
        "f" 'pdf-links-action-perform
        "d" 'pdf-view-next-page-command
        "u" 'pdf-view-previous-page-command
+       "r" 'revert-buffer
        )
 
       ;; This does not seem to work
@@ -1231,14 +1233,17 @@
       (general-define-key
        :keymaps 'pdf-view-mode-map
        "SPC" nil
+       "M-SPC" nil
+       "SPC m" nil
+       "M-SPC m" nil
        )
 
       (my-local-leader-def
        :keymaps 'pdf-view-mode-map
+       "" nil
        "t" '(pdf-outline :wk "toc") 
-
        "/" '(isearch-forward :wk "search in buffer")
-
+       "r" '(revert-buffer :wk "refresh")
        "a" '(:ignore t :wk "annotations")
        "a t" '(pdf-annot-add-text-annotation :wk "text")
        "a m" '(pdf-annot-add-markup-annotation :wk "markup")
@@ -1257,7 +1262,6 @@
 ;; Display a popup-buffer with the available key-combinations
 ;; whenever a keymap is pressed
 (use-package which-key
-
   :defer 5
   :init
   (which-key-mode)
