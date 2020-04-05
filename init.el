@@ -2,17 +2,19 @@
 
 ;;;; TODO
 ;; Ensure that the dictionary in auctex is correct, and not "default"
+;; Figure out how to control the kill-ring
 ;; Add expand-region
 
 ;;; Non-package specific stuff
 ;;;; Global variables
-(defvar init-theme "light") ; Default theme
-(defvar init-dict "british") ; Default language
-(defvar my-gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
-(defvar pdf-tools-p t) ; Activate pdf-tools
-(defvar macos-p (string-equal system-type "darwin")) ; Is this a mac?
-(defvar fzf-home-dir "~/OneDrive - NTNU/")
-;; (setq tab-always-indent 'complete)
+(defvar s/init-theme "light") ; Default theme
+(defvar s/init-dict "british") ; Default language
+(defvar s/gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
+(defvar s/pdf-tools-p t) ; Activate pdf-tools?
+(defvar s/macos-p (string-equal system-type "darwin")) ; Is this a mac?
+(defvar s/fzf-home-dir "~/OneDrive - NTNU/") ; Directory for fzf where i keep all my files
+(defvar s/latex-viewer "pdf-tools")
+(defvar s/literature-dir "~/OneDrive - NTNU/literature/")
 
 ;;;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
@@ -24,19 +26,17 @@
 
 ;; Set file-name-handler-alist
 ;; Also from https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
-(setq file-name-handler-alist-original file-name-handler-alist)
-(setq file-name-handler-alist nil)
+(setq file-name-handler-alist-original file-name-handler-alist
+      file-name-handler-alist nil)
 
-;; Set deferred timer to reset them
-(run-with-idle-timer
- 5 nil
- (lambda ()
-   (setq gc-cons-threshold my-gc-cons-threshold)
-   (setq file-name-handler-alist file-name-handler-alist-original)
-   (makunbound 'gc-cons-threshold-original)
-   (makunbound 'file-name-handler-alist-original)
-   (message "gc-cons-threshold and file-name-handler-alist restored")))
-
+;; Reset all variables after startup is finished
+(defun s/reset-vars ()
+  (setq gc-cons-threshold s/gc-cons-threshold)
+  (setq file-name-handler-alist file-name-handler-alist-original)
+  (makunbound 'gc-cons-threshold-original)
+  (makunbound 'file-name-handler-alist-original)
+  (message "gc-cons-threshold and file-name-handler-alist restored"))
+(run-with-idle-timer 5 nil 's/reset-vars)
 
 ;;;; Bootstrap straight.el
 
@@ -62,44 +62,18 @@
 (straight-use-package 'use-package) ; Install use-package
 (setq straight-use-package-by-default t)
 
-
-
 ;;;; Import the shell environment
 ;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
-;; Import some shell environment variables into Emacs at launch. Steve
-;; Purcell's exec-path-from-shell imports PATH and MANPATH by default;
-;; LANG, TEXINPUTS and BIBINPUTS are added here. You can customize
-;; 'exec-env-from-shell-variables' in site-start.el or the user's
-;; config file.
+;; Import some shell environment variables into Emacs at launch.
 (use-package exec-path-from-shell
   :config
   ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
-  (exec-path-from-shell-copy-env "LC_ALL")
-  (exec-path-from-shell-copy-env "LANG")
   (setq exec-path-from-shell-check-startup-files nil) ; Some variables should be set in .bashrc
-  (nconc exec-path-from-shell-variables '("LANG" "TEXINPUTS" "BIBINPUTS"))
-  (exec-path-from-shell-initialize)
-  )
-
-;; macOS stuff
-(if macos-p
-    (progn
-     (setq mac-option-modifier nil ;; do not use the option key
-	   mac-command-modifier 'meta) ;; command is meta
-     (setq dired-use-ls-dired nil)
-     ))
-
-(defun toggle-fullscreen ()
-  "Toggle full screen"
-  (interactive)
-  (set-frame-parameter
-   nil 'fullscreen
-   (when (not (frame-parameter nil 'fullscreen)) 'fullboth)))
+  (nconc exec-path-from-shell-variables
+	 '("LANG" "TEXINPUTS" "BIBINPUTS" "LC_ALL" "LANG" "R_PROFILE_USER"))
+  (exec-path-from-shell-initialize))
 
 
-
-
- 
 ;;;; BASIC SETTINGS
 
 (setq inhibit-startup-screen t) ; Remove startup screen
@@ -108,23 +82,22 @@
 (setq ring-bell-function 'ignore) ; Stop the error bell sound
 (fset 'yes-or-no-p 'y-or-n-p) ; Change all prompts to y or n
 
-;; Allow enclosing a marked region with $$
-(add-to-list 'insert-pair-alist (list ?\$ ?\$))
-
 (scroll-bar-mode -1) ; Remove scroll bar
 (tool-bar-mode -1) ; Remove tool bar
-(if (not macos-p) (menu-bar-mode -1)) ; Sometimes remove menu bar
+(if (not s/macos-p) (menu-bar-mode -1)) ; Sometimes remove menu bar
 
-;; Backup files
-(setq backup-directory-alist `(("." . ,(concat user-emacs-directory "backup")))
-    backup-by-copying t    ; Don't delink hardlinks
-    version-control t      ; Use version numbers on backups
-    delete-old-versions t  ; Automatically delete excess backups
-    kept-new-versions 20   ; how many of the newest versions to keep
-    kept-old-versions 5    ; and how many of the old
-    )
+;; Autosave and backups
+(setq make-backup-files nil) ; don't make backup files
+(setq auto-save-default nil) ; Do not autosave
 
-
+;; macOS stuff
+(if s/macos-p
+    (progn
+     (setq mac-option-modifier nil ;; do not use the option key
+	   mac-command-modifier 'meta) ;; command is meta
+     (setq dired-use-ls-dired nil)
+     ))
+ 
 ;; Ignore case in completion
 (setq completion-ignore-case t
       case-fold-search nil
@@ -137,7 +110,10 @@
 
 (xterm-mouse-mode t) ; Enable mouse in terminal
 
-(defun siliusmv/kill-buffer-and-frame ()
+
+;;;; Misc. functions
+
+(defun s/kill-buffer-and-frame ()
   "Kill the current buffer and delete the selected frame."
   (interactive)
   (let ((frame-to-delete (selected-frame))
@@ -160,28 +136,28 @@
 
 
 ;; Functions for changing font size
-(defun siliusmv/zoom-in ()
+(defun s/zoom-in ()
   (interactive)
   (let ((x (+ 10 (face-attribute 'default :height))))
     (set-face-attribute 'default nil :height x)))
 
-(defun siliusmv/zoom-out ()
+(defun s/zoom-out ()
   (interactive)
   (let ((x (- (face-attribute 'default :height) 10)))
     (set-face-attribute 'default nil :height x)))
 
-(defun siliusmv/choose-from-list (prompt var-list &optional var-name)
+(defun s/choose-from-list (prompt var-list &optional var-name)
   (if (not var-name)
       (setq var-name
 	    (ivy-read prompt var-list)))
   (nth 1 (assoc var-name var-list)))
 
-(defun siliusmv/kill-this-buffer ()
+(defun s/kill-this-buffer ()
   "Kill the current buffer without any prompts"
   (interactive)
   (kill-buffer (current-buffer)))
 
-(defun siliusmv/go-to-config ()
+(defun s/go-to-config ()
   "Go to the emacs config-file"
   (interactive)
   (find-file (concat user-emacs-directory "init.el")))
@@ -195,26 +171,24 @@
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
   :config
-  (evil-mode 1)
-  )
+  (evil-mode 1))
 
 
 (use-package evil-collection
   :after evil
   :custom (evil-collection-minibuffer-setup t)
   :config
-  (evil-collection-init)
-  )
-
+  (evil-collection-init))
 
 ;;;; Diminish
+;; Don't let active modes clutter the mode-line
 (use-package diminish)
 
 ;;;; General.el - keybindings
+;; Keybindings
 (use-package general
   :config
   (general-evil-setup t)
-
 
   (general-create-definer my-leader-def
     :prefix "SPC"
@@ -227,7 +201,6 @@
     :global-prefix "M-SPC m"
     :states '(normal visual motion insert emacs))
 
-  
   (general-define-key
    :keymaps 'override
    :states '(normal visual insert)
@@ -235,8 +208,7 @@
    "M-o" '(ace-window :wk "other window")
    "M-s" '(save-buffer :wk "save buffer")
    "M-S" '(save-some-buffers :wk "save all buffers")
-   "M-`" '(ns-next-frame :wk "switch frame")
-   )
+   "M-`" '(ns-next-frame :wk "switch frame"))
 
   (general-define-key
    :keymaps 'override
@@ -245,26 +217,25 @@
    "M-k" '(scroll-down-command :wk t)
    "M-j" '(scroll-up-command :wk t)
    "M-h" '(evil-jump-backward :wk "jump backward")
-   "M-l" '(evil-jump-forward :wk "jump forward")
-   )
+   "M-l" '(evil-jump-forward :wk "jump forward"))
 
   (general-define-key
    :keymaps 'minibuffer-local-map
-   "M-p" '(yank :wk "copy from clipboard")
-   ) 
+   "M-p" '(yank :wk "copy from clipboard")) 
 
   (general-define-key
    :states 'visual
    :keymaps 'override
-   "<tab>" 'indent-for-tab-command)
-
+   "<tab>" 'indent-for-tab-command) ;; Indent a large area
+  
+  ;; Allow enclosing a marked region with $$
+  (add-to-list 'insert-pair-alist (list ?\$ ?\$))
   ;; Editing commands
   (general-define-key
    :states 'visual
    :keymaps 'override
    :prefix "M-i"
    "" '(:ignore t :wk "insert")
-   "ESC" '(:ignore t :wk t)
    "(" '(insert-pair :wk "(")
    "[" '(insert-pair :wk "[")
    "{" '(insert-pair :wk "{")
@@ -272,15 +243,14 @@
    "\'" '(insert-pair :wk "\'")
    "\$" '(insert-pair :wk "\$")
    "`" '(insert-pair :wk "`")
-   ")" '(delete-pair :wk "delete pair")
-   )
+   ")" '(delete-pair :wk "delete pair"))
 
   (my-leader-def
    "" nil
    "ESC" '(:ignore t :wk t)
    "M-SPC" '(counsel-find-file :wk "find file")
    "SPC" '(counsel-find-file :wk "find file")
-   "~" '(siliusmv/go-to-config :wk "go home")
+   "~" '(s/go-to-config :wk "go home")
 
    "m" '(:ignore t :wk "mode specific")
 
@@ -307,7 +277,7 @@
    
    ;; Buffer keymap
    "b" '(:ignore t :wk "buffers")
-   "b k" '(siliusmv/kill-this-buffer :wk "kill buffer")
+   "b k" '(s/kill-this-buffer :wk "kill buffer")
    "b K" '(kill-buffer :wk "kill some buffer")
    "b s" '(save-buffer :wk "save buffer")
    "b r" '(rename-buffer :wk "rename buffer")
@@ -325,11 +295,11 @@
    ;; Fuzzy search
    "f" '(:ignore t :wk "fuzzy search")
    "f h" '(:ignore t :wk "frome home")
-   "f h d" '(siliusmv/fzf-home-dir :wk "for directories")
-   "f h f" '(siliusmv/fzf-home :wk "for files")
+   "f h d" '(s/fzf-home-dir :wk "for directories")
+   "f h f" '(s/fzf-home :wk "for files")
    "f" '(:ignore t :wk "from here")
    "f f" '(counsel-fzf :wk "for files")
-   "f d" '(siliusmv/fzf-dir-here :wk "for directories")
+   "f d" '(s/fzf-dir-here :wk "for directories")
 
    ;; Frame manipulation
    "F" '(:ignore t :wk "frame manipulation")
@@ -349,7 +319,7 @@
    "q w" '(delete-window :wk "close window")
    "q o" '(delete-other-windows :wk "close other windows")
    "q W" '(kill-buffer-and-window :wk "Kill buffer, close window")
-   "q F" '(siliusmv/kill-buffer-and-frame :wk "Kill buffer, close frame")
+   "q F" '(s/kill-buffer-and-frame :wk "Kill buffer, close frame")
 
    ;; Search keymap
    "s" '(:ignore t :wk "search")
@@ -364,14 +334,13 @@
 
    ;; Variables keymap
    "v" '(:ignore t :wk "change variables")
-   "v l" '(siliusmv/nlinum-cycle :wk "toggle line numbers")
-   "v d" '(siliusmv/choose-dictionary :wk "spell-check dictionary")
-   "v t" '(siliusmv/choose-theme :wk "theme")
+   "v d" '(s/choose-dictionary :wk "spell-check dictionary")
+   "v t" '(s/choose-theme :wk "theme")
    "v s" '(flyspell-mode :wk "toggle spelling")
    "v F" '(flycheck-mode :wk "toggle flycheck")
    "v f" '(:ignore t :wk "font size")
-   "v f +" '(siliusmv/zoom-in :wk "enlarge")
-   "v f -" '(siliusmv/zoom-out :wk "decrease")
+   "v f +" '(s/zoom-in :wk "enlarge")
+   "v f -" '(s/zoom-out :wk "decrease")
 
    ;; Window keymap
    "w" '(:ignore t :wk "window")
@@ -404,56 +373,40 @@
    "t n" '(persp-next :wk "next")
    "t p" '(persp-prev :wk "prev")
    "t r" '(persp-rename :wk "rename")
-   "t k" '(persp-kill :wk "kill")
-   ;; "t k" '(eyebrowse-next-window-config :wk "next")
-   ;; "t j" '(eyebrowse-prev-window-config :wk "prev")
-   ;; "t o" '(eyebrowse-switch-to-window-config :wk "other workspace")
-   ;; "t r" '(eyebrowse-rename-window-config :wk "rename")
-   ;; "t d" '(eyebrowse-close-window-config :wk "close current")
-   )
-  )
+   "t d" '(persp-kill :wk "close")
+   ))
  
 ;;;; Dired stuff
 
-(defun dired-hide-dotfiles ()
+(defun s/dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
-  (interactive)
   (dired-mark-files-regexp "^\\.")
-  (dired-do-kill-lines)
-  )
-
-(general-define-key
- :keymaps 'dired-mode-map
- :states 'normal
- "l" 'dired-find-file
- "h" 'dired-up-directory
- )
+  (dired-do-kill-lines))
 
 ;; This is necessary for letting us use SPC in dired
-(run-with-idle-timer
- 2 nil
- (lambda ()
-   (general-def
+(defun s/dired-keybinds ()
+  (general-def
      :keymaps 'dired-mode-map
      :states '(normal visual insert motion emacs)
      "SPC" nil
-     "SPC m" nil
-     )
+     "SPC m" nil)
    (my-local-leader-def
      :keymaps 'dired-mode-map
-     "h" '(dired-hide-dotfiles :wk "hide dotfiles")
+     "h" '(s/dired-hide-dotfiles :wk "hide dotfiles")
      "c" '(dired-do-copy :wk "copy")
      "m" '(dired-do-rename :wk "move")
      "d" '(dired-do-delete :wk "delete")
      "s" '(dired-do-symlink :wk "symlink")
      "+" '(dired-create-directory :wk "mkdir")
-     "R" '(dired-do-rename-regexp :wk "rename regexp")
-     )))
+     "R" '(dired-do-rename-regexp :wk "rename regexp"))
+   (general-define-key
+    :keymaps 'dired-mode-map
+    :states 'normal
+    "l" 'dired-find-file
+    "h" 'dired-up-directory))
+(run-with-idle-timer 2 nil 's/dired-keybinds)
 
 ;; Set dired ls arguments
-;; A: all elements, but . and ..
-;; l: required
-;; h: human readable
 (setq dired-listing-switches "-Alh")
 
 
@@ -464,17 +417,15 @@
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
 
-(add-hook 'emacs-lisp-mode-hook 'siliusmv/outline-minor-activate)
-
+(add-hook 'emacs-lisp-mode-hook 's/outline-minor-activate)
 
 ;;;; Language servers
 (use-package eglot
   :config
-  ;; Avoid annoying highlighting of sverything
-  (setq eglot-ignored-server-capabilites '(:documentHighlightProvider))
-
-  (setq eglot-stay-out-of '(company)) ; Don't mess with company backends
-  )
+  (setq
+   ;; Avoid annoying highlighting of sverything
+   eglot-ignored-server-capabilites '(:documentHighlightProvider)
+   eglot-stay-out-of '(company))) ; Don't mess with company backends
 
 (use-package flymake
   :init
@@ -484,35 +435,7 @@
     (setf (seq-elt (car ret) 1) " FM")
     ret)
   (advice-add #'flymake--mode-line-format
-	      :filter-return #'flymake--transform-mode-line-format)
-  )
-
-;;;; Relative nlinum mode
-(use-package nlinum-relative
-  :diminish nlinum-relative-mode
-  :config
-  (setq nlinum-highlight-current-line t)
-  ;(nlinum-relative-setup-evil)             ;; setup for evil
-  (setq nlinum-relative-redisplay-delay 0)      ;; delay
-  (setq nlinum-relative-current-symbol "")
-
-  (defun siliusmv/nlinum-off ()
-    (nlinum-relative-mode 0)
-    (nlinum-mode 0))
-
-  (defun siliusmv/nlinum-cycle ()
-    "Toggle between nlinum, nlinum-relative and no line numbering"
-    (interactive)
-    (if (and (bound-and-true-p nlinum-mode)
-	     (bound-and-true-p nlinum-relative-mode))
-	(siliusmv/nlinum-off)
-      (if (bound-and-true-p nlinum-mode)
-	  (nlinum-relative-mode)
-	(nlinum-mode)))
-    )
-  )
-
-
+	      :filter-return #'flymake--transform-mode-line-format))
 
 ;;;; Text navigation
 
@@ -524,15 +447,15 @@
   :config
   (setq avy-style 'at-full
 	avy-all-windows t
-	avy-timeout-seconds 0.5)
-  )
+	avy-timeout-seconds 0.5))
 
 (use-package ace-window
   :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)) ; letters for switching window
-  (setq aw-scope 'frame) ;; Only switch windows in the focused frame
-  (setq aw-background nil) ; Don't remove colour around the letters
-  )
+  (setq
+   aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l) ; letters for switching window
+   aw-scope 'frame ;; Only switch windows in the focused frame
+   aw-background nil  ; Don't remove colour around the letters
+   ))
 
 ;;;; Company
 (use-package company
@@ -555,20 +478,17 @@
    "M-k" 'company-select-previous
    "M-d" 'company-next-page
    "M-u" 'company-previous-page
-   "M-S" '(counsel-company :wk "counsel-company")
-   )
+   "M-S" '(counsel-company :wk "counsel-company"))
 
   (general-define-key
    :keymaps 'company-search-map
    "M-d" 'company-search-repeat-forward
-   "M-u" 'company-search-repeat-backward
-   )
+   "M-u" 'company-search-repeat-backward)
 
   (general-define-key
    :states 'insert
    :keymaps 'company-mode-map
-   "M-c" 'company-other-backend
-   )
+   "M-c" 'company-other-backend)
 
   ;; set default `company-backends'
   (setq company-backends
@@ -576,7 +496,6 @@
 	  company-files          ; files & directory
 	  (company-abbrev company-dabbrev :separate)
 	  ))
-
 
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t
@@ -588,14 +507,14 @@
   ;; Settings for backends
   (setq company-dabbrev-downcase nil
 	company-dabbrev-code-ignore-case t
-	company-dabbrev-ignore-case t)
-  
+	company-dabbrev-ignore-case t
+	company-dabbrev-code-other-buffers t ; Search other buffers with same major mode
+	)
   )
 
 (use-package company-statistics
   :config
   (add-hook 'after-init-hook 'company-statistics-mode))
-
 
 ;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
@@ -608,10 +527,10 @@
     "s" '(ess-switch-process :wk "Switch R session")
     )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
-	    :states '(motion normal insert visual emacs)
-	    "M-e" 'ess-eval-region-or-line-visibly-and-step
-	    "M-RET" 'ess-eval-region-or-function-or-paragraph-and-step
-	    )
+   :states '(motion normal insert visual emacs)
+   "M-e" 'ess-eval-region-or-line-visibly-and-step
+   "M-RET" 'ess-eval-region-or-function-or-paragraph-and-step
+   )
   :diminish
   ((ess-r-package-mode . "")
    (eldoc-mode . ""))
@@ -620,21 +539,8 @@
   ;; Enable sweaving directly within the AUCTeX ecosystem.
   (setq-default ess-swv-plug-into-AUCTeX-p t)
 
-  ;; Automagically delete trailing whitespace when saving R script
-  ;; files. One can add other commands in the ess-mode-hook below.
-  (add-hook 'ess-mode-hook
-	    '(lambda()
-	       (add-hook 'write-contents-functions
-			 (lambda ()
-			   (ess-nuke-trailing-whitespace)))
-	       (setq ess-nuke-trailing-whitespace-p t)))
-
   (require 'ess-site)
   :config
-  (add-hook 'inferior-ess-r-mode-hook
-	    (lambda ()
-	      (setq-local nlinum-relative-mode nil)
-	      (electric-pair-local-mode -1)))
 
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
@@ -646,6 +552,7 @@
 	ess-local-process-name "R"
 	ess-eval-visibly-p 'nowait ;; no waiting while ess evaluating
 	)
+
   ;; start help in normal mode
   (evil-set-initial-state 'ess-help-mode 'normal) 
 
@@ -662,9 +569,8 @@
        ;; *R*, *shell* buffers above prompt:
        (setq comint-scroll-to-bottom-on-input 'this)))
 
-
-
-  (defun my-ess-company-function ()
+  (defun s/ess-r-company ()
+    "Set company backends for R buffers"
     (set (make-local-variable 'company-backends)
 	 '(
 	   company-capf
@@ -681,7 +587,8 @@
 	    company-dabbrev-code :separate)
 	   )))
 
-  (defun my-inferior-ess-company-function ()
+  (defun s/inferior-ess-r-company ()
+    "Set company backends for inferior r buffers"
     (set (make-local-variable 'company-backends)
   	 '( (company-R-args
   	     company-R-objects
@@ -693,29 +600,21 @@
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
   ;; Company stuff
-  (add-hook 'ess-mode-hook 'my-ess-company-function)
-  (add-hook 'inferior-ess-mode-hook 'my-inferior-ess-company-function)
+  (add-hook 'ess-r-mode-hook 's/ess-r-company)
+  (add-hook 'inferior-ess-r-mode-hook 's/inferior-ess-r-company)
 
   (add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
 
-
-  ;; ;; Try to limit max buffer size
-  ;; ;;(add-hook 'inferior-ess-mode-hook 'comint-truncate-buffer)
-  ;; (add-hook 'inferior-ess-mode-hook
-  ;; 	    (lambda ()
-  ;; 	      (setq comint-buffer-maximum-size 1000)
-  ;; 	      (run-with-timer 300 300 'comint-truncate-buffer)
-  ;; 	      ))
-  (add-hook 'ess-mode-hook 'siliusmv/outline-minor-activate)
-  (add-hook 'ess-mode-hook
-  	    '(lambda ()
-  	       (setq outline-regexp "^#\\{1,2\\} ----")
-  	       (defun outline-level ()
-  		 (cond ((looking-at "^# ---- ") 1)
-  		       ((looking-at "^## ---- ") 1)
-  		       (t 1000)))
-  	       ))
+  (defun s/ess-r-outline ()
+    "Setup outline-minor-mode for ess-r buffers"
+    (setq outline-regexp "^#\\{1,2\\} [-=]\\{4\\}")
+    (defun outline-level ()
+      (cond ((looking-at "^#\\{1,2\\} [-=]\\{4\\}") 1)
+	    (t 1000))))
+  
+  (add-hook 'ess-r-mode-hook 's/ess-r-outline)
+  (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
 )
 
 
@@ -723,70 +622,23 @@
 (use-package doom-themes
   :init
   ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+  (setq doom-themes-enable-bold t ; if nil, bold is universally disabled
 	doom-themes-enable-italic t)
-  ;; doom-one-comment-bg t
-  ;; doom-one-light-comment-bg t) ; if nil, italics is universally disabled
 
-  ;; Load the theme (doom-one, doom-molokai, etc); keep in mind that each theme
-  ;; may have their own settings.
-  ;; (load-theme 'doom-one t)
-
-  (defvar siliusmv/my-themes
+  (defvar s/themes
     (list
      '("dark" doom-one)
      '("light" doom-one-light)))
 
-  (defun siliusmv/choose-theme (&optional theme-short)
+  (defun s/choose-theme (&optional theme-short)
     (interactive)
     (let ((theme
-	   (siliusmv/choose-from-list "Select theme: " siliusmv/my-themes theme-short)))
+	   (s/choose-from-list "Select theme: " s/themes theme-short)))
       (load-theme theme t)))
 
-  (siliusmv/choose-theme init-theme)
+  (s/choose-theme s/init-theme)
   )
 ;;;; Wokspaces
-
-;; (use-package eyebrowse
-;;   :init
-;;   (eyebrowse-mode)
-;;   :general
-;;   (:keymaps 'override
-;;    "M-1" '(eyebrowse-switch-to-window-config-1 :wk "workspace 1")
-;;    "M-2" '(eyebrowse-switch-to-window-config-2 :wk "workspace 2")
-;;    "M-3" '(eyebrowse-switch-to-window-config-3 :wk "workspace 3")
-;;    "M-4" '(eyebrowse-switch-to-window-config-4 :wk "workspace 4")
-;;    "M-5" '(eyebrowse-switch-to-window-config-5 :wk "workspace 5")
-;;    "M-6" '(eyebrowse-switch-to-window-config-6 :wk "workspace 6")
-;;    "M-7" '(eyebrowse-switch-to-window-config-7 :wk "workspace 7")
-;;    "M-8" '(eyebrowse-switch-to-window-config-8 :wk "workspace 8")
-;;    "M-9" '(eyebrowse-switch-to-window-config-9 :wk "workspace 9")
-;;    "M-0" '(eyebrowse-switch-to-window-config-0 :wk "workspace 0")
-;;    )
-;;   :config
-;;   (setq eyebrowse-new-workspace t ; Start new workspace with scratch
-;; 	eyebrowse-wrap-around t ; Go from last to first worskspace when cycling
-;; 	)
-;;   )
-
-
-;;(use-package persp-mode
-;;  :init
-;;  (persp-mode 1)
-;;  :config
-;;  ;; This was advised from https://github.com/Bad-ptr/persp-mode.el
-;;  (setq wg-morph-on nil)
-;;  (setq persp-autokill-buffer-on-remove 'kill-weak)
-;;
-;;  (setq persp-nil-hidden t ;; Hide nil-perspecive
-;;	persp-auto-save-opt (if noninteractive 0 1)
-;;	persp-nil-name "main"
-;;	persp-auto-save-fname "autosave"
-;;	persp-auto-resume-time -1 ;; Do not autoresume
-;;	persp-remove-buffers-from-nil-persp-behaviour nil
-;;	persp-init-frame-behaviour nil ;; Open scratch for new frames
-;;	)
-;;  )
 
 (use-package perspective
   :init (persp-mode))
@@ -800,12 +652,10 @@
     "b b" '(persp-counsel-switch-buffer :wk "switch buffer"))
   )
 
-
 ;;;; Resize frames
 (use-package frame-cmds)
 ;;;; Tramp
 (use-package tramp
-
   :config
   (setq tramp-default-method "ssh"))
 
@@ -815,13 +665,13 @@
   :config
   ;; Always have it on
   (global-undo-tree-mode)
+  (setq
+   ;; Each node in the undo tree should have a timestamp
+   undo-tree-visualizer-timestamps t
+   ;; Show a diff window displaying changes
+   undo-tree-visualizer-diff t))
 
-  ;; Each node in the undo tree should have a timestamp
-  (setq undo-tree-visualizer-timestamps t)
 
-  ;; Show a diff window displaying changes
-  (setq undo-tree-visualizer-diff t)
-  )
 ;;;; Magit
 (use-package magit
   :commands (magit-status)
@@ -837,16 +687,13 @@
 ;;;; Rainbow delimiters
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode)
-  :defer 5
   )
-
 
 ;;;; Jump to function definition
 (use-package imenu-anywhere)
 
 (use-package dumb-jump
-  :init
-  (add-hook 'prog-mode-hook 'dumb-jump-mode)
+  :hook (prog-mode . dumb-jump-mode)
   )
 
 ;;;; Ivy++
@@ -866,9 +713,7 @@
   :init
   (setq ivy-re-builders-alist
 	'((t . ivy--regex-ignore-order))) ;; Regexps can interchange order
-
   (setq ivy-height 20)
-
   (ivy-mode 1)
   :config
   (setq ivy-count-format "(%d/%d) ") ;; Proposed from the Ivy wiki
@@ -876,29 +721,27 @@
 
 (use-package counsel
   :general
-  ( 
-   "M-x" 'counsel-M-x
-   "C-x C-f" 'counsel-find-file
-   )
+  ("M-x" 'counsel-M-x
+   "C-x C-f" 'counsel-find-file)
   :init
   (counsel-mode +1)
-  (defun siliusmv/fzf-home ()
+  (defun s/fzf-home ()
     "Fuzzy find files from the home directory"
     (interactive)
-    (counsel-fzf "" fzf-home-dir))
+    (counsel-fzf "" s/fzf-home-dir))
 
-  (defun siliusmv/fzf-dir (start-dir)
+  (defun s/fzf-dir (start-dir)
     "Fuzzy search for directories"
     (interactive)
     (let ((counsel-fzf-cmd "find . -type d | fzf -f \"%s\""))
       (counsel-fzf "" start-dir)))
 
-  (defun siliusmv/fzf-home-dir ()
+  (defun s/fzf-home-dir ()
     "Fuzzy search for all directories in the home directory"
     (interactive)
-    (siliusmv/fzf-dir fzf-home-dir))
+    (s/fzf-dir s/fzf-home-dir))
 
-  (defun siliusmv/fzf-dir-here ()
+  (defun s/fzf-dir-here ()
     "Fuzzy search from all directories from current location"
     (interactive)
     (counsel-fzf "" default-directory))
@@ -912,23 +755,11 @@
 ;;;; Flycheck (linting)
 (use-package flycheck)
 
-
 ;;;; outline stuff
-
-;; (use-package outshine
-;;   :init (outshine-mode) ;; For some reason this is necessary
-;;   :general
-;;   (:keymaps 'outshine-mode-map
-;;    "<C-tab>" 'outshine-cycle
-;;    )
-;;   :config
-;;   (add-hook 'LaTeX-mode-hook 'outshine-mode)
-;;   (add-hook 'prog-mode-hook 'outshine-mode)
-;;   )
 
 (use-package outline-magic
   :init
-  (defun siliusmv/outline-minor-activate ()
+  (defun s/outline-minor-activate ()
     (interactive)
     (outline-minor-mode)
     (outline-minor-faces-add-font-lock-keywords))
@@ -936,8 +767,8 @@
   (:keymaps 'outline-minor-mode-map
    "<C-tab>" 'outline-cycle)
   :config
-  (add-hook 'LaTeX-mode-hook 'siliusmv/outline-minor-activate)
-  (add-hook 'prog-mode-hook 'siliusmv/outline-minor-activate)
+  (add-hook 'LaTeX-mode-hook 's/outline-minor-activate)
+  (add-hook 'prog-mode-hook 's/outline-minor-activate)
   )
 
 (use-package outline-minor-faces
@@ -976,8 +807,8 @@
     "i r" '(reftex-reference :wk "label")
 
     "M-v" '(:ignore t :wk "change variables")
-    "M-v f" '(siliusmv/toggle-tex-fold :wk "folding")
-    "M-v v" '(siliusmv/choose-latex-pdf-viewer :wk "PDF viewer")
+    "M-v f" '(s/toggle-tex-fold :wk "folding")
+    "M-v v" '(s/choose-latex-pdf-viewer :wk "PDF viewer")
     )
   (:keymaps 'TeX-mode-map
    :prefix "M-i"
@@ -1002,63 +833,63 @@
    TeX-auto-global (concat user-emacs-directory "auctex/auto-global")
    TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
   
-
   ;;; Functions for changing PDF viewers
-  (defvar siliusmv/pdf-viewers
+  (defvar s/pdf-viewers
     (list
      '("evince" "Evince")
      '("pdf-tools" "PDF Tools")
      '("zathura" "Zathura2")
      '("preview" "Preview.app")))
 
-  (defun siliusmv/choose-latex-pdf-viewer (&optional viewer-name)
+  (defun s/choose-latex-pdf-viewer (&optional viewer-name)
     "Change PDF viewer for latex"
     (interactive)
     (let ((viewer
-	   (siliusmv/choose-from-list
+	   (s/choose-from-list
 	    "Select PDF viewer: "
-	    siliusmv/pdf-viewers
+	    s/pdf-viewers
 	    viewer-name)))
       (delete `(output-pdf ,viewer) TeX-view-program-selection)
       (setq TeX-view-program-selection
       	    (cons `(output-pdf ,viewer) TeX-view-program-selection))))
 
-
   ;;; Functions for doing text-folding
-
-  (defvar siliusmv/toggle-state "unfolded")
-  (defun siliusmv/toggle-tex-fold ()
+  (defvar s/toggle-state "unfolded")
+  (defun s/toggle-tex-fold ()
     "Toggle between folded and unfolded buffers.
    If TeX-fold-mode is not activated, first activate it."
     (interactive)
     (if (not (bound-and-true-p TeX-fold-mode))
   	(TeX-fold-mode))
-    (if (equal siliusmv/toggle-state "folded")
+    (if (equal s/toggle-state "folded")
   	(progn
   	  (TeX-fold-clearout-buffer)
-  	  (setq siliusmv/toggle-state "unfolded"))
+  	  (setq s/toggle-state "unfolded"))
       (progn
   	(TeX-fold-buffer)
-  	(setq siliusmv/toggle-state "folded"))))
+  	(setq s/toggle-state "folded"))))
 
-
-  (add-hook 'TeX-mode-hook
-	    (lambda ()
-	      ;; Add backwards search to zathura
-	      ;; https://www.emacswiki.org/emacs/AUCTeX#toc23
-	      (add-to-list 'TeX-view-program-list
-			   '("Zathura2"
-			     ("zathura %o"
-			      (mode-io-correlate " --synctex-forward %n:0:%b -x \"emacsclient --socket-name=my-gui-server --no-wait +%{line} %{input}\""))
-			     "zathura"))
-
-	      ;; Add PDF Tools as a possible viewer
-	      (unless (assoc "PDF Tools" TeX-view-program-list-builtin)
-		(add-to-list 'TeX-view-program-list-builtin
-			     '("PDF Tools" TeX-pdf-tools-sync-view)))))
-
+  (defun s/add-tex-viewers ()
+    "Add some latex viewers to the list"
+    ;; Add backwards search to zathura
+    ;; https://www.emacswiki.org/emacs/AUCTeX#toc23
+    (add-to-list 'TeX-view-program-list
+		 '("Zathura2"
+		   ("zathura %o"
+		    (mode-io-correlate (concat " --synctex-forward %n:0:%b"
+					       " -x \"emacsclient"
+					       " --socket-name=my-gui-server"
+					       " --no-wait +%{line} %{input}\"")))
+		   "zathura"))
+    ;; Add PDF Tools as a possible viewer
+    (unless (assoc "PDF Tools" TeX-view-program-list-builtin)
+      (add-to-list 'TeX-view-program-list-builtin
+		   '("PDF Tools" TeX-pdf-tools-sync-view))))
+  
+  (add-hook 'TeX-mode-hook 's/add-tex-viewers)
+  
   :config
-  (siliusmv/choose-latex-pdf-viewer "zathura")
+  (s/choose-latex-pdf-viewer s/latex-viewer)
 
   ;;(setq TeX-complete-expert-commands t) ; Adds more commands for completion
   (setq Tex-auto-save t) ;; Parsing on save
@@ -1126,7 +957,8 @@
 	    :separate)
 	   company-files
 	   (company-dabbrev-code
-	    company-abbrev :separate)
+	    company-abbrev
+	    company-dabbrev :separate)
 	   ))
     (company-auctex-init))
 
@@ -1167,35 +999,30 @@
   ;; (setq-default ispell-program-name "hunspell")
   ;; (setq ispell-really-hunspell t)
 
-  (defvar siliusmv/my-dictionaries
+  (defvar s/dictionaries
     (list
      '("british" "english_british")
      '("norwegian" "norsk_bokmaal")))
 
-  (defun siliusmv/choose-dictionary (&optional dict-name)
+  (defun s/choose-dictionary (&optional dict-name)
     (interactive)
     (let ((dict
-	   (siliusmv/choose-from-list "Select dictionary: " siliusmv/my-dictionaries dict-name)))
+	   (s/choose-from-list "Select dictionary: " s/dictionaries dict-name)))
       (ispell-change-dictionary dict)))
 
+  (s/choose-dictionary s/init-dict)
 
-  (siliusmv/choose-dictionary init-dict)
-
-
-  (use-package flyspell-correct-ivy
-    ;; :bind (:map flyspell-mode-map
-    ;; ("C-c $" . flyspell-correct-word-generic)))
-    )
+  (use-package flyspell-correct-ivy)
   )
 
 
 ;;;; PDF Tools
 (use-package tablist) ;; Apparently necessary for PDF Tools
-(if pdf-tools-p
+(if s/pdf-tools-p
     (use-package pdf-tools
       :config
 
-      (if macos-p
+      (if s/macos-p
 	  (progn
 	    (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/opt/libffi/lib/pkgconfig")
 
@@ -1210,7 +1037,6 @@
       (setq-default pdf-view-display-size 'fit-page)
       ;; automatically annotate highlights
       (setq pdf-annot-activate-created-annotations t)
-
 
       :init
       ;; use normal isearch
@@ -1262,7 +1088,6 @@
 ;; Display a popup-buffer with the available key-combinations
 ;; whenever a keymap is pressed
 (use-package which-key
-  :defer 5
   :init
   (which-key-mode)
   :diminish which-key-mode
@@ -1271,8 +1096,6 @@
   (which-key-setup-side-window-bottom)
   (setq which-key-side-window-max-height 0.5)
   )
-
-
 
 ;;;; Project management
 (use-package projectile
@@ -1284,25 +1107,7 @@
 
 ;; Install ag or ripgrep!!!!
 
-
 ;;;; Terminal
-;; Eshell stuff
-(use-package eshell
-  :config
-  (add-hook 'eshell-mode-hook
-	    (lambda ()
-	      (setq-local company-idle-delay nil)
-	      (add-to-list 'eshell-visual-commands "tmux")
-	      (add-to-list 'eshell-visual-commands "htop")
-	      (add-to-list 'eshell-visual-commands "top")
-	      (add-to-list 'eshell-visual-commands "screen")
-	    ))
-  (setq eshell-cmpl-ignore-case t
-	eshell-cmpl-autolist t
-	eshell-cmpl-cycle-completions nil)
-
-  )
-
 ;; Libvterm
 (use-package vterm)
 (use-package vterm-toggle)
@@ -1322,7 +1127,6 @@
 ;;;; Pairing of parentheses
 (use-package elec-pair
   :init
-  :defer 5
   :config
   (electric-pair-mode 1)
   ;; pairing of parentheses and other symbols
@@ -1349,41 +1153,20 @@
    (C . t)))
 
 ;; auto-fill mode
-(add-hook 'org-mode-hook
-	  (lambda ()
-	    (auto-fill-mode)))
-
+(add-hook 'org-mode-hook 'auto-fill-mode)
 (add-hook 'org-mode-hook 'org-indent-mode)
-
-(defun siliusmv/org-cycle-current-headline ()
-  "Cycle the current headline. Taken from
-https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-without-going-to-block-header"
-  (interactive)
-  (org-cycle-internal-local))
-
 
 (general-define-key
  :keymaps 'org-mode-map
  :states '(normal)
  "<tab>" 'org-cycle ; Evil-collection is stupid
- "<C-tab>" 'org-previous-visible-heading
-; "C-<tab>" 'siliusmv/org-cycle-current-headline
- )
-
-;(general-define-key
-; :keymaps 'org-mode-map
-; :states '(insert visual)
-; "<tab>" 'indent-for-tab-command
-; )
-
+ "<C-tab>" 'org-previous-visible-heading)
 
 (setq org-src-tab-acts-natively t)
 
 (my-local-leader-def
  :keymaps 'org-mode-map
- "TAB" '(org-global-cycle :wk "Cycle buffer")
- )
-
+ "TAB" '(org-global-cycle :wk "Cycle buffer"))
 
 (general-define-key
  :keymaps 'org-mode-map
@@ -1398,8 +1181,6 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
  "M-g M-k" '(org-previous-block :wk "next block")
  )
 
-;(setq org-export-use-babel nil)
-
 ;; Necessary for exporting org to html
 (use-package htmlize)
 
@@ -1410,10 +1191,6 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
 
 (setq org-latex-listings 'minted)
 
-;(setq org-latex-pdf-process
-;      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-;        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
-;        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
 (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
 
 ;; Do asynchronous org-babel calls in an R session
@@ -1423,21 +1200,18 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
    :host github
    :repo "jackkamm/ob-session-async")
   :config
-  (require 'ob-session-async-R)
-  )
-
+  (require 'ob-session-async-R))
 
 (use-package org-bullets
   :config
   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-
 (use-package org-ref
   :init
-  (setq reftex-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
-	org-ref-bibliography-notes "~/OneDrive - NTNU/literature/bibliography.org"
-	org-ref-default-bibliography '("~/OneDrive - NTNU/literature/sources.bib")
-	org-ref-pdf-directory "~/OneDrive - NTNU/literature/*read/")
+  (setq reftex-default-bibliography (list (concat s/literature-dir "sources.bib"))
+	org-ref-bibliography-notes (concat "bibliography.org")
+	org-ref-default-bibliography (list (concat "sources.bib"))
+	org-ref-pdf-directory (concat "*read/"))
 
   (setq org-ref-completion-library 'org-ref-ivy-cite)
   
@@ -1445,8 +1219,6 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
   (setq bibtex-completion-pdf-open-function
 	(lambda (fpath)
 	  (start-process "open" "*open*" "open" fpath)))
-
-  ;; https://github.com/jkitchin/org-ref
 
   (require 'org-ref)
   (require 'org-ref-latex)
@@ -1457,183 +1229,58 @@ https://stackoverflow.com/questions/8607656/emacs-org-mode-how-to-fold-block-wit
   (require 'org-ref-arxiv)
   (require 'org-ref-scopus)
 
-  (add-hook 'TeX-mode-hook
-	    (lambda ()
-	      (org-ref-latex-cite-on)))
+  (add-hook 'TeX-mode-hook 'org-ref-latex-cite-on)
+
   (general-define-key
    :keymaps 'TeX-mode-map
-   "<mouse-3>" 'org-ref-latex-click
-   )
-
+   "<mouse-3>" 'org-ref-latex-click)
   
   )
 
 
 ;;;; Modeline
 
-
 (use-package all-the-icons :config (setq all-the-icons-scale-factor 1.0))
-
-;; (use-package fancy-battery
-;;   :config
-;;   (fancy-battery-mode))
 
 (use-package doom-modeline
   :config
-  ;; How tall the mode-line should be (only respected in GUI Emacs).
-  (setq doom-modeline-height 25)
+  (setq
+   ;; How tall the mode-line should be (only respected in GUI Emacs).
+   doom-modeline-height 25
+   ;; How wide the mode-line bar should be (only respected in GUI Emacs).
+   doom-modeline-bar-width 3
+   ;; If you are expereicing the laggy issue, especially while editing remote files
+   ;; with tramp, please try `file-name' style.
+   ;; Please refer to https://github.com/bbatsov/projectile/issues/657.
+   doom-modeline-buffer-file-name-style 'buffer-name
+   ;; Whether show `all-the-icons' or not (if nil nothing will be showed).
+   doom-modeline-icon t
+   ;; Whether show the icon for major mode. It respects `doom-modeline-icon'.
+   doom-modeline-major-mode-icon t
+   ;; Display color icons for `major-mode'. It respects `all-the-icons-color-icons'.
+   doom-modeline-major-mode-color-icon nil
+   ;; If non-nil, only display one number for checker information if applicable.
+   doom-modeline-checker-simple-format t
+   ;; Whether display `lsp' state or not. Non-nil to display in mode-line.
+   doom-modeline-lsp t
+   ;; Whether display environment version or not
+   doom-modeline-env-version t
+   ;; Only show true name for symlinks
+   find-file-visit-truename t
+   ;; Display time
+   display-time-format (format-time-string "%H:%M"))
 
-  ;; How wide the mode-line bar should be (only respected in GUI Emacs).
-  (setq doom-modeline-bar-width 3)
-
-  ;; Determines the style used by `doom-modeline-buffer-file-name'.
-  ;;
-  ;; Given ~/Projects/FOSS/emacs/lisp/comint.el
-  ;;   truncate-upto-project => ~/P/F/emacs/lisp/comint.el
-  ;;   truncate-from-project => ~/Projects/FOSS/emacs/l/comint.el
-  ;;   truncate-with-project => emacs/l/comint.el
-  ;;   truncate-except-project => ~/P/F/emacs/l/comint.el
-  ;;   truncate-upto-root => ~/P/F/e/lisp/comint.el
-  ;;   truncate-all => ~/P/F/e/l/comint.el
-  ;;   relative-from-project => emacs/lisp/comint.el
-  ;;   relative-to-project => lisp/comint.el
-  ;;   file-name => comint.el
-  ;;   buffer-name => comint.el<2> (uniquify buffer name)
-  ;;
-  ;; If you are expereicing the laggy issue, especially while editing remote files
-  ;; with tramp, please try `file-name' style.
-  ;; Please refer to https://github.com/bbatsov/projectile/issues/657.
-  (setq doom-modeline-buffer-file-name-style 'buffer-name)
-
-  ;; Whether show `all-the-icons' or not (if nil nothing will be showed).
-  (setq doom-modeline-icon t)
-
-  ;; Whether show the icon for major mode. It respects `doom-modeline-icon'.
-  (setq doom-modeline-major-mode-icon t)
-
-  ;; Display color icons for `major-mode'. It respects `all-the-icons-color-icons'.
-  (setq doom-modeline-major-mode-color-icon nil)
-
-  ;; If non-nil, only display one number for checker information if applicable.
-  (setq doom-modeline-checker-simple-format t)
-  
-  ;; Whether display `lsp' state or not. Non-nil to display in mode-line.
-  (setq doom-modeline-lsp t)
-
-  ;; Whether display environment version or not
-  (setq doom-modeline-env-version t)
-
-  ;; Only show true name for symlinks
-  (setq find-file-visit-truename t)
-
-  ;; Display time
-  (setq display-time-format
-	(format-time-string "%H:%M"))
-
-
-  (doom-modeline-def-segment my-time
-    (let* ((hour (string-to-number (format-time-string "%I")))
-	   (icon (all-the-icons-wicon (format "time-%s" hour) :height 1.3 :v-adjust 0.0)))
-      (concat
-       (propertize (format-time-string " %H:%M ") 'face `(:height 0.9))
-       (propertize (format "%s " icon) 'face `(:height 1.0 :family ,(all-the-icons-wicon-family)) 'display '(raise -0.0)))))
-  
-  (doom-modeline-def-modeline 'main
-    '(bar workspace-name window-number modals matches buffer-info remote-host buffer-position parrot selection-info)
-    '(objed-state misc-info persp-name battery my-time grip irc mu4e github debug lsp minor-modes input-method indent-info buffer-encoding major-mode process vcs checker))
-
-  (doom-modeline-def-modeline 'minimal
-    '(bar matches buffer-info-simple)
-    '(media-info major-mode))
-
-  (doom-modeline-def-modeline 'special
-    '(bar window-number modals matches buffer-info buffer-position parrot selection-info)
-    '(objed-state misc-info battery my-time irc-buffers debug lsp minor-modes input-method indent-info buffer-encoding major-mode process checker))
-
-  (doom-modeline-def-modeline 'project
-    '(bar window-number buffer-default-directory)
-    '(misc-info battery my-time mu4e github debug major-mode process))
-
-  (doom-modeline-def-modeline 'package
-    '(bar window-number package)
-    '(misc-info major-mode process))
-
-  (doom-modeline-def-modeline 'info
-    '(bar window-number buffer-info info-nodes buffer-position parrot selection-info)
-    '(misc-info buffer-encoding major-mode))
-
-  (doom-modeline-def-modeline 'media
-    '(bar window-number buffer-size buffer-info)
-    '(misc-info media-info major-mode process vcs))
-
-  (doom-modeline-def-modeline 'pdf
-    '(bar window-number buffer-size buffer-info pdf-pages)
-    '(misc-info major-mode process vcs))
-
-  (doom-modeline-def-modeline 'helm
-    '(bar helm-buffer-id helm-number helm-follow helm-prefix-argument)
-    '(helm-help))
-
-  (doom-modeline-def-modeline 'timemachine
-    '(bar window-number matches git-timemachine buffer-position parrot selection-info)
-    '(misc-info battery my-time mu4e github debug minor-modes indent-info buffer-encoding major-mode))
-
-
-  (defun doom-modeline-set-main-modeline (&optional default)
-    "Set main mode-line.
-If DEFAULT is non-nil, set the default mode-line for all buffers."
-    (doom-modeline-set-modeline 'main default))
-
-  (defun doom-modeline-set-minimal-modeline ()
-    "Set minimal mode-line."
-    (doom-modeline-set-modeline 'minimal))
-
-  (defun doom-modeline-set-special-modeline ()
-    "Set sepcial mode-line."
-    (doom-modeline-set-modeline 'special))
-
-  (defun doom-modeline-set-project-modeline ()
-    "Set project mode-line."
-    (doom-modeline-set-modeline 'project))
-
-  (defun doom-modeline-set-info-modeline ()
-    "Set Info mode-line."
-    (doom-modeline-set-modeline 'info))
-
-  (defun doom-modeline-set-package-modeline ()
-    "Set package mode-line."
-    (doom-modeline-set-modeline 'package))
-
-  (defun doom-modeline-set-media-modeline ()
-    "Set media mode-line."
-    (doom-modeline-set-modeline 'media))
-
-  (defun doom-modeline-set-pdf-modeline ()
-    "Set pdf mode-line."
-    (doom-modeline-set-modeline 'pdf))
-
-  (defun doom-modeline-set-helm-modeline (&rest _)
-    "Set helm mode-line."
-    (doom-modeline-set-modeline 'helm))
-
-  (defun doom-modeline-set-timemachine-modeline (&rest _)
-    "Set timemachine mode-line."
-    (doom-modeline-set-modeline 'timemachine))
-
-  (doom-modeline-mode)
-  )
-
-
+  (doom-modeline-mode))
 
 ;;;; Midnight mode
 (use-package midnight)
+
 ;;;; Yasnippet
 (use-package yasnippet
   :init
   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
   :config
-  (yas-global-mode 1)
-  )
+  (yas-global-mode 1))
 
 ;;;; Polymode
 (use-package polymode)
@@ -1643,35 +1290,38 @@ If DEFAULT is non-nil, set the default mode-line for all buffers."
   (add-hook 'org-mode-hook 'poly-org-mode))
 
 (use-package poly-R) ;; This one must run after ESS
-;(use-package poly-markdown)
 
 ;;;; Desktop-save-mode
 
+(defun s/activate-desktop-save ()
+  (desktop-save-mode 1)
+  (setq desktop-save 'nil))
+
 ;; Activate desktop-save-mode
 ;; This is done after-init to not load desktop eagerly
-(add-hook 'after-init-hook 
-	  (lambda ()
-	    (desktop-save-mode 1)
-	    (setq desktop-save 'nil)))
+(add-hook 'after-init-hook 's/activate-desktop-save)
 
 (setq desktop-dirname (concat user-emacs-directory "desktops/")
       desktop-path (list (concat user-emacs-directory "desktops/")))
 
 ;;;; Openwith external programs
-;; (if macos-p
-;;     (progn
-;;       (use-package openwith
-;; 	:config
-;; 	(setq openwith-associations
-;; 	      '(("\\.pdf\\'" "open" (file))
-;; 		("\\.png\\'" "open" (file))
-;; 		("\\.jpg\\'" "open" (file))
-;; 		))
-;; 	(openwith-mode 1)
-;; 	)))
-;;;; Other stuff
+(if s/macos-p
+    (progn
+      (use-package openwith
+	:config
+	(setq openwith-associations
+	      '(("\\.png\\'" "open" (file))
+		("\\.jpg\\'" "open" (file))
+		))
+	(openwith-mode 1)
+	)))
 
-(require 'iso-transl) ; I don't know what this does
+;;;; Fix the usage of accent keys
+;; https://wiki.archlinux.org/index.php/Emacs
+;; "Emacs, the normal way to use accent keys does not work as expected.
+;; Trying to accent a word like 'fiancé' will produce an error message."
+;; We fix this with iso-transl
+(require 'iso-transl)
 
 
 ;;; Mandatory stuff
