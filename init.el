@@ -190,16 +190,22 @@
   :config
   (general-evil-setup t)
 
-  (general-create-definer my-leader-def
+  (general-create-definer s/leader-def
     :prefix "SPC"
     :global-prefix "M-SPC"
     :states '(normal visual motion insert emacs)
     :keymaps 'override)
 
-  (general-create-definer my-local-leader-def
+  (general-create-definer s/local-leader-def
     :prefix "SPC m"
     :global-prefix "M-SPC m"
     :states '(normal visual motion insert emacs))
+
+  (general-create-definer s/goto-leader-def
+    :prefix "g"
+    :global-prefix "M-SPC g"
+    :states '(normal visual motion insert emacs)
+    :keymaps 'override)
 
   (general-define-key
    :keymaps 'override
@@ -245,31 +251,36 @@
    "`" '(insert-pair :wk "`")
    ")" '(delete-pair :wk "delete pair"))
 
-  (my-leader-def
+  (s/goto-leader-def
+    "h" '(counsel-outline :wk "outline header")
+    "l" '(avy-goto-line :wk "line")
+    "e" '(flymake-goto-next-error :wk "next error (flymake)")
+    "E" '(flymake-goto-prev-error :wk "prev error (flymake)")
+    "b" '(evil-next-buffer :wk "next buffer")
+    "B" '(evil-prev-buffer :wk "prev buffer")
+    "s" '(flyspell-correct-next :wk "next spelling error")
+    "S" '(flyspell-correct-previous :wk "prev spelling error")
+    "t" '(persp-next :wk "next tab")
+    "T" '(persp-prev :wk "prev tab")
+
+    "d" '(:ignore t :wk "definition")
+    "d i" '(ivy-imenu-anywhere :wk "with imenu")
+    "d d" '(dumb-jump-go :wk "with dumb-jump")
+    "d x" '(xref-find-definitions :wk "with xref")
+    )
+
+  (s/leader-def
    "" nil
-   "ESC" '(:ignore t :wk t)
    "M-SPC" '(counsel-find-file :wk "find file")
    "SPC" '(counsel-find-file :wk "find file")
    "~" '(s/go-to-config :wk "go home")
 
+   "g" '(:ignore t :wk "go to...")
    "m" '(:ignore t :wk "mode specific")
 
    "c" '(counsel-compile :wk "compile")
 
-   "g" '(:ignore t :wk "go to...")
-   "g h" '(counsel-outline :wk "outline header")
-   "g l" '(avy-goto-line :wk "line")
-   "g e" '(flymake-goto-next-error :wk "next error (flymake)")
-   "g E" '(flymake-goto-prev-error :wk "prev error (flymake)")
-   "g b" '(evil-next-buffer :wk "next buffer")
-   "g B" '(evil-prev-buffer :wk "prev buffer")
-   "g s" '(flyspell-correct-next :wk "next spelling error")
-   "g S" '(flyspell-correct-previous :wk "prev spelling error")
-   "g d" '(:ignore t :wk "definition")
-   "g d i" '(ivy-imenu-anywhere :wk "with imenu")
-   "g d d" '(dumb-jump-go :wk "with dumb-jump")
-
-   ;; Yasnippet keymap
+      ;; Yasnippet keymap
    "y" '(:ignore t :wk "yasnippet")
    "y i" '(yas-insert-snippet :wk "insert")
    "y c" '(yas-new-snippet :wk "create")
@@ -390,7 +401,7 @@
      :states '(normal visual insert motion emacs)
      "SPC" nil
      "SPC m" nil)
-   (my-local-leader-def
+   (s/local-leader-def
      :keymaps 'dired-mode-map
      "h" '(s/dired-hide-dotfiles :wk "hide dotfiles")
      "c" '(dired-do-copy :wk "copy")
@@ -409,9 +420,11 @@
 ;; Set dired ls arguments
 (setq dired-listing-switches "-Alh")
 
+;; Smart guessing of target directory for copying etc.
+(setq dired-dwim-target t)
 
 ;;;; Elisp stuff
-(my-local-leader-def
+(s/local-leader-def
  :keymaps 'emacs-lisp-mode-map
  "o" '(eval-defun :wk "evaluate outer sexp")
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
@@ -521,10 +534,10 @@
   :commands (run-ess-r)
   :defer 5
   :general
-  (my-local-leader-def
+  (s/local-leader-def
     :keymaps '(ess-r-mode-map inferior-ess-mode-map)
     "r" '(run-ess-r :wk "Open new R session")
-    "s" '(ess-switch-process :wk "Switch R session")
+    "s" '(ess-switch-process :wk "Switch ESS session")
     )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
    :states '(motion normal insert visual emacs)
@@ -539,7 +552,7 @@
   ;; Enable sweaving directly within the AUCTeX ecosystem.
   (setq-default ess-swv-plug-into-AUCTeX-p t)
 
-  (require 'ess-site)
+  (require 'ess-r-mode)
   :config
 
   (setq ess-inject-source nil
@@ -605,6 +618,7 @@
 
   (add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
+  (add-hook 'inferior-ess-mode-hook '(lambda () (electric-pair-local-mode -1)))
 
   (defun s/ess-r-outline ()
     "Setup outline-minor-mode for ess-r buffers"
@@ -617,6 +631,26 @@
   (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
 )
 
+;;;; Julia
+;;(use-package eglot-jl
+;;  :hook (ess-julia-mode . eglot-jl-init))
+
+(use-package julia-snail
+  :hook (julia-mode . julia-snail-mode)
+  :init
+  (defun s/julia-snail-send-line-and-step ()
+    (interactive)
+    (julia-snail-send-line)
+    (next-line))
+  :general
+  (:keymaps 'julia-snail-mode-map
+   ;"M-e" 'julia-snail-send-line
+   "M-e" 's/julia-snail-send-line-and-step
+   "M-RET" 'julia-snail-send-region)
+  (s/local-leader-def
+    :keymaps 'julia-mode-map
+    "j" '(julia-snail :wk "julia"))
+  )
 
 ;;;; Themes
 (use-package doom-themes
@@ -648,8 +682,9 @@
   :general
   (:keymaps 'projectile-command-map
    "p" '(projectile-persp-switch-project :wk "switch project"))
-  (my-leader-def
-    "b b" '(persp-counsel-switch-buffer :wk "switch buffer"))
+  (s/leader-def
+    "b b" '(persp-counsel-switch-buffer :wk "switch buffer")
+    "b B" '(counsel-switch-buffer :wk "switch buffer globally"))
   )
 
 ;;;; Resize frames
@@ -783,13 +818,15 @@
 ;; Give comments on badly written text
 (use-package writegood-mode
   :init
-  (add-hook 'LaTeX-mode-hook 'writegood-mode))
+  (add-hook 'LaTeX-mode-hook 'writegood-mode)
+  :config
+  (delete "significantly" writegood-weasel-words))
 
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
 (use-package auctex
   :general
-  (my-local-leader-def
+  (s/local-leader-def
     :keymaps 'TeX-mode-map
     "ESC" '(:ignore t :wk t)
     "v" '(TeX-view :wk "view pdf")
@@ -819,7 +856,7 @@
    "c" '(reftex-citation :wk "citation")
    "r" '(reftex-reference :wk "label")
    )
-  (my-local-leader-def
+  (s/local-leader-def
     :keymaps 'bibtex-mode-map
     "t" '(org-ref-clean-bibtex-entry :wk "tidy entry")
     )
@@ -944,7 +981,7 @@
 (use-package company-auctex
   :config
 
-  (defun my-latex-company-function ()
+  (defun s/latex-company-function ()
     (set (make-local-variable 'company-backends)
 	 '(
 	   (company-reftex-labels
@@ -962,7 +999,7 @@
 	   ))
     (company-auctex-init))
 
-  (add-hook 'LaTeX-mode-hook 'my-latex-company-function)
+  (add-hook 'LaTeX-mode-hook 's/latex-company-function)
   
   )
 
@@ -1064,7 +1101,7 @@
        "M-SPC m" nil
        )
 
-      (my-local-leader-def
+      (s/local-leader-def
        :keymaps 'pdf-view-mode-map
        "" nil
        "t" '(pdf-outline :wk "toc") 
@@ -1117,7 +1154,7 @@
    :host github
    :repo "suonlight/multi-libvterm")
   :general
-  (my-local-leader-def
+  (s/local-leader-def
     :keymaps 'vterm-mode-map
     "n" '(multi-libvterm-next :wk "next")
     "p" '(multi-libvterm-prev :wk "previous")
@@ -1164,7 +1201,7 @@
 
 (setq org-src-tab-acts-natively t)
 
-(my-local-leader-def
+(s/local-leader-def
  :keymaps 'org-mode-map
  "TAB" '(org-global-cycle :wk "Cycle buffer"))
 
