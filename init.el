@@ -203,7 +203,7 @@
 
   (general-create-definer s/goto-leader-def
     :prefix "g"
-    :global-prefix "M-SPC g"
+    :global-prefix "M-g"
     :states '(normal visual motion insert emacs)
     :keymaps 'override)
 
@@ -252,6 +252,7 @@
    ")" '(delete-pair :wk "delete pair"))
 
   (s/goto-leader-def
+    "" '(:ignore t :wk "go to...")
     "h" '(counsel-outline :wk "outline header")
     "l" '(avy-goto-line :wk "line")
     "e" '(flymake-goto-next-error :wk "next error (flymake)")
@@ -262,12 +263,12 @@
     "S" '(flyspell-correct-previous :wk "prev spelling error")
     "t" '(persp-next :wk "next tab")
     "T" '(persp-prev :wk "prev tab")
+    "r" '(revert-buffer :wk "refresh buffer")
 
     "d" '(:ignore t :wk "definition")
     "d i" '(ivy-imenu-anywhere :wk "with imenu")
     "d d" '(dumb-jump-go :wk "with dumb-jump")
-    "d x" '(xref-find-definitions :wk "with xref")
-    )
+    "d x" '(xref-find-definitions :wk "with xref"))
 
   (s/leader-def
    "" nil
@@ -486,7 +487,7 @@
    "S-TAB" nil
    "<return>" nil
    "M-l" 'company-complete-common
-   "M-s" 'company-search-candidates
+   "C-M-s" 'company-search-candidates
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "M-d" 'company-next-page
@@ -1136,10 +1137,30 @@
 
 ;;;; Project management
 (use-package projectile
+  :init
+  (defun s/projectile-run-r (&optional arg)
+    "Invoke an `r'-process in the project's root.
+
+Switch to the project specific term buffer if it already exists.
+
+Use a prefix argument ARG to indicate creation of a new process instead."
+    (interactive "P")
+    (let* ((project (projectile-ensure-project (projectile-project-root)))
+	   (buffer (projectile-generate-process-name "R" arg))
+	   (buffer (split-string buffer))
+	   (buffer (concat (car buffer) ":" (cadr buffer))))
+      (unless (buffer-live-p (get-buffer buffer))
+	(unless (require 'ess-r-mode nil 'noerror)
+	  (error "Package 'ess-r-mode' is not available"))
+	(projectile-with-default-dir project
+	  (run-ess-r)))
+      (switch-to-buffer buffer)))
   :config
   (projectile-mode +1)
   (setq projectile-completion-system 'ivy)
   (setq projectile-switch-project-action #'projectile-dired) ; go to top level directory
+  (s/leader-def
+   "o r" '(s/projectile-run-r :wk "R"))
   )
 
 ;; Install ag or ripgrep!!!!
