@@ -205,7 +205,7 @@
     :prefix "g"
     :global-prefix "M-g"
     :states '(normal visual motion insert emacs)
-    :keymaps 'override)
+    :keymaps '(prog-mode-map text-mode-map dired-mode-map))
 
   (general-define-key
    :keymaps 'override
@@ -633,25 +633,52 @@
 )
 
 ;;;; Julia
-;;(use-package eglot-jl
-;;  :hook (ess-julia-mode . eglot-jl-init))
 
-(use-package julia-snail
-  :hook (julia-mode . julia-snail-mode)
-  :init
-  (defun s/julia-snail-send-line-and-step ()
-    (interactive)
-    (julia-snail-send-line)
-    (next-line))
+(use-package julia-mode
+  :config
+  (add-hook 'julia-mode-hook 'julia-repl-mode)
   :general
-  (:keymaps 'julia-snail-mode-map
-   ;"M-e" 'julia-snail-send-line
-   "M-e" 's/julia-snail-send-line-and-step
-   "M-RET" 'julia-snail-send-region)
   (s/local-leader-def
     :keymaps 'julia-mode-map
-    "j" '(julia-snail :wk "julia"))
+    "j" '(julia-repl :wk "julia"))
   )
+
+;(use-package julia-snail)
+
+;; You have to go into the source code of the function
+;; eglot-jl--ls-invocation and comment out the line where
+;; they change the environment variable JULIA_LOAD_PATH
+;; for this to not destroy everything
+(use-package eglot-jl
+  :init
+  (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
+  (eglot-jl-init)
+  :config
+  (add-hook 'julia-mode-hook 'eglot-ensure))
+
+(use-package julia-repl
+  :general
+  (:keymaps 'julia-repl-mode-map
+   "M-e" 'julia-repl-send-line
+   "M-RET" 'julia-repl-send-region-or-line)
+)
+
+; (use-package julia-snail
+;   :hook (julia-mode . julia-snail-mode)
+;   :init
+;   (defun s/julia-snail-send-line-and-step ()
+;     (interactive)
+;     (julia-snail-send-line)
+;     (evil-next-line))
+;   :general
+;   (:keymaps 'julia-snail-mode-map
+;    ;"M-e" 'julia-snail-send-line
+;    "M-e" 's/julia-snail-send-line-and-step
+;    "M-RET" 'julia-snail-send-top-level-form)
+;   (s/local-leader-def
+;     :keymaps 'julia-mode-map
+;     "j" '(julia-snail :wk "julia"))
+;   )
 
 ;;;; Themes
 (use-package doom-themes
@@ -952,7 +979,6 @@
   (setq TeX-source-correlate-method 'synctex)
   (TeX-source-correlate-mode)
   (setq TeX-source-correlate-start-server t)
-
   )
 
 (use-package reftex
