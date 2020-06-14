@@ -6,7 +6,7 @@
 ;; Add expand-region
 
 ;;; Non-package specific stuff
-;;;; Global variables
+;;;; Global variables and constants
 (defvar s/init-theme "light") ; Default theme
 (defvar s/init-dict "british") ; Default language
 (defvar s/gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
@@ -15,6 +15,7 @@
 (defvar s/fzf-home-dir "~/OneDrive - NTNU/") ; Directory for fzf where i keep all my files
 (defvar s/latex-viewer "pdf-tools")
 (defvar s/literature-dir "~/OneDrive - NTNU/literature/")
+(setq-default fill-column 100) ; Column for starting automatic line wrap
 
 ;;;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
@@ -95,8 +96,7 @@
     (progn
      (setq mac-option-modifier nil ;; do not use the option key
 	   mac-command-modifier 'meta) ;; command is meta
-     (setq dired-use-ls-dired nil)
-     ))
+     (setq dired-use-ls-dired nil)))
  
 ;; Ignore case in completion
 (setq completion-ignore-case t
@@ -205,7 +205,7 @@
     :prefix "g"
     :global-prefix "M-g"
     :states '(normal visual motion insert emacs)
-    :keymaps '(prog-mode-map text-mode-map dired-mode-map))
+    :keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
 
   (general-define-key
    :keymaps 'override
@@ -636,14 +636,14 @@
 
 (use-package julia-mode
   :config
-  (add-hook 'julia-mode-hook 'julia-repl-mode)
-  :general
-  (s/local-leader-def
-    :keymaps 'julia-mode-map
-    "j" '(julia-repl :wk "julia"))
+  ;(add-hook 'julia-mode-hook 'julia-repl-mode)
+  (add-hook 'julia-mode-hook 'julia-snail-mode)
+  ;:general
+  ;(s/local-leader-def
+  ;  :keymaps 'julia-mode-map
+  ;  "j" '(julia-snail :wk "julia"))
   )
 
-;(use-package julia-snail)
 
 ;; You have to go into the source code of the function
 ;; eglot-jl--ls-invocation and comment out the line where
@@ -656,29 +656,29 @@
   :config
   (add-hook 'julia-mode-hook 'eglot-ensure))
 
-(use-package julia-repl
-  :general
-  (:keymaps 'julia-repl-mode-map
-   "M-e" 'julia-repl-send-line
-   "M-RET" 'julia-repl-send-region-or-line)
-)
-
-; (use-package julia-snail
-;   :hook (julia-mode . julia-snail-mode)
-;   :init
-;   (defun s/julia-snail-send-line-and-step ()
-;     (interactive)
-;     (julia-snail-send-line)
-;     (evil-next-line))
+; (use-package julia-repl
 ;   :general
-;   (:keymaps 'julia-snail-mode-map
-;    ;"M-e" 'julia-snail-send-line
-;    "M-e" 's/julia-snail-send-line-and-step
-;    "M-RET" 'julia-snail-send-top-level-form)
-;   (s/local-leader-def
-;     :keymaps 'julia-mode-map
-;     "j" '(julia-snail :wk "julia"))
-;   )
+;   (:keymaps 'julia-repl-mode-map
+;    "M-e" 'julia-repl-send-line
+;    "M-RET" 'julia-repl-send-region-or-line)
+; )
+
+(use-package julia-snail
+  ;:hook (julia-mode . julia-snail-mode)
+  :init
+  (defun s/julia-snail-send-line-and-step ()
+    (interactive)
+    (julia-snail-send-line)
+    (evil-next-line))
+  :general
+  (:keymaps 'julia-snail-mode-map
+   ;"M-e" 'julia-snail-send-line
+   "M-e" 's/julia-snail-send-line-and-step
+   "M-RET" 'julia-snail-send-top-level-form)
+  (s/local-leader-def
+    :keymaps 'julia-mode-map
+    "j" '(julia-snail :wk "julia"))
+  )
 
 ;;;; Themes
 (use-package doom-themes
@@ -1032,7 +1032,6 @@
 
 
 ;;;; Auto-fill texts
-(setq-default fill-column 75)
 (add-hook 'text-mode-hook 'auto-fill-mode)
 (add-hook 'LaTeX-mode 'auto-fill-mode)
 (diminish 'auto-fill-function)
