@@ -4,6 +4,7 @@
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Figure out how to control the kill-ring
 ;; Add expand-region
+;; Fig better keybinds in the ivy buffer and for company
 
 ;;; Non-package specific stuff
 ;;;; Global variables and constants
@@ -135,17 +136,6 @@
 	  (remove-hook 'kill-buffer-hook delete-frame-functions t))))))
 
 
-;; Functions for changing font size
-(defun s/zoom-in ()
-  (interactive)
-  (let ((x (+ 10 (face-attribute 'default :height))))
-    (set-face-attribute 'default nil :height x)))
-
-(defun s/zoom-out ()
-  (interactive)
-  (let ((x (- (face-attribute 'default :height) 10)))
-    (set-face-attribute 'default nil :height x)))
-
 (defun s/choose-from-list (prompt var-list &optional var-name)
   (if (not var-name)
       (setq var-name
@@ -202,10 +192,10 @@
     :states '(normal visual motion insert emacs))
 
   (general-create-definer s/goto-leader-def
-    :prefix "g"
-    :global-prefix "M-g"
+    :prefix "M-g"
     :states '(normal visual motion insert emacs)
-    :keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
+    ;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
+    :keymaps 'override)
 
   (general-define-key
    :keymaps 'override
@@ -351,8 +341,8 @@
    "v s" '(flyspell-mode :wk "toggle spelling")
    "v F" '(flycheck-mode :wk "toggle flycheck")
    "v f" '(:ignore t :wk "font size")
-   "v f +" '(s/zoom-in :wk "enlarge")
-   "v f -" '(s/zoom-out :wk "decrease")
+   "v f +" '(default-text-scale-increase :wk "enlarge")
+   "v f -" '(default-text-scale-decrease :wk "decrease")
 
    ;; Window keymap
    "w" '(:ignore t :wk "window")
@@ -387,7 +377,12 @@
    "t r" '(persp-rename :wk "rename")
    "t d" '(persp-kill :wk "close")
    ))
- 
+
+
+;;;; Change text size
+;; This contains the functions default-text-scale-(increase/decrease)
+(use-package default-text-scale)
+
 ;;;; Dired stuff
 
 (defun s/dired-hide-dotfiles ()
@@ -514,7 +509,7 @@
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t
 	company-tooltip-align-annotations t
-	company-idle-delay 0.5
+	company-idle-delay nil
 	company-minimum-prefix-length 1
 	company-tooltip-limit 10)
 
@@ -593,23 +588,18 @@
 	    company-R-objects
 	    company-R-library :separate)
 	   company-dabbrev-code
-	   (company-capf ; Works together with eglot
-	    company-files
-	    company-R-args
-	    company-R-objects
-	    company-R-library
-	    company-dabbrev-code :separate)
 	   )))
 
   (defun s/inferior-ess-r-company ()
     "Set company backends for inferior r buffers"
     (set (make-local-variable 'company-backends)
-  	 '( (company-R-args
-  	     company-R-objects
-  	     company-R-library :separate)
-  	    company-files
-  	    company-capf
-  	    )))
+  	 '(
+	   company-capf
+	   company-files
+	   (company-R-args
+	    company-R-objects
+	    company-R-library :separate)
+	   )))
 
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
@@ -995,10 +985,11 @@
   ;; Pass the -pdf flag when TeX-PDF-mode is active
   (setq auctex-latexmk-inherit-TeX-PDF-mode t)
 
-  (add-hook 'LaTeX-mode-hook (lambda ()
-			       (setq TeX-command-default "LatexMk"
-				     TeX-command-force "LatexMk")
-			       (TeX-source-correlate-mode t)))
+  (add-hook 'LaTeX-mode-hook
+	    (lambda ()
+	      (setq TeX-command-default "LatexMk"
+		    TeX-command-force "LatexMk")
+	      (TeX-source-correlate-mode t)))
   :config
   (auctex-latexmk-setup)
   )
@@ -1417,13 +1408,14 @@ Use a prefix argument ARG to indicate creation of a new process instead."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
- '(org-agenda-files nil)
+ '(org-agenda-files (quote ("~/OneDrive - NTNU/literature/bibliography.org")))
  '(pdf-tools-handle-upgrades nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(outline-minor-0 ((t (:weight bold :underline t :background nil))))
+ '(outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil)))))
 
 ;;; init.el ends here
