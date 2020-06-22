@@ -426,7 +426,6 @@
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
 
-(add-hook 'emacs-lisp-mode-hook 's/outline-minor-activate)
 
 ;;;; Language servers
 (use-package eglot
@@ -527,7 +526,39 @@
 
 ;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
-  :commands (run-ess-r)
+  :init
+  ;; Enable sweaving directly within the AUCTeX ecosystem.
+  (setq-default ess-swv-plug-into-AUCTeX-p t)
+  (require 'ess-r-mode)
+  (defun s/ess-r-outline ()
+    "Setup outline-minor-mode for ess-r buffers"
+    (setq outline-regexp "^#\\{1,2\\} [-=]\\{4\\}")
+    (defun outline-level ()
+      (cond ((looking-at "^#\\{1,2\\} [-=]\\{4\\}") 1)
+	    (t 1000))))
+  (defun s/ess-r-company ()
+    "Set company backends for R buffers"
+    (set (make-local-variable 'company-backends)
+	 '(
+	   company-capf
+	   company-files
+	   (company-R-args
+	    company-R-objects
+	    company-R-library :separate)
+	   company-dabbrev-code
+	   )))
+
+  (defun s/inferior-ess-r-company ()
+    "Set company backends for inferior r buffers"
+    (set (make-local-variable 'company-backends)
+  	 '(
+	   company-capf
+	   company-files
+	   (company-R-args
+	    company-R-objects
+	    company-R-library :separate)
+	   )))
+
   :defer 5
   :general
   (s/local-leader-def
@@ -543,12 +574,6 @@
   :diminish
   ((ess-r-package-mode . "")
    (eldoc-mode . ""))
-  :init
-
-  ;; Enable sweaving directly within the AUCTeX ecosystem.
-  (setq-default ess-swv-plug-into-AUCTeX-p t)
-
-  (require 'ess-r-mode)
   :config
 
   (setq ess-inject-source nil
@@ -578,29 +603,6 @@
        ;; *R*, *shell* buffers above prompt:
        (setq comint-scroll-to-bottom-on-input 'this)))
 
-  (defun s/ess-r-company ()
-    "Set company backends for R buffers"
-    (set (make-local-variable 'company-backends)
-	 '(
-	   company-capf
-	   company-files
-	   (company-R-args
-	    company-R-objects
-	    company-R-library :separate)
-	   company-dabbrev-code
-	   )))
-
-  (defun s/inferior-ess-r-company ()
-    "Set company backends for inferior r buffers"
-    (set (make-local-variable 'company-backends)
-  	 '(
-	   company-capf
-	   company-files
-	   (company-R-args
-	    company-R-objects
-	    company-R-library :separate)
-	   )))
-
   (setq ess-use-company nil) ; Don't let ESS decide backends
   
   ;; Company stuff
@@ -611,15 +613,6 @@
   (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook '(lambda () (electric-pair-local-mode -1)))
 
-  (defun s/ess-r-outline ()
-    "Setup outline-minor-mode for ess-r buffers"
-    (setq outline-regexp "^#\\{1,2\\} [-=]\\{4\\}")
-    (defun outline-level ()
-      (cond ((looking-at "^#\\{1,2\\} [-=]\\{4\\}") 1)
-	    (t 1000))))
-  
-  (add-hook 'ess-r-mode-hook 's/ess-r-outline)
-  (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
 )
 
 ;;;; Julia
@@ -654,7 +647,6 @@
 ; )
 
 (use-package julia-snail
-  ;:hook (julia-mode . julia-snail-mode)
   :init
   (defun s/julia-snail-send-line-and-step ()
     (interactive)
@@ -662,7 +654,6 @@
     (evil-next-line))
   :general
   (:keymaps 'julia-snail-mode-map
-   ;"M-e" 'julia-snail-send-line
    "M-e" 's/julia-snail-send-line-and-step
    "M-RET" 'julia-snail-send-top-level-form)
   (s/local-leader-def
@@ -822,6 +813,9 @@
   :config
   (add-hook 'LaTeX-mode-hook 's/outline-minor-activate)
   (add-hook 'prog-mode-hook 's/outline-minor-activate)
+  (add-hook 'ess-r-mode-hook 's/ess-r-outline)
+  (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
+  (add-hook 'emacs-lisp-mode-hook 's/outline-minor-activate)
   )
 
 (use-package outline-minor-faces
@@ -1179,12 +1173,15 @@ Use a prefix argument ARG to indicate creation of a new process instead."
    "o r" '(s/projectile-run-r :wk "R"))
   )
 
+;;;; Tramp
+(use-package tramp)
+
 ;; Install ag or ripgrep!!!!
 
 ;;;; Terminal
 ;; Libvterm
 (use-package vterm)
-(use-package vterm-toggle)
+;(use-package vterm-toggle)
 (use-package multi-libvterm
   :straight
   (:type git
@@ -1346,24 +1343,24 @@ Use a prefix argument ARG to indicate creation of a new process instead."
 
   (doom-modeline-mode))
 
-;;;; Midnight mode
-(use-package midnight)
-
-;;;; Yasnippet
-(use-package yasnippet
-  :init
-  (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
-  :config
-  (yas-global-mode 1))
-
-;;;; Polymode
-(use-package polymode)
-
-(use-package poly-org
-  :init
-  (add-hook 'org-mode-hook 'poly-org-mode))
-
-(use-package poly-R) ;; This one must run after ESS
+;; ;;;; Midnight mode
+;; (use-package midnight)
+;; 
+;; ;;;; Yasnippet
+;; (use-package yasnippet
+;;   :init
+;;   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
+;;   :config
+;;   (yas-global-mode 1))
+;; 
+;; ;;;; Polymode
+;; (use-package polymode)
+;; 
+;; (use-package poly-org
+;;   :init
+;;   (add-hook 'org-mode-hook 'poly-org-mode))
+;; 
+;; (use-package poly-R) ;; This one must run after ESS
 
 ;;;; Desktop-save-mode
 
@@ -1408,14 +1405,12 @@ Use a prefix argument ARG to indicate creation of a new process instead."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
- '(org-agenda-files (quote ("~/OneDrive - NTNU/literature/bibliography.org")))
  '(pdf-tools-handle-upgrades nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(outline-minor-0 ((t (:weight bold :underline t :background nil))))
- '(outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil)))))
+ )
 
 ;;; init.el ends here
