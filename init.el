@@ -174,6 +174,7 @@
 ;; Don't let active modes clutter the mode-line
 (use-package diminish)
 
+
 ;;;; General.el - keybindings
 ;; Keybindings
 (use-package general
@@ -192,6 +193,7 @@
     :states '(normal visual motion insert emacs))
 
   (general-create-definer s/goto-leader-def
+    ;:global-prefix "M-g"
     :prefix "M-g"
     :states '(normal visual motion insert emacs)
     ;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
@@ -266,7 +268,7 @@
    "SPC" '(counsel-find-file :wk "find file")
    "~" '(s/go-to-config :wk "go home")
 
-   "g" '(:ignore t :wk "go to...")
+   "g" (general-simulate-key "M-g" :which-key "go to...")
    "m" '(:ignore t :wk "mode specific")
 
    "c" '(counsel-compile :wk "compile")
@@ -379,6 +381,30 @@
    ))
 
 
+;;;; outline stuff
+(use-package outline-magic
+  :init
+  (defun s/outline-minor-activate ()
+    (interactive)
+    (outline-minor-mode)
+    (outline-minor-faces-add-font-lock-keywords))
+  :general
+  (:keymaps 'outline-minor-mode-map
+	    "<C-tab>" 'outline-cycle)
+  :config
+  (add-hook 'LaTeX-mode-hook 's/outline-minor-activate)
+  (add-hook 'prog-mode-hook 's/outline-minor-activate)
+  )
+
+(use-package outline-minor-faces
+  :custom-face
+  ;; Adjusting some face options from 'outline-minor-faces', to bring it
+  ;; closer to the usual Org experience.
+  (outline-minor-0 ((t (:weight bold :underline t :background nil))))
+  (outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil))))
+  )
+
+
 ;;;; Change text size
 ;; This contains the functions default-text-scale-(increase/decrease)
 (use-package default-text-scale)
@@ -426,6 +452,7 @@
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
 
+(add-hook 'emacs-lisp-mode-hook 's/outline-minor-activate)
 
 ;;;; Language servers
 (use-package eglot
@@ -481,22 +508,21 @@
    "S-TAB" nil
    "<return>" nil
    "M-l" 'company-complete-common
-   "C-M-s" 'company-search-candidates
+   "M-/" 'company-search-candidates
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
-   "M-d" 'company-next-page
-   "M-u" 'company-previous-page
+   "M-n" 'company-other-backend
    "M-S" '(counsel-company :wk "counsel-company"))
 
   (general-define-key
    :keymaps 'company-search-map
-   "M-d" 'company-search-repeat-forward
-   "M-u" 'company-search-repeat-backward)
+   "M-j" 'company-search-repeat-forward
+   "M-k" 'company-search-repeat-backward)
 
   (general-define-key
    :states 'insert
    :keymaps 'company-mode-map
-   "M-c" 'company-other-backend)
+   "M-n" 'company-other-backend)
 
   ;; set default `company-backends'
   (setq company-backends
@@ -527,8 +553,6 @@
 ;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
   :init
-  ;; Enable sweaving directly within the AUCTeX ecosystem.
-  (setq-default ess-swv-plug-into-AUCTeX-p t)
   (require 'ess-r-mode)
   (defun s/ess-r-outline ()
     "Setup outline-minor-mode for ess-r buffers"
@@ -559,7 +583,6 @@
 	    company-R-library :separate)
 	   )))
 
-  :defer 5
   :general
   (s/local-leader-def
     :keymaps '(ess-r-mode-map inferior-ess-mode-map)
@@ -576,6 +599,9 @@
    (eldoc-mode . ""))
   :config
 
+  (add-hook 'ess-r-mode-hook 's/ess-r-outline)
+  (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
+  
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
 	ess-eval-visibly nil ;; Something about echoing code
@@ -619,25 +645,20 @@
 
 (use-package julia-mode
   :config
-  ;(add-hook 'julia-mode-hook 'julia-repl-mode)
   (add-hook 'julia-mode-hook 'julia-snail-mode)
-  ;:general
-  ;(s/local-leader-def
-  ;  :keymaps 'julia-mode-map
-  ;  "j" '(julia-snail :wk "julia"))
   )
 
 
-;; You have to go into the source code of the function
-;; eglot-jl--ls-invocation and comment out the line where
-;; they change the environment variable JULIA_LOAD_PATH
-;; for this to not destroy everything
-(use-package eglot-jl
-  :init
-  (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
-  (eglot-jl-init)
-  :config
-  (add-hook 'julia-mode-hook 'eglot-ensure))
+;; ;; You have to go into the source code of the function
+;; ;; eglot-jl--ls-invocation and comment out the line where
+;; ;; they change the environment variable JULIA_LOAD_PATH
+;; ;; for this to not destroy everything
+;; (use-package eglot-jl
+;;   :init
+;;   (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
+;;   (eglot-jl-init)
+;;   :config
+;;   (add-hook 'julia-mode-hook 'eglot-ensure))
 
 ; (use-package julia-repl
 ;   :general
@@ -698,10 +719,9 @@
 
 ;;;; Resize frames
 (use-package frame-cmds)
+
 ;;;; Tramp
-(use-package tramp
-  :config
-  (setq tramp-default-method "ssh"))
+;; (use-package tramp)
 
 ;;;; Undo-tree
 (use-package undo-tree
@@ -734,11 +754,8 @@
   )
 
 ;;;; Jump to function definition
-(use-package imenu-anywhere)
-
 (use-package dumb-jump
-  :hook (prog-mode . dumb-jump-mode)
-  )
+  :hook (prog-mode . dumb-jump-mode))
 
 ;;;; Ivy++
 (use-package ivy
@@ -798,33 +815,6 @@
 
 ;;;; Flycheck (linting)
 (use-package flycheck)
-
-;;;; outline stuff
-
-(use-package outline-magic
-  :init
-  (defun s/outline-minor-activate ()
-    (interactive)
-    (outline-minor-mode)
-    (outline-minor-faces-add-font-lock-keywords))
-  :general
-  (:keymaps 'outline-minor-mode-map
-   "<C-tab>" 'outline-cycle)
-  :config
-  (add-hook 'LaTeX-mode-hook 's/outline-minor-activate)
-  (add-hook 'prog-mode-hook 's/outline-minor-activate)
-  (add-hook 'ess-r-mode-hook 's/ess-r-outline)
-  (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
-  (add-hook 'emacs-lisp-mode-hook 's/outline-minor-activate)
-  )
-
-(use-package outline-minor-faces
-  :custom-face
-  ;; Adjusting some face options from 'outline-minor-faces', to bring it
-  ;; closer to the usual Org experience.
-  (outline-minor-0 ((t (:weight bold :underline t :background nil))))
-  (outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil))))
-  )
 
 ;;;; Writegood-mode
 ;; Give comments on badly written text
@@ -1173,27 +1163,24 @@ Use a prefix argument ARG to indicate creation of a new process instead."
    "o r" '(s/projectile-run-r :wk "R"))
   )
 
-;;;; Tramp
-(use-package tramp)
-
 ;; Install ag or ripgrep!!!!
 
 ;;;; Terminal
 ;; Libvterm
 (use-package vterm)
 ;(use-package vterm-toggle)
-(use-package multi-libvterm
-  :straight
-  (:type git
-   :host github
-   :repo "suonlight/multi-libvterm")
-  :general
-  (s/local-leader-def
-    :keymaps 'vterm-mode-map
-    "n" '(multi-libvterm-next :wk "next")
-    "p" '(multi-libvterm-prev :wk "previous")
-    )
-  )
+;(use-package multi-libvterm
+;  :straight
+;  (:type git
+;   :host github
+;   :repo "suonlight/multi-libvterm")
+;  :general
+;  (s/local-leader-def
+;    :keymaps 'vterm-mode-map
+;    "n" '(multi-libvterm-next :wk "next")
+;    "p" '(multi-libvterm-prev :wk "previous")
+;    )
+;  )
 
 ;;;; Pairing of parentheses
 (use-package elec-pair
@@ -1207,9 +1194,10 @@ Use a prefix argument ARG to indicate creation of a new process instead."
 		  (?\( . ?\))
 		  (?\[ . ?\])
 		  ))
-  ;; ;; Do not complete if right in front of a word
-  ;; (setq-default electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
+  ;; Do not complete if right in front of a word
+  (setq-default electric-pair-inhibit-predicate 'electric-pair-conservative-inhibit)
   (show-paren-mode) ;; Highlight matching parenthesis
+  (setq-default electric-pair-skip-whitespace 'chomp) ; delete whitespace between you and closing parentheses
   )
 
 
@@ -1343,16 +1331,16 @@ Use a prefix argument ARG to indicate creation of a new process instead."
 
   (doom-modeline-mode))
 
-;; ;;;; Midnight mode
-;; (use-package midnight)
-;; 
-;; ;;;; Yasnippet
-;; (use-package yasnippet
-;;   :init
-;;   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
-;;   :config
-;;   (yas-global-mode 1))
-;; 
+;;;; Midnight mode
+(use-package midnight)
+
+;;;; Yasnippet
+(use-package yasnippet
+  :init
+  (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
+  :config
+  (yas-global-mode 1))
+
 ;; ;;;; Polymode
 ;; (use-package polymode)
 ;; 
