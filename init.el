@@ -17,6 +17,7 @@
 (defvar s/latex-viewer "pdf-tools")
 (defvar s/literature-dir "~/OneDrive - NTNU/literature/")
 (setq-default fill-column 100) ; Column for starting automatic line wrap
+(setq-default default-input-method "TeX") ; Input method activated by the command toggle-input-method
 
 ;;;; Startup optimisation
 ;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
@@ -345,6 +346,7 @@
    "v f" '(:ignore t :wk "font size")
    "v f +" '(default-text-scale-increase :wk "enlarge")
    "v f -" '(default-text-scale-decrease :wk "decrease")
+   "v i" '(toggle-input-method :wk "input method (TeX)")
 
    ;; Window keymap
    "w" '(:ignore t :wk "window")
