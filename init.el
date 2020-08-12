@@ -200,6 +200,11 @@
     ;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
     :keymaps 'override)
 
+  (general-create-definer s/insert-greek
+    :prefix "`"
+    :states '(insert emacs)
+    :keymaps '(prog-mode-map text-mode-map))
+
   (general-define-key
    :keymaps 'override
    :states '(normal visual insert)
@@ -262,6 +267,55 @@
     "d i" '(ivy-imenu-anywhere :wk "with imenu")
     "d d" '(dumb-jump-go :wk "with dumb-jump")
     "d x" '(xref-find-definitions :wk "with xref"))
+
+  (s/insert-greek
+    "" '(:ignore t :wk "insert greek letter")
+    "q" (lambda () (interactive) (insert "χ") :wk "χ")
+    "w" (lambda () (interactive) (insert "ω") :wk "ω")
+    "e" (lambda () (interactive) (insert "ε") :wk "ε")
+    "r" (lambda () (interactive) (insert "ρ") :wk "ρ")
+    "t" (lambda () (interactive) (insert "τ") :wk "τ")
+    "y" (lambda () (interactive) (insert "ψ") :wk "ψ")
+    "u" (lambda () (interactive) (insert "υ") :wk "υ")
+    "p" (lambda () (interactive) (insert "π") :wk "π")
+    "a" (lambda () (interactive) (insert "α") :wk "α")
+    "s" (lambda () (interactive) (insert "σ") :wk "σ")
+    "d" (lambda () (interactive) (insert "δ") :wk "δ")
+    "f" (lambda () (interactive) (insert "ϕ") :wk "ϕ")
+    "g" (lambda () (interactive) (insert "γ") :wk "γ")
+    "h" (lambda () (interactive) (insert "η") :wk "η")
+    "j" (lambda () (interactive) (insert "θ") :wk "θ")
+    "k" (lambda () (interactive) (insert "κ") :wk "κ")
+    "l" (lambda () (interactive) (insert "λ") :wk "λ")
+    "z" (lambda () (interactive) (insert "ζ") :wk "ζ")
+    "x" (lambda () (interactive) (insert "ξ") :wk "ξ")
+    "b" (lambda () (interactive) (insert "β") :wk "β")
+    "n" (lambda () (interactive) (insert "ν") :wk "ν")
+    "m" (lambda () (interactive) (insert "μ") :wk "μ")
+
+    "Q" (lambda () (interactive) (insert "Χ") :wk "Χ")
+    "W" (lambda () (interactive) (insert "Ω") :wk "Ω")
+    "E" (lambda () (interactive) (insert "Ε") :wk "Ε")
+    "R" (lambda () (interactive) (insert "Ρ") :wk "Ρ")
+    "T" (lambda () (interactive) (insert "Τ") :wk "Τ")
+    "Y" (lambda () (interactive) (insert "Ψ") :wk "Ψ")
+    "U" (lambda () (interactive) (insert "Υ") :wk "Υ")
+    "P" (lambda () (interactive) (insert "Π") :wk "Π")
+    "A" (lambda () (interactive) (insert "Α") :wk "Α")
+    "S" (lambda () (interactive) (insert "Σ") :wk "Σ")
+    "D" (lambda () (interactive) (insert "Δ") :wk "Δ")
+    "F" (lambda () (interactive) (insert "ϕ") :wk "ϕ")
+    "G" (lambda () (interactive) (insert "Γ") :wk "Γ")
+    "H" (lambda () (interactive) (insert "Η") :wk "Η")
+    "J" (lambda () (interactive) (insert "Θ") :wk "Θ")
+    "K" (lambda () (interactive) (insert "Κ") :wk "Κ")
+    "L" (lambda () (interactive) (insert "Λ") :wk "Λ")
+    "Z" (lambda () (interactive) (insert "Ζ") :wk "Ζ")
+    "X" (lambda () (interactive) (insert "Ξ") :wk "Ξ")
+    "B" (lambda () (interactive) (insert "Β") :wk "Β")
+    "N" (lambda () (interactive) (insert "Ν") :wk "Ν")
+    "M" (lambda () (interactive) (insert "Μ") :wk "Μ")
+    )
 
   (s/leader-def
    "" nil
