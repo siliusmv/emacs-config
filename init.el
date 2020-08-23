@@ -106,12 +106,13 @@
       read-buffer-completion-ignore-case t
       read-file-name-completion-ignore-case t)
 
+(setq frame-resize-pixelwise t) ;; I don't know what this does, but it might be a good idea to use. Not a problem to remove this either
+
 ;; Add the themes-folder to load-path
 (add-to-list 'custom-theme-load-path
 	     (expand-file-name (concat user-emacs-directory "themes/")))
 
 (xterm-mouse-mode t) ; Enable mouse in terminal
-
 
 ;;;; Misc. functions
 
@@ -153,7 +154,6 @@
   (interactive)
   (find-file (concat user-emacs-directory "init.el")))
 
-
 ;;; Package specific settings
 ;;;; Evil-mode
 
@@ -174,6 +174,12 @@
 ;;;; Diminish
 ;; Don't let active modes clutter the mode-line
 (use-package diminish)
+
+;;;; Smooth scrolling
+;; Keep the pointer in the center of the screen
+(use-package smooth-scrolling
+  :config
+  (smooth-scrolling-mode 1))
 
 
 ;;;; General.el - keybindings
@@ -203,7 +209,7 @@
   (general-create-definer s/insert-greek
     :prefix "`"
     :states '(insert emacs)
-    :keymaps '(prog-mode-map text-mode-map))
+    :keymaps '(prog-mode-map text-mode-map ess-mode-map))
 
   (general-define-key
    :keymaps 'override
@@ -270,6 +276,8 @@
 
   (s/insert-greek
     "" '(:ignore t :wk "insert greek letter")
+    "`" (lambda () (interactive) (insert "`") :wk "`")
+
     "q" (lambda () (interactive) (insert "χ") :wk "χ")
     "w" (lambda () (interactive) (insert "ω") :wk "ω")
     "e" (lambda () (interactive) (insert "ε") :wk "ε")
@@ -292,6 +300,7 @@
     "b" (lambda () (interactive) (insert "β") :wk "β")
     "n" (lambda () (interactive) (insert "ν") :wk "ν")
     "m" (lambda () (interactive) (insert "μ") :wk "μ")
+    "," (lambda () (interactive) (insert "ℓ") :wk "ℓ")
 
     "Q" (lambda () (interactive) (insert "Χ") :wk "Χ")
     "W" (lambda () (interactive) (insert "Ω") :wk "Ω")
@@ -558,16 +567,19 @@
 
   (general-define-key
    :keymaps 'company-active-map
+   ;"<tab>" 'company-complete
+   ;"TAB" 'company-complete
    "<tab>" nil
    "TAB" nil
    "<backtab>" nil
    "S-TAB" nil
    "<return>" nil
    "M-l" 'company-complete-common
-   "M-/" 'company-search-candidates
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "M-n" 'company-other-backend
+   ;"M-/" 'company-search-candidates
+   "M-/" 'counsel-company
    "M-S" '(counsel-company :wk "counsel-company"))
 
   (general-define-key
@@ -584,13 +596,13 @@
   (setq company-backends
 	'(company-capf
 	  company-files          ; files & directory
-	  (company-abbrev company-dabbrev :separate)
+	  ;(company-abbrev company-dabbrev :separate)
 	  ))
 
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t
 	company-tooltip-align-annotations t
-	company-idle-delay nil
+	company-idle-delay .1
 	company-minimum-prefix-length 1
 	company-tooltip-limit 10)
 
@@ -598,13 +610,9 @@
   (setq company-dabbrev-downcase nil
 	company-dabbrev-code-ignore-case t
 	company-dabbrev-ignore-case t
-	company-dabbrev-code-other-buffers t ; Search other buffers with same major mode
+	; company-dabbrev-code-other-buffers t ; Search other buffers with same major mode
 	)
   )
-
-(use-package company-statistics
-  :config
-  (add-hook 'after-init-hook 'company-statistics-mode))
 
 ;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
@@ -612,26 +620,14 @@
   (require 'ess-r-mode)
   (defun s/ess-r-outline ()
     "Setup outline-minor-mode for ess-r buffers"
-    (setq outline-regexp "^#\\{1,2\\} [-=]\\{4\\}")
+    (setq outline-regexp "^#\\{1,2\\} -\\{4\\}")
     (defun outline-level ()
-      (cond ((looking-at "^#\\{1,2\\} [-=]\\{4\\}") 1)
+      (cond ((looking-at "^#\\{1,2\\} -\\{4\\}") 1)
 	    (t 1000))))
   (defun s/ess-r-company ()
     "Set company backends for R buffers"
     (set (make-local-variable 'company-backends)
 	 '(
-	   company-capf
-	   company-files
-	   (company-R-args
-	    company-R-objects
-	    company-R-library :separate)
-	   company-dabbrev-code
-	   )))
-
-  (defun s/inferior-ess-r-company ()
-    "Set company backends for inferior r buffers"
-    (set (make-local-variable 'company-backends)
-  	 '(
 	   company-capf
 	   company-files
 	   (company-R-args
@@ -644,6 +640,11 @@
     :keymaps '(ess-r-mode-map inferior-ess-mode-map)
     "r" '(run-ess-r :wk "Open new R session")
     "s" '(ess-switch-process :wk "Switch ESS session")
+    "t" '(ess-r-devtools-test-package :wk "test package")
+    "l" '(ess-r-devtools-load-package :wk "load package")
+    "b" '(ess-r-devtools-build-package :wk "build package")
+    "i" '(ess-r-devtools-install-package :wk "install package")
+    "u" '(ess-r-devtools-unload-package :wk "unload package")
     )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
    :states '(motion normal insert visual emacs)
@@ -689,12 +690,10 @@
   
   ;; Company stuff
   (add-hook 'ess-r-mode-hook 's/ess-r-company)
-  (add-hook 'inferior-ess-r-mode-hook 's/inferior-ess-r-company)
+  (add-hook 'inferior-ess-r-mode-hook (lambda () (company-mode -1)))
 
   (add-hook 'ess-mode-hook 'eglot-ensure)
-  (add-hook 'inferior-ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook '(lambda () (electric-pair-local-mode -1)))
-
 )
 
 ;;;; Julia
@@ -705,16 +704,16 @@
   )
 
 
-;; ;; You have to go into the source code of the function
-;; ;; eglot-jl--ls-invocation and comment out the line where
-;; ;; they change the environment variable JULIA_LOAD_PATH
-;; ;; for this to not destroy everything
-;; (use-package eglot-jl
-;;   :init
-;;   (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
-;;   (eglot-jl-init)
-;;   :config
-;;   (add-hook 'julia-mode-hook 'eglot-ensure))
+;; You have to go into the source code of the function
+;; eglot-jl--ls-invocation and comment out the line where
+;; they change the environment variable JULIA_LOAD_PATH
+;; for this to not destroy everything
+(use-package eglot-jl
+  :init
+  (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
+  (eglot-jl-init)
+  :config
+  (add-hook 'julia-mode-hook 'eglot-ensure))
 
 ; (use-package julia-repl
 ;   :general
@@ -1324,9 +1323,9 @@ Use a prefix argument ARG to indicate creation of a new process instead."
 (use-package org-ref
   :init
   (setq reftex-default-bibliography (list (concat s/literature-dir "sources.bib"))
-	org-ref-bibliography-notes (concat "bibliography.org")
-	org-ref-default-bibliography (list (concat "sources.bib"))
-	org-ref-pdf-directory (concat "*read/"))
+	org-ref-bibliography-notes (concat s/literature-dir "bibliography.org")
+	org-ref-default-bibliography (list (concat s/literature-dir "sources.bib"))
+	org-ref-pdf-directory (concat s/literature-dir "*read/"))
 
   (setq org-ref-completion-library 'org-ref-ivy-cite)
   
@@ -1449,12 +1448,14 @@ Use a prefix argument ARG to indicate creation of a new process instead."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
+ '(org-agenda-files (quote ("~/OneDrive - NTNU/literature/bibliography.org")))
  '(pdf-tools-handle-upgrades nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(outline-minor-0 ((t (:weight bold :underline t :background nil))))
+ '(outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil)))))
 
 ;;; init.el ends here
