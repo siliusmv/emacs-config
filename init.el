@@ -209,7 +209,7 @@
   (general-create-definer s/insert-greek
     :prefix "`"
     :states '(insert emacs)
-    :keymaps '(prog-mode-map text-mode-map ess-mode-map))
+    :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map))
 
   (general-define-key
    :keymaps 'override
@@ -564,21 +564,20 @@
   :init
   (add-hook 'after-init-hook 'global-company-mode)
   :config
-
   (general-define-key
    :keymaps 'company-active-map
-   ;"<tab>" 'company-complete
-   ;"TAB" 'company-complete
+					;"<tab>" 'company-complete
+					;"TAB" 'company-complete
    "<tab>" nil
    "TAB" nil
    "<backtab>" nil
    "S-TAB" nil
    "<return>" nil
-   "M-l" 'company-complete-common
+   "M-l" 'company-complete
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "M-n" 'company-other-backend
-   ;"M-/" 'company-search-candidates
+					;"M-/" 'company-search-candidates
    "M-/" 'counsel-company
    "M-S" '(counsel-company :wk "counsel-company"))
 
@@ -595,24 +594,29 @@
   ;; set default `company-backends'
   (setq company-backends
 	'(company-capf
-	  company-files          ; files & directory
-	  ;(company-abbrev company-dabbrev :separate)
+	  company-files ; files & directory
+					;(company-abbrev company-dabbrev :separate)
 	  ))
 
   ;; Behavoiur of completion pop-up
-  (setq company-selection-wrap-around t
+  (setq company-selection-wrap-around t ; Start at the top after reaching the bottom
 	company-tooltip-align-annotations t
-	company-idle-delay .1
-	company-minimum-prefix-length 1
+	company-idle-delay 0 ; Waiting time before we start completion
+	company-minimum-prefix-length 1 ; Minimum letters before we start completion
 	company-tooltip-limit 10)
 
   ;; Settings for backends
   (setq company-dabbrev-downcase nil
 	company-dabbrev-code-ignore-case t
 	company-dabbrev-ignore-case t
-	; company-dabbrev-code-other-buffers t ; Search other buffers with same major mode
-	)
+	company-dabbrev-code-other-buffers nil) ; Search other buffers with same major mode
+
   )
+
+(use-package company-statistics
+  :config
+  (add-hook 'after-init-hook 'company-statistics-mode))
+
 
 ;;;; ESS (Emacs Speaks Statistics)
 (use-package ess
@@ -820,6 +824,7 @@
    "M-j" 'ivy-next-line
    "M-k" 'ivy-previous-line
    "M-l" 'ivy-alt-done
+   "M-RET" 'ivy-immediate-done
    "M-s" 'ivy-avy
    "M-h" 'ivy-backward-kill-word
    "M-d" 'ivy-scroll-down-command
@@ -1389,10 +1394,19 @@ Use a prefix argument ARG to indicate creation of a new process instead."
 ;;;; Midnight mode
 (use-package midnight)
 
+;;;; Indentation
+(use-package aggressive-indent
+  :config
+  (global-aggressive-indent-mode 1))
+
+
 ;;;; Yasnippet
 (use-package yasnippet
   :init
   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
+  :general
+  (:keymaps 'yas-minor-mode-map
+	    "TAB" 'yas-maybe-expand)
   :config
   (yas-global-mode 1))
 
