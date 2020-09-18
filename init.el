@@ -20,11 +20,9 @@
 (setq-default default-input-method "TeX") ; Input method activated by the command toggle-input-method
 
 ;;;; Startup optimisation
-;; From https://emacs.stackexchange.com/questions/34342/is-there-any-downside-to-setting-gc-cons-threshold-very-high-and-collecting-ga
 
 ;; Set garbage collection threshold
 ;; From https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
-; (setq gc-cons-threshold-original gc-cons-threshold)
 (setq gc-cons-threshold (* 1024 1024 100))
 
 ;; Set file-name-handler-alist
@@ -36,7 +34,6 @@
 (defun s/reset-vars ()
   (setq gc-cons-threshold s/gc-cons-threshold)
   (setq file-name-handler-alist file-name-handler-alist-original)
-  (makunbound 'gc-cons-threshold-original)
   (makunbound 'file-name-handler-alist-original)
   (message "gc-cons-threshold and file-name-handler-alist restored"))
 (run-with-idle-timer 5 nil 's/reset-vars)
@@ -181,7 +178,6 @@
   :config
   (smooth-scrolling-mode 1))
 
-
 ;;;; General.el - keybindings
 ;; Keybindings
 (use-package general
@@ -200,13 +196,13 @@
     :states '(normal visual motion insert emacs))
 
   (general-create-definer s/goto-leader-def
-    ;:global-prefix "M-g"
+					;:global-prefix "M-g"
     :prefix "M-g"
     :states '(normal visual motion insert emacs)
-    ;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
+					;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
     :keymaps 'override)
 
-  (general-create-definer s/insert-greek
+  (general-create-definer s/insert-unicode
     :prefix "`"
     :states '(insert emacs)
     :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map))
@@ -274,8 +270,8 @@
     "d d" '(dumb-jump-go :wk "with dumb-jump")
     "d x" '(xref-find-definitions :wk "with xref"))
 
-  (s/insert-greek
-    "" '(:ignore t :wk "insert greek letter")
+  (s/insert-unicode
+    "" '(:ignore t :wk "insert unicode")
     "`" (lambda () (interactive) (insert "`") :wk "`")
 
     "q" (lambda () (interactive) (insert "χ") :wk "χ")
@@ -324,126 +320,194 @@
     "B" (lambda () (interactive) (insert "Β") :wk "Β")
     "N" (lambda () (interactive) (insert "Ν") :wk "Ν")
     "M" (lambda () (interactive) (insert "Μ") :wk "Μ")
+
+    "_ a" (lambda () (interactive) (insert "ₐ") :wk "ₐ")
+    "_ e" (lambda () (interactive) (insert "ₑ") :wk "ₑ")
+    "_ h" (lambda () (interactive) (insert "ₕ") :wk "ₕ")
+    "_ i" (lambda () (interactive) (insert "ᵢ") :wk "ᵢ")
+    "_ j" (lambda () (interactive) (insert "ⱼ") :wk "ⱼ")
+    "_ k" (lambda () (interactive) (insert "ₖ") :wk "ₖ")
+    "_ l" (lambda () (interactive) (insert "ₗ") :wk "ₗ")
+    "_ m" (lambda () (interactive) (insert "ₘ") :wk "ₘ")
+    "_ m" (lambda () (interactive) (insert "ₙ") :wk "ₙ")
+    "_ o" (lambda () (interactive) (insert "ₒ") :wk "ₒ")
+    "_ p" (lambda () (interactive) (insert "ₚ") :wk "ₚ")
+    "_ r" (lambda () (interactive) (insert "ᵣ") :wk "ᵣ")
+    "_ s" (lambda () (interactive) (insert "ₛ") :wk "ₛ")
+    "_ t" (lambda () (interactive) (insert "ₜ") :wk "ₜ")
+    "_ u" (lambda () (interactive) (insert "ᵤ") :wk "ᵤ")
+    "_ v" (lambda () (interactive) (insert "ᵥ") :wk "ᵥ")
+    "_ x" (lambda () (interactive) (insert "ₓ") :wk "ₓ")
+    "_ (" (lambda () (interactive) (insert "₍") :wk "ₓ")
+    "_ )" (lambda () (interactive) (insert "₎") :wk "ₓ")
+    "_ 0" (lambda () (interactive) (insert "₀") :wk "₀")
+    "_ 1" (lambda () (interactive) (insert "₁") :wk "₁")
+    "_ 2" (lambda () (interactive) (insert "₂") :wk "₂")
+    "_ 3" (lambda () (interactive) (insert "₃") :wk "₃")
+    "_ 4" (lambda () (interactive) (insert "₄") :wk "₄")
+    "_ 5" (lambda () (interactive) (insert "₅") :wk "₅")
+    "_ 6" (lambda () (interactive) (insert "₆") :wk "₆")
+    "_ 7" (lambda () (interactive) (insert "₇") :wk "₇")
+    "_ 8" (lambda () (interactive) (insert "₈") :wk "₈")
+    "_ 9" (lambda () (interactive) (insert "₉") :wk "₉")
+
+    "^ a" (lambda () (interactive) (insert "ᵃ") :wk "ᵃ")
+    "^ b" (lambda () (interactive) (insert "ᵇ") :wk "ᵇ")
+    "^ c" (lambda () (interactive) (insert "ᶜ") :wk "ᶜ")
+    "^ d" (lambda () (interactive) (insert "ᵈ") :wk "ᵈ")
+    "^ e" (lambda () (interactive) (insert "ᵉ") :wk "ᵉ")
+    "^ f" (lambda () (interactive) (insert "ᶠ") :wk "ᶠ")
+    "^ g" (lambda () (interactive) (insert "ᵍ") :wk "ᵍ")
+    "^ h" (lambda () (interactive) (insert "ʰ") :wk "ʰ")
+    "^ i" (lambda () (interactive) (insert "ⁱ") :wk "ⁱ")
+    "^ j" (lambda () (interactive) (insert "ʲ") :wk "ʲ")
+    "^ k" (lambda () (interactive) (insert "ᵏ") :wk "ᵏ")
+    "^ l" (lambda () (interactive) (insert "ˡ") :wk "ˡ")
+    "^ m" (lambda () (interactive) (insert "ᵐ") :wk "ᵐ")
+    "^ n" (lambda () (interactive) (insert "ⁿ") :wk "ⁿ")
+    "^ o" (lambda () (interactive) (insert "ᵒ") :wk "ᵒ")
+    "^ p" (lambda () (interactive) (insert "ᵖ") :wk "ᵖ")
+    "^ r" (lambda () (interactive) (insert "ʳ") :wk "ʳ")
+    "^ s" (lambda () (interactive) (insert "ˢ") :wk "ˢ")
+    "^ t" (lambda () (interactive) (insert "ᵗ") :wk "ᵗ")
+    "^ u" (lambda () (interactive) (insert "ᵘ") :wk "ᵘ")
+    "^ v" (lambda () (interactive) (insert "ᵛ") :wk "ᵛ")
+    "^ w" (lambda () (interactive) (insert "ʷ") :wk "ʷ")
+    "^ x" (lambda () (interactive) (insert "ˣ") :wk "ˣ")
+    "^ y" (lambda () (interactive) (insert "ʸ") :wk "ʸ")
+    "^ z" (lambda () (interactive) (insert "ᶻ") :wk "ᶻ")
+    "^ (" (lambda () (interactive) (insert "⁽") :wk "⁽")   
+    "^ )" (lambda () (interactive) (insert "⁾") :wk "⁾")
+    "^ 0" (lambda () (interactive) (insert "⁰") :wk "⁰")
+    "^ 1" (lambda () (interactive) (insert "¹") :wk "¹")
+    "^ 2" (lambda () (interactive) (insert "²") :wk "²")
+    "^ 3" (lambda () (interactive) (insert "³") :wk "³")
+    "^ 4" (lambda () (interactive) (insert "⁴") :wk "⁴")
+    "^ 5" (lambda () (interactive) (insert "⁵") :wk "⁵")
+    "^ 6" (lambda () (interactive) (insert "⁶") :wk "⁶")
+    "^ 7" (lambda () (interactive) (insert "⁷") :wk "⁷")
+    "^ 8" (lambda () (interactive) (insert "⁸") :wk "⁸")
+    "^ 9" (lambda () (interactive) (insert "⁹") :wk "⁹")
     )
 
   (s/leader-def
-   "" nil
-   "M-SPC" '(counsel-find-file :wk "find file")
-   "SPC" '(counsel-find-file :wk "find file")
-   "~" '(s/go-to-config :wk "go home")
+    "" nil
+    "M-SPC" '(counsel-find-file :wk "find file")
+    "SPC" '(counsel-find-file :wk "find file")
+    "~" '(s/go-to-config :wk "go home")
 
-   "g" (general-simulate-key "M-g" :which-key "go to...")
-   "m" '(:ignore t :wk "mode specific")
+    "g" (general-simulate-key "M-g" :which-key "go to...")
+    "m" '(:ignore t :wk "mode specific")
 
-   "c" '(counsel-compile :wk "compile")
+    "c" '(counsel-compile :wk "compile")
 
-      ;; Yasnippet keymap
-   "y" '(:ignore t :wk "yasnippet")
-   "y i" '(yas-insert-snippet :wk "insert")
-   "y c" '(yas-new-snippet :wk "create")
-   "y r" '(yas-reload-all :wk "reload")
-   
-   ;; Buffer keymap
-   "b" '(:ignore t :wk "buffers")
-   "b k" '(s/kill-this-buffer :wk "kill buffer")
-   "b K" '(kill-buffer :wk "kill some buffer")
-   "b s" '(save-buffer :wk "save buffer")
-   "b r" '(rename-buffer :wk "rename buffer")
-   "b b" '(counsel-switch-buffer :wk "switch buffer")
+    ;; Yasnippet keymap
+    "y" '(:ignore t :wk "yasnippet")
+    "y i" '(yas-insert-snippet :wk "insert")
+    "y c" '(yas-new-snippet :wk "create")
+    "y r" '(yas-reload-all :wk "reload")
+    
+    ;; Buffer keymap
+    "b" '(:ignore t :wk "buffers")
+    "b k" '(s/kill-this-buffer :wk "kill buffer")
+    "b K" '(kill-buffer :wk "kill some buffer")
+    "b s" '(save-buffer :wk "save buffer")
+    "b r" '(rename-buffer :wk "rename buffer")
+    "b b" '(counsel-switch-buffer :wk "switch buffer")
 
-   ;; Help keymap
-   "h" '(:ignore t :wk "help")
-   "h k" '(describe-key :wk "keys")
-   "h v" '(describe-variable :wk "variables")
-   "h ?" '(help-for-help :wk "all the help-possibilities")
-   "h i" '(info :wk "read the manual")
-   "h m" '(describe-mode :wk "modes")
-   "h f" '(describe-function :wk "functions")
+    ;; Help keymap
+    "h" '(:ignore t :wk "help")
+    "h k" '(describe-key :wk "keys")
+    "h v" '(describe-variable :wk "variables")
+    "h ?" '(help-for-help :wk "all the help-possibilities")
+    "h i" '(info :wk "read the manual")
+    "h m" '(describe-mode :wk "modes")
+    "h f" '(describe-function :wk "functions")
 
-   ;; Fuzzy search
-   "f" '(:ignore t :wk "fuzzy search")
-   "f h" '(:ignore t :wk "frome home")
-   "f h d" '(s/fzf-home-dir :wk "for directories")
-   "f h f" '(s/fzf-home :wk "for files")
-   "f" '(:ignore t :wk "from here")
-   "f f" '(counsel-fzf :wk "for files")
-   "f d" '(s/fzf-dir-here :wk "for directories")
+    ;; Fuzzy search
+    "f" '(:ignore t :wk "fuzzy search")
+    "f h" '(:ignore t :wk "frome home")
+    "f h d" '(s/fzf-home-dir :wk "for directories")
+    "f h f" '(s/fzf-home :wk "for files")
+    "f" '(:ignore t :wk "from here")
+    "f f" '(counsel-fzf :wk "for files")
+    "f d" '(s/fzf-dir-here :wk "for directories")
 
-   ;; Frame manipulation
-   "F" '(:ignore t :wk "frame manipulation")
-   "F |" '(tile-frames-horizontally :wk "tile horisontally")
-   "F -" '(tile-frames-vertically :wk "tile vertically")
-   "F F" '(toggle-max-frame :wk "toggle full-screen")
-   "F K" '(toggle-max-frame-vertically :wk "toggle vertical full-screen")
-   "F H" '(toggle-max-frame-horizontally :wk "toggle horisontal full-screen")
-   "F l" '(move-frame-to-screen-right :wk "move to right side")
-   "F h" '(move-frame-to-screen-left :wk "move to left side")
-   "F k" '(move-frame-to-screen-up :wk "move to top")
-   "F j" '(move-frame-to-screen-down :wk "move to bottom")
-   
-   ;; Quit
-   "q" '(:ignore t :wk "quit")
-   "q f" '(delete-frame :wk "close frame")
-   "q w" '(delete-window :wk "close window")
-   "q o" '(delete-other-windows :wk "close other windows")
-   "q W" '(kill-buffer-and-window :wk "Kill buffer, close window")
-   "q F" '(s/kill-buffer-and-frame :wk "Kill buffer, close frame")
+    ;; Frame manipulation
+    "F" '(:ignore t :wk "frame manipulation")
+    "F |" '(tile-frames-horizontally :wk "tile horisontally")
+    "F -" '(tile-frames-vertically :wk "tile vertically")
+    "F F" '(toggle-max-frame :wk "toggle full-screen")
+    "F K" '(toggle-max-frame-vertically :wk "toggle vertical full-screen")
+    "F H" '(toggle-max-frame-horizontally :wk "toggle horisontal full-screen")
+    "F l" '(move-frame-to-screen-right :wk "move to right side")
+    "F h" '(move-frame-to-screen-left :wk "move to left side")
+    "F k" '(move-frame-to-screen-up :wk "move to top")
+    "F j" '(move-frame-to-screen-down :wk "move to bottom")
+    
+    ;; Quit
+    "q" '(:ignore t :wk "quit")
+    "q f" '(delete-frame :wk "close frame")
+    "q w" '(delete-window :wk "close window")
+    "q o" '(delete-other-windows :wk "close other windows")
+    "q W" '(kill-buffer-and-window :wk "Kill buffer, close window")
+    "q F" '(s/kill-buffer-and-frame :wk "Kill buffer, close frame")
 
-   ;; Search keymap
-   "s" '(:ignore t :wk "search")
-   "s b" '(counsel-grep-or-swiper :wk "search in buffer")
-   "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
-   "s d" '(counsel-ag :wk "search in directory")
-   "s g" '(counsel-git-grep :wk "search in git repository")
-   ;; "s p" '(projectile-ripgrep :wk "search in project")
+    ;; Search keymap
+    "s" '(:ignore t :wk "search")
+    "s b" '(counsel-grep-or-swiper :wk "search in buffer")
+    "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
+    "s d" '(counsel-ag :wk "search in directory")
+    "s g" '(counsel-git-grep :wk "search in git repository")
+    ;; "s p" '(projectile-ripgrep :wk "search in project")
 
-   ;; Project keymap
-   "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
+    ;; Project keymap
+    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
 
-   ;; Variables keymap
-   "v" '(:ignore t :wk "change variables")
-   "v d" '(s/choose-dictionary :wk "spell-check dictionary")
-   "v t" '(s/choose-theme :wk "theme")
-   "v s" '(flyspell-mode :wk "toggle spelling")
-   "v F" '(flycheck-mode :wk "toggle flycheck")
-   "v f" '(:ignore t :wk "font size")
-   "v f +" '(default-text-scale-increase :wk "enlarge")
-   "v f -" '(default-text-scale-decrease :wk "decrease")
-   "v i" '(toggle-input-method :wk "input method (TeX)")
+    ;; Variables keymap
+    "v" '(:ignore t :wk "change variables")
+    "v d" '(s/choose-dictionary :wk "spell-check dictionary")
+    "v t" '(s/choose-theme :wk "theme")
+    "v s" '(flyspell-mode :wk "toggle spelling")
+    "v F" '(flycheck-mode :wk "toggle flycheck")
+    "v f" '(:ignore t :wk "font size")
+    "v f +" '(default-text-scale-increase :wk "enlarge")
+    "v f -" '(default-text-scale-decrease :wk "decrease")
+    "v i" '(toggle-input-method :wk "input method (TeX)")
 
-   ;; Window keymap
-   "w" '(:ignore t :wk "window")
-   "w +" '(evil-window-increase-height :wk "increase height")
-   "w -" '(evil-window-decrease-height :wk "decrease height")
-   "w =" '(balance-windows :wk "balance windows")
-   "w <" '(evil-window-increase-width :wk "increase width")
-   "w >" '(evil-window-decrease-width :wk "decrease width")
-   "w h" '(evil-window-left :wk t)
-   "w j" '(evil-window-down :wk t)
-   "w k" '(evil-window-up :wk t)
-   "w l" '(evil-window-right :wk t)
-   "w d" '(delete-window :wk "delete window")
-   "w f" '(delete-other-windows :wk "focus on window")
-   "w v" '(split-window-right :wk "split vertical")
-   "w s" '(split-window-below :wk "split")
-   "w o" '(ace-window :wk "other window")
+    ;; Window keymap
+    "w" '(:ignore t :wk "window")
+    "w +" '(evil-window-increase-height :wk "increase height")
+    "w -" '(evil-window-decrease-height :wk "decrease height")
+    "w =" '(balance-windows :wk "balance windows")
+    "w <" '(evil-window-increase-width :wk "increase width")
+    "w >" '(evil-window-decrease-width :wk "decrease width")
+    "w h" '(evil-window-left :wk t)
+    "w j" '(evil-window-down :wk t)
+    "w k" '(evil-window-up :wk t)
+    "w l" '(evil-window-right :wk t)
+    "w d" '(delete-window :wk "delete window")
+    "w f" '(delete-other-windows :wk "focus on window")
+    "w v" '(split-window-right :wk "split vertical")
+    "w s" '(split-window-below :wk "split")
+    "w o" '(ace-window :wk "other window")
 
-   ;; "Open programs" - keymap
-   "o" '(:ignore t :wk "open ...")
-   "o d" '(dired :wk "dired")
-   "o t" '(vterm-other-window :wk "terminal")
-   "o g" '(magit-status :wk "git")
-   "o e" '(eshell :wk "eshell")
-   "o r" '(run-ess-r :wk "R")
+    ;; "Open programs" - keymap
+    "o" '(:ignore t :wk "open ...")
+    "o d" '(dired :wk "dired")
+    "o t" '(vterm-other-window :wk "terminal")
+    "o g" '(magit-status :wk "git")
+    "o e" '(eshell :wk "eshell")
+    "o r" '(run-ess-r :wk "R")
 
-   ;; "Workspaces (tabs)"
-   "t" '(:ignore t :wk "workspaces")
-   "t o" '(persp-switch :wk "other workspace")
-   "t n" '(persp-next :wk "next")
-   "t p" '(persp-prev :wk "prev")
-   "t r" '(persp-rename :wk "rename")
-   "t d" '(persp-kill :wk "close")
-   ))
+    ;; "Workspaces (tabs)"
+    "t" '(:ignore t :wk "workspaces")
+    "t o" '(persp-switch :wk "other workspace")
+    "t n" '(persp-next :wk "next")
+    "t p" '(persp-prev :wk "prev")
+    "t r" '(persp-rename :wk "rename")
+    "t d" '(persp-kill :wk "close")
+    ))
 
 
 ;;;; outline stuff
@@ -705,7 +769,7 @@
 (use-package julia-mode
   :config
   (add-hook 'julia-mode-hook 'julia-snail-mode)
-  )
+  (add-hook 'julia-mode-hook 'yas-minor-mode))
 
 
 ;; You have to go into the source code of the function
@@ -1394,55 +1458,18 @@ Use a prefix argument ARG to indicate creation of a new process instead."
 ;;;; Midnight mode
 (use-package midnight)
 
-;;;; Indentation
-(use-package aggressive-indent
-  :config
-  (global-aggressive-indent-mode 1))
-
-
 ;;;; Yasnippet
 (use-package yasnippet
   :init
+  (yas-global-mode 1)
   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
   :general
   (:keymaps 'yas-minor-mode-map
-	    "TAB" 'yas-maybe-expand)
+	    "M-/" 'yas-maybe-expand)
   :config
-  (yas-global-mode 1))
+  (add-hook 'eglot-server-initialized-hook 'yas-minor-mode)
+  )
 
-;; ;;;; Polymode
-;; (use-package polymode)
-;; 
-;; (use-package poly-org
-;;   :init
-;;   (add-hook 'org-mode-hook 'poly-org-mode))
-;; 
-;; (use-package poly-R) ;; This one must run after ESS
-
-;;;; Desktop-save-mode
-
-(defun s/activate-desktop-save ()
-  (desktop-save-mode 1)
-  (setq desktop-save 'nil))
-
-;; Activate desktop-save-mode
-;; This is done after-init to not load desktop eagerly
-(add-hook 'after-init-hook 's/activate-desktop-save)
-
-(setq desktop-dirname (concat user-emacs-directory "desktops/")
-      desktop-path (list (concat user-emacs-directory "desktops/")))
-
-;;;; Openwith external programs
-(if s/macos-p
-    (progn
-      (use-package openwith
-	:config
-	(setq openwith-associations
-	      '(("\\.png\\'" "open" (file))
-		("\\.jpg\\'" "open" (file))
-		))
-	(openwith-mode 1)
-	)))
 
 ;;;; Fix the usage of accent keys
 ;; https://wiki.archlinux.org/index.php/Emacs
@@ -1462,7 +1489,6 @@ Use a prefix argument ARG to indicate creation of a new process instead."
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module (quote evil-search))
- '(org-agenda-files (quote ("~/OneDrive - NTNU/literature/bibliography.org")))
  '(pdf-tools-handle-upgrades nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
