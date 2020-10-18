@@ -320,74 +320,6 @@
     "B" (lambda () (interactive) (insert "Β") :wk "Β")
     "N" (lambda () (interactive) (insert "Ν") :wk "Ν")
     "M" (lambda () (interactive) (insert "Μ") :wk "Μ")
-
-    "_ a" (lambda () (interactive) (insert "ₐ") :wk "ₐ")
-    "_ e" (lambda () (interactive) (insert "ₑ") :wk "ₑ")
-    "_ h" (lambda () (interactive) (insert "ₕ") :wk "ₕ")
-    "_ i" (lambda () (interactive) (insert "ᵢ") :wk "ᵢ")
-    "_ j" (lambda () (interactive) (insert "ⱼ") :wk "ⱼ")
-    "_ k" (lambda () (interactive) (insert "ₖ") :wk "ₖ")
-    "_ l" (lambda () (interactive) (insert "ₗ") :wk "ₗ")
-    "_ m" (lambda () (interactive) (insert "ₘ") :wk "ₘ")
-    "_ m" (lambda () (interactive) (insert "ₙ") :wk "ₙ")
-    "_ o" (lambda () (interactive) (insert "ₒ") :wk "ₒ")
-    "_ p" (lambda () (interactive) (insert "ₚ") :wk "ₚ")
-    "_ r" (lambda () (interactive) (insert "ᵣ") :wk "ᵣ")
-    "_ s" (lambda () (interactive) (insert "ₛ") :wk "ₛ")
-    "_ t" (lambda () (interactive) (insert "ₜ") :wk "ₜ")
-    "_ u" (lambda () (interactive) (insert "ᵤ") :wk "ᵤ")
-    "_ v" (lambda () (interactive) (insert "ᵥ") :wk "ᵥ")
-    "_ x" (lambda () (interactive) (insert "ₓ") :wk "ₓ")
-    "_ (" (lambda () (interactive) (insert "₍") :wk "ₓ")
-    "_ )" (lambda () (interactive) (insert "₎") :wk "ₓ")
-    "_ 0" (lambda () (interactive) (insert "₀") :wk "₀")
-    "_ 1" (lambda () (interactive) (insert "₁") :wk "₁")
-    "_ 2" (lambda () (interactive) (insert "₂") :wk "₂")
-    "_ 3" (lambda () (interactive) (insert "₃") :wk "₃")
-    "_ 4" (lambda () (interactive) (insert "₄") :wk "₄")
-    "_ 5" (lambda () (interactive) (insert "₅") :wk "₅")
-    "_ 6" (lambda () (interactive) (insert "₆") :wk "₆")
-    "_ 7" (lambda () (interactive) (insert "₇") :wk "₇")
-    "_ 8" (lambda () (interactive) (insert "₈") :wk "₈")
-    "_ 9" (lambda () (interactive) (insert "₉") :wk "₉")
-
-    "^ a" (lambda () (interactive) (insert "ᵃ") :wk "ᵃ")
-    "^ b" (lambda () (interactive) (insert "ᵇ") :wk "ᵇ")
-    "^ c" (lambda () (interactive) (insert "ᶜ") :wk "ᶜ")
-    "^ d" (lambda () (interactive) (insert "ᵈ") :wk "ᵈ")
-    "^ e" (lambda () (interactive) (insert "ᵉ") :wk "ᵉ")
-    "^ f" (lambda () (interactive) (insert "ᶠ") :wk "ᶠ")
-    "^ g" (lambda () (interactive) (insert "ᵍ") :wk "ᵍ")
-    "^ h" (lambda () (interactive) (insert "ʰ") :wk "ʰ")
-    "^ i" (lambda () (interactive) (insert "ⁱ") :wk "ⁱ")
-    "^ j" (lambda () (interactive) (insert "ʲ") :wk "ʲ")
-    "^ k" (lambda () (interactive) (insert "ᵏ") :wk "ᵏ")
-    "^ l" (lambda () (interactive) (insert "ˡ") :wk "ˡ")
-    "^ m" (lambda () (interactive) (insert "ᵐ") :wk "ᵐ")
-    "^ n" (lambda () (interactive) (insert "ⁿ") :wk "ⁿ")
-    "^ o" (lambda () (interactive) (insert "ᵒ") :wk "ᵒ")
-    "^ p" (lambda () (interactive) (insert "ᵖ") :wk "ᵖ")
-    "^ r" (lambda () (interactive) (insert "ʳ") :wk "ʳ")
-    "^ s" (lambda () (interactive) (insert "ˢ") :wk "ˢ")
-    "^ t" (lambda () (interactive) (insert "ᵗ") :wk "ᵗ")
-    "^ u" (lambda () (interactive) (insert "ᵘ") :wk "ᵘ")
-    "^ v" (lambda () (interactive) (insert "ᵛ") :wk "ᵛ")
-    "^ w" (lambda () (interactive) (insert "ʷ") :wk "ʷ")
-    "^ x" (lambda () (interactive) (insert "ˣ") :wk "ˣ")
-    "^ y" (lambda () (interactive) (insert "ʸ") :wk "ʸ")
-    "^ z" (lambda () (interactive) (insert "ᶻ") :wk "ᶻ")
-    "^ (" (lambda () (interactive) (insert "⁽") :wk "⁽")   
-    "^ )" (lambda () (interactive) (insert "⁾") :wk "⁾")
-    "^ 0" (lambda () (interactive) (insert "⁰") :wk "⁰")
-    "^ 1" (lambda () (interactive) (insert "¹") :wk "¹")
-    "^ 2" (lambda () (interactive) (insert "²") :wk "²")
-    "^ 3" (lambda () (interactive) (insert "³") :wk "³")
-    "^ 4" (lambda () (interactive) (insert "⁴") :wk "⁴")
-    "^ 5" (lambda () (interactive) (insert "⁵") :wk "⁵")
-    "^ 6" (lambda () (interactive) (insert "⁶") :wk "⁶")
-    "^ 7" (lambda () (interactive) (insert "⁷") :wk "⁷")
-    "^ 8" (lambda () (interactive) (insert "⁸") :wk "⁸")
-    "^ 9" (lambda () (interactive) (insert "⁹") :wk "⁹")
     )
 
   (s/leader-def
@@ -529,7 +461,7 @@
   :custom-face
   ;; Adjusting some face options from 'outline-minor-faces', to bring it
   ;; closer to the usual Org experience.
-  (outline-minor-0 ((t (:weight bold :underline t :background nil))))
+  (outline-minor-0 ((t (:weight bold :background nil))))
   (outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil))))
   )
 
@@ -587,7 +519,7 @@
 (use-package eglot
   :config
   (setq
-   ;; Avoid annoying highlighting of sverything
+   ;; Avoid annoying highlighting of everything
    eglot-ignored-server-capabilites '(:documentHighlightProvider)
    eglot-stay-out-of '(company))) ; Don't mess with company backends
 
@@ -665,7 +597,7 @@
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t ; Start at the top after reaching the bottom
 	company-tooltip-align-annotations t
-	company-idle-delay 0 ; Waiting time before we start completion
+	company-idle-delay .1 ; Waiting time before we start completion
 	company-minimum-prefix-length 1 ; Minimum letters before we start completion
 	company-tooltip-limit 10)
 
@@ -686,12 +618,6 @@
 (use-package ess
   :init
   (require 'ess-r-mode)
-  (defun s/ess-r-outline ()
-    "Setup outline-minor-mode for ess-r buffers"
-    (setq outline-regexp "^#\\{1,2\\} -\\{4\\}")
-    (defun outline-level ()
-      (cond ((looking-at "^#\\{1,2\\} -\\{4\\}") 1)
-	    (t 1000))))
   (defun s/ess-r-company ()
     "Set company backends for R buffers"
     (set (make-local-variable 'company-backends)
@@ -724,9 +650,6 @@
    (eldoc-mode . ""))
   :config
 
-  (add-hook 'ess-r-mode-hook 's/ess-r-outline)
-  (add-hook 'ess-r-mode-hook 's/outline-minor-activate)
-  
   (setq ess-inject-source nil
 	ess-r-package-auto-enable-namespaced-evaluation nil ;; Not use namespace
 	ess-eval-visibly nil ;; Something about echoing code
@@ -843,8 +766,6 @@
 ;;;; Resize frames
 (use-package frame-cmds)
 
-;;;; Tramp
-;; (use-package tramp)
 
 ;;;; Undo-tree
 (use-package undo-tree
@@ -873,8 +794,7 @@
 
 ;;;; Rainbow delimiters
 (use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode)
-  )
+  :hook (prog-mode . rainbow-delimiters-mode))
 
 ;;;; Jump to function definition
 (use-package dumb-jump
@@ -1179,72 +1099,73 @@
 
 
 ;;;; PDF Tools
-(use-package tablist) ;; Apparently necessary for PDF Tools
-(if s/pdf-tools-p
-    (use-package pdf-tools
-      :config
-
-      (if s/macos-p
-	  (progn
-	    (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/opt/libffi/lib/pkgconfig")
-
-	    (custom-set-variables
-	     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
-	    (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
-	    ))
-
-      ;; initialise
-      (pdf-tools-install)
-      ;; open pdfs scaled to fit page
-      (setq-default pdf-view-display-size 'fit-page)
-      ;; automatically annotate highlights
-      (setq pdf-annot-activate-created-annotations t)
-
-      :init
-      ;; use normal isearch
-      (general-define-key
-       :keymaps 'pdf-view-mode-map
-       :states 'normal
-       "f" 'pdf-links-action-perform
-       "d" 'pdf-view-next-page-command
-       "u" 'pdf-view-previous-page-command
-       "r" 'revert-buffer
-       )
-
-      ;; This does not seem to work
-      (general-define-key
-       :keymaps 'pdf-view-mode-map
-       "M-j" 'pdf-view-next-page-command
-       "M-k" 'pdf-view-previous-page-command
-       )
-
-      (general-define-key
-       :keymaps 'pdf-view-mode-map
-       "SPC" nil
-       "M-SPC" nil
-       "SPC m" nil
-       "M-SPC m" nil
-       )
-
-      (s/local-leader-def
-       :keymaps 'pdf-view-mode-map
-       "" nil
-       "t" '(pdf-outline :wk "toc") 
-       "/" '(isearch-forward :wk "search in buffer")
-       "r" '(revert-buffer :wk "refresh")
-       "a" '(:ignore t :wk "annotations")
-       "a t" '(pdf-annot-add-text-annotation :wk "text")
-       "a m" '(pdf-annot-add-markup-annotation :wk "markup")
-       "a d" '(pdf-annot-delete :wk "delete")
-       "a l" '(pdf-annot-list-annotations :wk "list annotations")
-       )
-
-      ;; Stop the annoying blinking in the pdf
-      (add-hook 'pdf-view-mode-hook
-		(lambda ()
-		  (blink-cursor-mode -1)))
-      )
-)
+;; (use-package tablist) ;; Apparently necessary for PDF Tools
+;; (if s/pdf-tools-p
+;;     (use-package pdf-tools
+;;       :config
+;; 
+;;       ;; I just uncommented this. Don't know if that makes things crash
+;;       ;; (if s/macos-p
+;;       ;; 	  (progn
+;;       ;; 	    (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/opt/libffi/lib/pkgconfig")
+;; 
+;;       ;; 	    (custom-set-variables
+;;       ;; 	     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+;;       ;; 	    (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+;;       ;; 	    ))
+;; 
+;;       ;; initialise
+;;       (pdf-tools-install)
+;;       ;; open pdfs scaled to fit page
+;;       (setq-default pdf-view-display-size 'fit-page)
+;;       ;; automatically annotate highlights
+;;       (setq pdf-annot-activate-created-annotations t)
+;; 
+;;       :init
+;;       ;; use normal isearch
+;;       (general-define-key
+;;        :keymaps 'pdf-view-mode-map
+;;        :states 'normal
+;;        "f" 'pdf-links-action-perform
+;;        "d" 'pdf-view-next-page-command
+;;        "u" 'pdf-view-previous-page-command
+;;        "r" 'revert-buffer
+;;        )
+;; 
+;;       ;; This does not seem to work
+;;       (general-define-key
+;;        :keymaps 'pdf-view-mode-map
+;;        "M-j" 'pdf-view-next-page-command
+;;        "M-k" 'pdf-view-previous-page-command
+;;        )
+;; 
+;;       (general-define-key
+;;        :keymaps 'pdf-view-mode-map
+;;        "SPC" nil
+;;        "M-SPC" nil
+;;        "SPC m" nil
+;;        "M-SPC m" nil
+;;        )
+;; 
+;;       (s/local-leader-def
+;;        :keymaps 'pdf-view-mode-map
+;;        "" nil
+;;        "t" '(pdf-outline :wk "toc") 
+;;        "/" '(isearch-forward :wk "search in buffer")
+;;        "r" '(revert-buffer :wk "refresh")
+;;        "a" '(:ignore t :wk "annotations")
+;;        "a t" '(pdf-annot-add-text-annotation :wk "text")
+;;        "a m" '(pdf-annot-add-markup-annotation :wk "markup")
+;;        "a d" '(pdf-annot-delete :wk "delete")
+;;        "a l" '(pdf-annot-list-annotations :wk "list annotations")
+;;        )
+;; 
+;;       ;; Stop the annoying blinking in the pdf
+;;       (add-hook 'pdf-view-mode-hook
+;; 		(lambda ()
+;; 		  (blink-cursor-mode -1)))
+;;       )
+;; )
 
 ;;;; which-key
 ;; Display a popup-buffer with the available key-combinations
@@ -1261,50 +1182,15 @@
 
 ;;;; Project management
 (use-package projectile
-  :init
-  (defun s/projectile-run-r (&optional arg)
-    "Invoke an `r'-process in the project's root.
-
-Switch to the project specific term buffer if it already exists.
-
-Use a prefix argument ARG to indicate creation of a new process instead."
-    (interactive "P")
-    (let* ((project (projectile-ensure-project (projectile-project-root)))
-	   (buffer (projectile-generate-process-name "R" arg))
-	   (buffer (split-string buffer))
-	   (buffer (concat (car buffer) ":" (cadr buffer))))
-      (unless (buffer-live-p (get-buffer buffer))
-	(unless (require 'ess-r-mode nil 'noerror)
-	  (error "Package 'ess-r-mode' is not available"))
-	(projectile-with-default-dir project
-	  (run-ess-r)))
-      (switch-to-buffer buffer)))
   :config
   (projectile-mode +1)
   (setq projectile-completion-system 'ivy)
   (setq projectile-switch-project-action #'projectile-dired) ; go to top level directory
-  (s/leader-def
-   "o r" '(s/projectile-run-r :wk "R"))
   )
-
-;; Install ag or ripgrep!!!!
 
 ;;;; Terminal
 ;; Libvterm
 (use-package vterm)
-;(use-package vterm-toggle)
-;(use-package multi-libvterm
-;  :straight
-;  (:type git
-;   :host github
-;   :repo "suonlight/multi-libvterm")
-;  :general
-;  (s/local-leader-def
-;    :keymaps 'vterm-mode-map
-;    "n" '(multi-libvterm-next :wk "next")
-;    "p" '(multi-libvterm-prev :wk "previous")
-;    )
-;  )
 
 ;;;; Pairing of parentheses
 (use-package elec-pair
@@ -1417,7 +1303,6 @@ Use a prefix argument ARG to indicate creation of a new process instead."
   (general-define-key
    :keymaps 'TeX-mode-map
    "<mouse-3>" 'org-ref-latex-click)
-  
   )
 
 
@@ -1495,7 +1380,7 @@ Use a prefix argument ARG to indicate creation of a new process instead."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(outline-minor-0 ((t (:weight bold :underline t :background nil))))
+ '(outline-minor-0 ((t (:weight bold :background nil))))
  '(outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil)))))
 
 ;;; init.el ends here
