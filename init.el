@@ -11,10 +11,8 @@
 (defvar s/init-theme "light") ; Default theme
 (defvar s/init-dict "british") ; Default language
 (defvar s/gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
-(defvar s/pdf-tools-p t) ; Activate pdf-tools?
 (defvar s/macos-p (string-equal system-type "darwin")) ; Is this a mac?
 (defvar s/fzf-home-dir "~/OneDrive - NTNU/") ; Directory for fzf where i keep all my files
-(defvar s/latex-viewer "pdf-tools")
 (defvar s/literature-dir "~/OneDrive - NTNU/literature/")
 (setq-default fill-column 100) ; Column for starting automatic line wrap
 (setq-default default-input-method "TeX") ; Input method activated by the command toggle-input-method
@@ -86,9 +84,9 @@
 (tool-bar-mode -1) ; Remove tool bar
 (if (not s/macos-p) (menu-bar-mode -1)) ; Sometimes remove menu bar
 
-;; Autosave and backups
-(setq make-backup-files nil) ; don't make backup files
-(setq auto-save-default nil) ; Do not autosave
+;; ;; Autosave and backups
+;; (setq make-backup-files nil) ; don't make backup files
+;; (setq auto-save-default nil) ; Do not autosave
 
 ;; macOS stuff
 (if s/macos-p
@@ -936,22 +934,6 @@
       (setq TeX-view-program-selection
       	    (cons `(output-pdf ,viewer) TeX-view-program-selection))))
 
-  ;;; Functions for doing text-folding
-  (defvar s/toggle-state "unfolded")
-  (defun s/toggle-tex-fold ()
-    "Toggle between folded and unfolded buffers.
-   If TeX-fold-mode is not activated, first activate it."
-    (interactive)
-    (if (not (bound-and-true-p TeX-fold-mode))
-  	(TeX-fold-mode))
-    (if (equal s/toggle-state "folded")
-  	(progn
-  	  (TeX-fold-clearout-buffer)
-  	  (setq s/toggle-state "unfolded"))
-      (progn
-  	(TeX-fold-buffer)
-  	(setq s/toggle-state "folded"))))
-
   (defun s/add-tex-viewers ()
     "Add some latex viewers to the list"
     ;; Add backwards search to zathura
@@ -972,7 +954,6 @@
   (add-hook 'TeX-mode-hook 's/add-tex-viewers)
   
   :config
-  (s/choose-latex-pdf-viewer s/latex-viewer)
 
   ;;(setq TeX-complete-expert-commands t) ; Adds more commands for completion
   (setq Tex-auto-save t) ;; Parsing on save
@@ -984,16 +965,6 @@
 	TeX-auto-parse-length 999999
 	TeX-auto-global (concat user-emacs-directory "auctex/auto-global/"))
   
-  ;; automatically insert braces after sub/superscript in math mode
-  (setq TeX-electric-sub-and-superscript t)
-
-  ;; Syntax highlighting
-  ;; (not sure if this is correct way to activate)
-  (global-font-lock-mode t) 
-  (setq-default font-latex-script-display nil) ; Do not lower/lift subscripts/superscripts
-
-  (setq LaTeX-includegraphics-read-file 'LaTeX-includegraphics-read-file-relative)
-
   (setq TeX-source-correlate-method 'synctex)
   (TeX-source-correlate-mode)
   (setq TeX-source-correlate-start-server t)
@@ -1005,8 +976,7 @@
   (add-hook 'LaTeX-mode-hook
   	    (lambda () (reftex-mode 1)))
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-  (setq reftex-plug-into-AUCTEX t)
-  )
+  (setq reftex-plug-into-AUCTEX t))
 
 (use-package auctex-latexmk
   :init
@@ -1021,7 +991,6 @@
   :config
   (auctex-latexmk-setup)
   )
-
 
 (use-package company-reftex)
 (use-package company-auctex
@@ -1039,14 +1008,11 @@
 	    company-capf
 	    :separate)
 	   company-files
-	   (company-dabbrev-code
-	    company-abbrev
-	    company-dabbrev :separate)
+	   company-capf
 	   ))
     (company-auctex-init))
 
   (add-hook 'LaTeX-mode-hook 's/latex-company-function)
-  
   )
 
 
@@ -1098,75 +1064,6 @@
   )
 
 
-;;;; PDF Tools
-;; (use-package tablist) ;; Apparently necessary for PDF Tools
-;; (if s/pdf-tools-p
-;;     (use-package pdf-tools
-;;       :config
-;; 
-;;       ;; I just uncommented this. Don't know if that makes things crash
-;;       ;; (if s/macos-p
-;;       ;; 	  (progn
-;;       ;; 	    (setenv "PKG_CONFIG_PATH" "/usr/local/Cellar/zlib/1.2.8/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/opt/libffi/lib/pkgconfig")
-;; 
-;;       ;; 	    (custom-set-variables
-;;       ;; 	     '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
-;;       ;; 	    (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
-;;       ;; 	    ))
-;; 
-;;       ;; initialise
-;;       (pdf-tools-install)
-;;       ;; open pdfs scaled to fit page
-;;       (setq-default pdf-view-display-size 'fit-page)
-;;       ;; automatically annotate highlights
-;;       (setq pdf-annot-activate-created-annotations t)
-;; 
-;;       :init
-;;       ;; use normal isearch
-;;       (general-define-key
-;;        :keymaps 'pdf-view-mode-map
-;;        :states 'normal
-;;        "f" 'pdf-links-action-perform
-;;        "d" 'pdf-view-next-page-command
-;;        "u" 'pdf-view-previous-page-command
-;;        "r" 'revert-buffer
-;;        )
-;; 
-;;       ;; This does not seem to work
-;;       (general-define-key
-;;        :keymaps 'pdf-view-mode-map
-;;        "M-j" 'pdf-view-next-page-command
-;;        "M-k" 'pdf-view-previous-page-command
-;;        )
-;; 
-;;       (general-define-key
-;;        :keymaps 'pdf-view-mode-map
-;;        "SPC" nil
-;;        "M-SPC" nil
-;;        "SPC m" nil
-;;        "M-SPC m" nil
-;;        )
-;; 
-;;       (s/local-leader-def
-;;        :keymaps 'pdf-view-mode-map
-;;        "" nil
-;;        "t" '(pdf-outline :wk "toc") 
-;;        "/" '(isearch-forward :wk "search in buffer")
-;;        "r" '(revert-buffer :wk "refresh")
-;;        "a" '(:ignore t :wk "annotations")
-;;        "a t" '(pdf-annot-add-text-annotation :wk "text")
-;;        "a m" '(pdf-annot-add-markup-annotation :wk "markup")
-;;        "a d" '(pdf-annot-delete :wk "delete")
-;;        "a l" '(pdf-annot-list-annotations :wk "list annotations")
-;;        )
-;; 
-;;       ;; Stop the annoying blinking in the pdf
-;;       (add-hook 'pdf-view-mode-hook
-;; 		(lambda ()
-;; 		  (blink-cursor-mode -1)))
-;;       )
-;; )
-
 ;;;; which-key
 ;; Display a popup-buffer with the available key-combinations
 ;; whenever a keymap is pressed
@@ -1177,8 +1074,7 @@
   :config
   (setq which-key-sort-order 'which-key-local-then-key-order)
   (which-key-setup-side-window-bottom)
-  (setq which-key-side-window-max-height 0.5)
-  )
+  (setq which-key-side-window-max-height 0.5))
 
 ;;;; Project management
 (use-package projectile
@@ -1189,7 +1085,6 @@
   )
 
 ;;;; Terminal
-;; Libvterm
 (use-package vterm)
 
 ;;;; Pairing of parentheses
@@ -1352,8 +1247,7 @@
   (:keymaps 'yas-minor-mode-map
 	    "M-/" 'yas-maybe-expand)
   :config
-  (add-hook 'eglot-server-initialized-hook 'yas-minor-mode)
-  )
+  (add-hook 'eglot-server-initialized-hook 'yas-minor-mode))
 
 
 ;;;; Fix the usage of accent keys
@@ -1373,8 +1267,7 @@
  '(custom-safe-themes nil)
  '(ess-style (quote RStudio))
  '(evil-collection-minibuffer-setup t t)
- '(evil-search-module (quote evil-search))
- '(pdf-tools-handle-upgrades nil))
+ '(evil-search-module (quote evil-search)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
