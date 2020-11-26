@@ -101,16 +101,7 @@
       read-buffer-completion-ignore-case t
       read-file-name-completion-ignore-case t)
 
-(setq frame-resize-pixelwise t) ;; I don't know what this does, but it might be a good idea to use. Not a problem to remove this either
-
-;; Add the themes-folder to load-path
-(add-to-list 'custom-theme-load-path
-	     (expand-file-name (concat user-emacs-directory "themes/")))
-
-(xterm-mouse-mode t) ; Enable mouse in terminal
-
 ;;;; Misc. functions
-
 (defun s/kill-buffer-and-frame ()
   "Kill the current buffer and delete the selected frame."
   (interactive)
@@ -159,7 +150,6 @@
   :config
   (evil-mode 1))
 
-
 (use-package evil-collection
   :after evil
   :custom (evil-collection-minibuffer-setup t)
@@ -202,8 +192,8 @@
 
   (general-create-definer s/insert-unicode
     :prefix "`"
-    :states '(insert emacs)
-    :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map))
+    ;:states '(insert emacs)
+    :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map evil-ex-completion-map minibuffer-local-map))
 
   (general-define-key
    :keymaps 'override
