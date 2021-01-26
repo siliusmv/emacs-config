@@ -1069,7 +1069,7 @@
   )
 
 
-;;;; Org-mode
+;;;; Org-ref
 
 (org-babel-do-load-languages
  'org-babel-load-languages
@@ -1094,44 +1094,6 @@
 (s/local-leader-def
  :keymaps 'org-mode-map
  "TAB" '(org-global-cycle :wk "Cycle buffer"))
-
-(general-define-key
- :keymaps 'org-mode-map
- :states '(normal visual insert)
- "M-g" nil
- "M-g s" '(avy-org-goto-heading-timer :wk "avy heading")
- "M-g j" '(org-forward-heading-same-level :wk "forward same level")
- "M-g k" '(org-backward-heading-same-level :wk "backward same level")
- "M-g h" '(org-up-heading-safe :wk "up one heading")
- "M-g l" '(org-next-visible-heading :wk "next heading")
- "M-g M-j" '(org-next-block :wk "next block")
- "M-g M-k" '(org-previous-block :wk "next block")
- )
-
-;; Necessary for exporting org to html
-(use-package htmlize)
-
-;; Prettify pdf exports
-(require 'ox-latex)
-(require 'ox-beamer)
-(add-to-list 'org-latex-packages-alist '("" "minted"))
-
-(setq org-latex-listings 'minted)
-
-(setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
-
-;; Do asynchronous org-babel calls in an R session
-(use-package ob-session-async
-  :straight
-  (:type git
-   :host github
-   :repo "jackkamm/ob-session-async")
-  :config
-  (require 'ob-session-async-R))
-
-(use-package org-bullets
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 (use-package org-ref
   :init
@@ -1160,8 +1122,7 @@
 
   (general-define-key
    :keymaps 'TeX-mode-map
-   "<mouse-3>" 'org-ref-latex-click)
-  )
+   "<mouse-3>" 'org-ref-latex-click))
 
 
 ;;;; Modeline
