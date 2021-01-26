@@ -877,45 +877,6 @@
    TeX-macro-private "~/.local/share/latex"
    TeX-style-private "~/.local/share/latex")
   
-  ;;; Functions for changing PDF viewers
-  (defvar s/pdf-viewers
-    (list
-     '("evince" "Evince")
-     '("pdf-tools" "PDF Tools")
-     '("zathura" "Zathura2")
-     '("preview" "Preview.app")))
-
-  (defun s/choose-latex-pdf-viewer (&optional viewer-name)
-    "Change PDF viewer for latex"
-    (interactive)
-    (let ((viewer
-	   (s/choose-from-list
-	    "Select PDF viewer: "
-	    s/pdf-viewers
-	    viewer-name)))
-      (delete `(output-pdf ,viewer) TeX-view-program-selection)
-      (setq TeX-view-program-selection
-      	    (cons `(output-pdf ,viewer) TeX-view-program-selection))))
-
-  (defun s/add-tex-viewers ()
-    "Add some latex viewers to the list"
-    ;; Add backwards search to zathura
-    ;; https://www.emacswiki.org/emacs/AUCTeX#toc23
-    (add-to-list 'TeX-view-program-list
-		 '("Zathura2"
-		   ("zathura %o"
-		    (mode-io-correlate (concat " --synctex-forward %n:0:%b"
-					       " -x \"emacsclient"
-					       " --socket-name=my-gui-server"
-					       " --no-wait +%{line} %{input}\"")))
-		   "zathura"))
-    ;; Add PDF Tools as a possible viewer
-    (unless (assoc "PDF Tools" TeX-view-program-list-builtin)
-      (add-to-list 'TeX-view-program-list-builtin
-		   '("PDF Tools" TeX-pdf-tools-sync-view))))
-  
-  (add-hook 'TeX-mode-hook 's/add-tex-viewers)
-  
   :config
 
   ;;(setq TeX-complete-expert-commands t) ; Adds more commands for completion
@@ -947,10 +908,10 @@
   ;; Pass the -pdf flag when TeX-PDF-mode is active
   (setq auctex-latexmk-inherit-TeX-PDF-mode t)
 
-  ;(add-hook 'LaTeX-mode-hook
-  ;	    (lambda ()
-  ;	      (setq TeX-command-default "LatexMk"
-  ;		    TeX-command-force "LatexMk")))
+  (add-hook 'LaTeX-mode-hook
+  	    (lambda ()
+  	      (setq TeX-command-default "LatexMk"
+  		    TeX-command-force "LatexMk")))
   :config
   (auctex-latexmk-setup)
   )
@@ -958,7 +919,6 @@
 (use-package company-reftex)
 (use-package company-auctex
   :config
-
   (defun s/latex-company-function ()
     (set (make-local-variable 'company-backends)
 	 '(
