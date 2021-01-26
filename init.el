@@ -241,7 +241,6 @@
 
   (s/goto-leader-def
     "" '(:ignore t :wk "go to...")
-    "h" '(counsel-outline :wk "outline header")
     "l" '(avy-goto-line :wk "line")
     "e" '(flymake-goto-next-error :wk "next error (flymake)")
     "E" '(flymake-goto-prev-error :wk "prev error (flymake)")
@@ -430,30 +429,6 @@
     ))
 
 
-;;;; outline stuff
-(use-package outline-magic
-  :init
-  (defun s/outline-minor-activate ()
-    (interactive)
-    (outline-minor-mode)
-    (outline-minor-faces-add-font-lock-keywords))
-  :general
-  (:keymaps 'outline-minor-mode-map
-	    "<C-tab>" 'outline-cycle)
-  :config
-  (add-hook 'LaTeX-mode-hook 's/outline-minor-activate)
-  (add-hook 'prog-mode-hook 's/outline-minor-activate)
-  )
-
-(use-package outline-minor-faces
-  :custom-face
-  ;; Adjusting some face options from 'outline-minor-faces', to bring it
-  ;; closer to the usual Org experience.
-  (outline-minor-0 ((t (:weight bold :background nil))))
-  (outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil))))
-  )
-
-
 ;;;; Change text size
 ;; This contains the functions default-text-scale-(increase/decrease)
 (use-package default-text-scale)
@@ -501,7 +476,6 @@
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
 
-(add-hook 'emacs-lisp-mode-hook 's/outline-minor-activate)
 
 ;;;; Language servers
 (use-package eglot
@@ -1258,12 +1232,5 @@
  '(ess-style 'RStudio)
  '(evil-collection-minibuffer-setup t t)
  '(evil-search-module 'evil-search))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(outline-minor-0 ((t (:weight bold :background nil))))
- '(outline-minor-1 ((t (:inherit (outline-minor-0 outline-1) :background nil)))))
 
 ;;; init.el ends here
