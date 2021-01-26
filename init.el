@@ -12,7 +12,6 @@
 (defvar s/init-dict "british") ; Default language
 (defvar s/gc-cons-threshold (* 1024 1024 50)) ; Threshold for garbage disposal
 (defvar s/macos-p (string-equal system-type "darwin")) ; Is this a mac?
-(defvar s/fzf-home-dir "~/OneDrive - NTNU/") ; Directory for fzf where i keep all my files
 (defvar s/literature-dir "~/OneDrive - NTNU/literature/")
 (setq-default fill-column 100) ; Column for starting automatic line wrap
 (setq-default default-input-method "TeX") ; Input method activated by the command toggle-input-method
@@ -342,15 +341,6 @@
     "h i" '(info :wk "read the manual")
     "h m" '(describe-mode :wk "modes")
     "h f" '(describe-function :wk "functions")
-
-    ;; Fuzzy search
-    "f" '(:ignore t :wk "fuzzy search")
-    "f h" '(:ignore t :wk "frome home")
-    "f h d" '(s/fzf-home-dir :wk "for directories")
-    "f h f" '(s/fzf-home :wk "for files")
-    "f" '(:ignore t :wk "from here")
-    "f f" '(counsel-fzf :wk "for files")
-    "f d" '(s/fzf-dir-here :wk "for directories")
 
     ;; Frame manipulation
     "F" '(:ignore t :wk "frame manipulation")
@@ -788,28 +778,7 @@
   ("M-x" 'counsel-M-x
    "C-x C-f" 'counsel-find-file)
   :init
-  (counsel-mode +1)
-  (defun s/fzf-home ()
-    "Fuzzy find files from the home directory"
-    (interactive)
-    (counsel-fzf "" s/fzf-home-dir))
-
-  (defun s/fzf-dir (start-dir)
-    "Fuzzy search for directories"
-    (interactive)
-    (let ((counsel-fzf-cmd "find . -type d | fzf -f \"%s\""))
-      (counsel-fzf "" start-dir)))
-
-  (defun s/fzf-home-dir ()
-    "Fuzzy search for all directories in the home directory"
-    (interactive)
-    (s/fzf-dir s/fzf-home-dir))
-
-  (defun s/fzf-dir-here ()
-    "Fuzzy search from all directories from current location"
-    (interactive)
-    (counsel-fzf "" default-directory))
-  )
+  (counsel-mode +1))
 
 
 ;; Show last used functions in M-x
@@ -822,10 +791,8 @@
 ;;;; Writegood-mode
 ;; Give comments on badly written text
 (use-package writegood-mode
-  :init
-  (add-hook 'LaTeX-mode-hook 'writegood-mode)
-  :config
-  (delete "significantly" writegood-weasel-words))
+  :init (add-hook 'LaTeX-mode-hook 'writegood-mode)
+  :config (delete "significantly" writegood-weasel-words))
 
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
