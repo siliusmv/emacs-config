@@ -4,13 +4,13 @@
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Figure out how to control the kill-ring
 ;; Add expand-region
-;; Fig better keybinds in the ivy buffer and for company
+;; Speed up eglot in some way?
 
 ;;; Non-package specific stuff
 ;;;; Global variables and constants
 (defvar s/init-theme "light") ; Default theme
 (defvar s/init-dict "british") ; Default language
-(defvar s/gc-cons-threshold (* 1024 1024 5)) ; Threshold for garbage disposal
+(defvar s/gc-cons-threshold (* 1024 1024 50)) ; Threshold for garbage disposal
 (defvar s/macos-p (string-equal system-type "darwin")) ; Is this a mac?
 (defvar s/fzf-home-dir "~/OneDrive - NTNU/") ; Directory for fzf where i keep all my files
 (defvar s/literature-dir "~/OneDrive - NTNU/literature/")
@@ -193,7 +193,7 @@
   (general-create-definer s/insert-unicode
     :prefix "`"
     ;:states '(insert emacs)
-    :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map evil-ex-completion-map minibuffer-local-map))
+    :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map evil-ex-completion-map minibuffer-local-map swiper-map))
 
   (general-define-key
    :keymaps 'override
@@ -507,9 +507,13 @@
 (use-package eglot
   :config
   (setq
+   eglot-stay-out-of '(company) ; Don't mess with company backends
    ;; Avoid annoying highlighting of everything
-   eglot-ignored-server-capabilites '(:documentHighlightProvider)
-   eglot-stay-out-of '(company))) ; Don't mess with company backends
+   eglot-ignored-server-capabilites
+   '(:hoverProvider :definitionProvider :typeDefinitionProvider :implementationProvider :implementationProvider
+		    :referencesProvider :documentHighlightProvider :documentSymbolProvider :workspaceSymbolProvider
+		    :codeLensProvider :documentFormattingProvider :documentRangeFormattingProvider :documentLinkProvider)
+   ))
 
 (use-package flymake
   :init
@@ -550,8 +554,6 @@
   :config
   (general-define-key
    :keymaps 'company-active-map
-					;"<tab>" 'company-complete
-					;"TAB" 'company-complete
    "<tab>" nil
    "TAB" nil
    "<backtab>" nil
@@ -609,13 +611,9 @@
   (defun s/ess-r-company ()
     "Set company backends for R buffers"
     (set (make-local-variable 'company-backends)
-	 '(
-	   company-capf
+	 '(company-capf
 	   company-files
-	   (company-R-args
-	    company-R-objects
-	    company-R-library :separate)
-	   )))
+	   (company-R-args company-R-objects company-R-library :separate))))
 
   :general
   (s/local-leader-def
@@ -681,7 +679,6 @@
   :config
   (add-hook 'julia-mode-hook 'julia-snail-mode)
   (add-hook 'julia-mode-hook 'yas-minor-mode))
-
 
 ;; You have to go into the source code of the function
 ;; eglot-jl--ls-invocation and comment out the line where
@@ -902,7 +899,9 @@
   ;; Completion for latex macros
   (setq 
    TeX-auto-global (concat user-emacs-directory "auctex/auto-global")
-   TeX-auto-regexp-list 'TeX-auto-full-regexp-list)
+   TeX-auto-regexp-list 'TeX-auto-full-regexp-list
+   TeX-macro-private "~/.local/share/latex"
+   TeX-style-private "~/.local/share/latex")
   
   ;;; Functions for changing PDF viewers
   (defvar s/pdf-viewers
@@ -955,9 +954,10 @@
 	TeX-auto-parse-length 999999
 	TeX-auto-global (concat user-emacs-directory "auctex/auto-global/"))
   
-  (setq TeX-source-correlate-method 'synctex)
-  (TeX-source-correlate-mode)
-  (setq TeX-source-correlate-start-server t)
+  ; (setq TeX-source-correlate-method 'synctex)
+  ; (TeX-source-correlate-mode)
+  ; (setq TeX-source-correlate-start-server t)
+  ; (add-hook 'LaTeX-mode-hook (lambda () (TeX-source-correlate-mode t)))
   )
 
 (use-package reftex
@@ -973,11 +973,10 @@
   ;; Pass the -pdf flag when TeX-PDF-mode is active
   (setq auctex-latexmk-inherit-TeX-PDF-mode t)
 
-  (add-hook 'LaTeX-mode-hook
-	    (lambda ()
-	      (setq TeX-command-default "LatexMk"
-		    TeX-command-force "LatexMk")
-	      (TeX-source-correlate-mode t)))
+  ;(add-hook 'LaTeX-mode-hook
+  ;	    (lambda ()
+  ;	      (setq TeX-command-default "LatexMk"
+  ;		    TeX-command-force "LatexMk")))
   :config
   (auctex-latexmk-setup)
   )
@@ -1228,6 +1227,7 @@
 ;;;; Midnight mode
 (use-package midnight)
 
+
 ;;;; Yasnippet
 (use-package yasnippet
   :init
@@ -1255,9 +1255,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes nil)
- '(ess-style (quote RStudio))
+ '(ess-style 'RStudio)
  '(evil-collection-minibuffer-setup t t)
- '(evil-search-module (quote evil-search)))
+ '(evil-search-module 'evil-search))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
