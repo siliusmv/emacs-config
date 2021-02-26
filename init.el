@@ -317,7 +317,7 @@
     "g" (general-simulate-key "M-g" :which-key "go to...")
     "m" '(:ignore t :wk "mode specific")
 
-    "c" '(counsel-compile :wk "compile")
+    "c" '(makefile-executor-execute-project-target :wk "compile")
 
     ;; Yasnippet keymap
     "y" '(:ignore t :wk "yasnippet")
@@ -794,6 +794,9 @@
   :init (add-hook 'LaTeX-mode-hook 'writegood-mode)
   :config (delete "significantly" writegood-weasel-words))
 
+;;;; Compilation
+(use-package makefile-executor)
+
 
 ;;;; LaTeX-stuff (AuCTeX, refTeX and more)
 (use-package auctex
@@ -855,11 +858,6 @@
   (setq TeX-auto-regexp-list 'TeX-auto-full-regexp-list
 	TeX-auto-parse-length 999999
 	TeX-auto-global (concat user-emacs-directory "auctex/auto-global/"))
-  
-  ; (setq TeX-source-correlate-method 'synctex)
-  ; (TeX-source-correlate-mode)
-  ; (setq TeX-source-correlate-start-server t)
-  ; (add-hook 'LaTeX-mode-hook (lambda () (TeX-source-correlate-mode t)))
   )
 
 (use-package reftex
@@ -869,19 +867,6 @@
   	    (lambda () (reftex-mode 1)))
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
   (setq reftex-plug-into-AUCTEX t))
-
-(use-package auctex-latexmk
-  :init
-  ;; Pass the -pdf flag when TeX-PDF-mode is active
-  (setq auctex-latexmk-inherit-TeX-PDF-mode t)
-
-  (add-hook 'LaTeX-mode-hook
-  	    (lambda ()
-  	      (setq TeX-command-default "LatexMk"
-  		    TeX-command-force "LatexMk")))
-  :config
-  (auctex-latexmk-setup)
-  )
 
 (use-package company-reftex)
 (use-package company-auctex
