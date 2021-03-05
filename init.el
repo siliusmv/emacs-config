@@ -5,6 +5,7 @@
 ;; Figure out how to control the kill-ring
 ;; Add expand-region
 ;; Speed up eglot in some way?
+;; Fix the autosave-stuff!
 
 ;;; Non-package specific stuff
 ;;;; Global variables and constants
@@ -67,7 +68,7 @@
   ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
   (setq exec-path-from-shell-check-startup-files nil) ; Some variables should be set in .bashrc
   (nconc exec-path-from-shell-variables
-	 '("LANG" "TEXINPUTS" "BIBINPUTS" "LC_ALL" "LANG" "R_PROFILE_USER"))
+	 '("LANG" "LC_ALL" "LANG" "R_PROFILE_USER"))
   (exec-path-from-shell-initialize))
 
 
@@ -81,7 +82,7 @@
 
 (scroll-bar-mode -1) ; Remove scroll bar
 (tool-bar-mode -1) ; Remove tool bar
-(if (not s/macos-p) (menu-bar-mode -1)) ; Sometimes remove menu bar
+(menu-bar-mode -1) ; Sometimes remove menu bar
 
 ;; ;; Autosave and backups
 ;; (setq make-backup-files nil) ; don't make backup files
@@ -157,6 +158,7 @@
 
 ;;;; Diminish
 ;; Don't let active modes clutter the mode-line
+;; You kind of don't need this when you have the evil-modeline...
 (use-package diminish)
 
 ;;;; Smooth scrolling
@@ -183,16 +185,21 @@
     :states '(normal visual motion insert emacs))
 
   (general-create-definer s/goto-leader-def
-					;:global-prefix "M-g"
+    ;:global-prefix "M-g"
     :prefix "M-g"
     :states '(normal visual motion insert emacs)
-					;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
+    ;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
     :keymaps 'override)
 
   (general-create-definer s/insert-unicode
     :prefix "`"
     ;:states '(insert emacs)
-    :keymaps '(prog-mode-map text-mode-map ess-mode-map inferior-ess-mode-map evil-ex-completion-map minibuffer-local-map swiper-map))
+    :keymaps '(prog-mode-map
+	       text-mode-map ess-mode-map
+	       inferior-ess-mode-map
+	       evil-ex-completion-map
+	       minibuffer-local-map
+	       swiper-map))
 
   (general-define-key
    :keymaps 'override
@@ -404,7 +411,7 @@
     ;; "Open programs" - keymap
     "o" '(:ignore t :wk "open ...")
     "o d" '(dired :wk "dired")
-    "o t" '(vterm-other-window :wk "terminal")
+    "o t" '(vterm-toggle-cd :wk "terminal")
     "o g" '(magit-status :wk "git")
     "o e" '(eshell :wk "eshell")
     "o r" '(run-ess-r :wk "R")
@@ -427,6 +434,7 @@
 
 (defun s/dired-hide-dotfiles ()
   "Hides all dotfiles in a dired-buffer"
+  (interactive)
   (dired-mark-files-regexp "^\\.")
   (dired-do-kill-lines))
 
@@ -472,12 +480,16 @@
   :config
   (setq
    eglot-stay-out-of '(company) ; Don't mess with company backends
-   ;; Avoid annoying highlighting of everything
+   ;; Try to make eglot easier on the CPU
    eglot-ignored-server-capabilites
-   '(:hoverProvider :definitionProvider :typeDefinitionProvider :implementationProvider :implementationProvider
-		    :referencesProvider :documentHighlightProvider :documentSymbolProvider :workspaceSymbolProvider
-		    :codeLensProvider :documentFormattingProvider :documentRangeFormattingProvider :documentLinkProvider)
-   ))
+   '(:hoverProvider)
+   ; :definitionProvider :typeDefinitionProvider
+   ; :implementationProvider :implementationProvider
+   ; :referencesProvider :documentHighlightProvider
+   ; :documentSymbolProvider :workspaceSymbolProvider
+   ; :codeLensProvider :documentFormattingProvider
+   ; :documentRangeFormattingProvider :documentLinkProvider)
+  ))
 
 (use-package flymake
   :init
@@ -641,41 +653,49 @@
 
 (use-package julia-mode
   :config
-  (add-hook 'julia-mode-hook 'julia-snail-mode)
-  (add-hook 'julia-mode-hook 'yas-minor-mode))
-
-;; You have to go into the source code of the function
-;; eglot-jl--ls-invocation and comment out the line where
-;; they change the environment variable JULIA_LOAD_PATH
-;; for this to not destroy everything
-(use-package eglot-jl
-  :init
-  (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
-  (eglot-jl-init)
-  :config
-  (add-hook 'julia-mode-hook 'eglot-ensure))
-
-; (use-package julia-repl
-;   :general
-;   (:keymaps 'julia-repl-mode-map
-;    "M-e" 'julia-repl-send-line
-;    "M-RET" 'julia-repl-send-region-or-line)
-; )
-
-(use-package julia-snail
-  :init
-  (defun s/julia-snail-send-line-and-step ()
-    (interactive)
-    (julia-snail-send-line)
-    (evil-next-line))
-  :general
-  (:keymaps 'julia-snail-mode-map
-   "M-e" 's/julia-snail-send-line-and-step
-   "M-RET" 'julia-snail-send-top-level-form)
-  (s/local-leader-def
-    :keymaps 'julia-mode-map
-    "j" '(julia-snail :wk "julia"))
+  (add-hook 'julia-mode-hook 'julia-repl-mode)
+  ;; (add-hook 'julia-mode-hook 'julia-snail-mode)
+  ;; (add-hook 'julia-mode-hook 'yas-minor-mode) ;; I don't know why I had this here...
   )
+;; 
+;; ;; You have to go into the source code of the function
+;; ;; eglot-jl--ls-invocation and comment out the line where
+;; ;; they change the environment variable JULIA_LOAD_PATH
+;; ;; for this to not destroy everything
+;; (use-package eglot-jl
+;;   :init
+;;   (setq eglot-jl-default-environment "~/.julia/environments/v1.4")
+;;   (eglot-jl-init)
+;;   :config
+;;   (add-hook 'julia-mode-hook 'eglot-ensure))
+;; 
+(use-package julia-repl
+  :general
+  (:keymaps 'julia-repl-mode-map
+   "M-e" 'julia-repl-send-line
+   "M-RET" 'julia-repl-send-region-or-line)
+  (s/local-leader-def
+    :keymaps '(julia-repl-mode-map)
+    "j" '(julia-repl :wk "Open julia repl")
+    "a" '(julia-repl-activate-parent :wk "Activate project in parent directories")
+    "d" '(julia-repl-doc :wk "Documentation")
+    "r" '(julia-repl-includet-buffer :wk "Revise run buffer"))
+)
+;; 
+;; (use-package julia-snail
+;;   :init
+;;   (defun s/julia-snail-send-line-and-step ()
+;;     (interactive)
+;;     (julia-snail-send-line)
+;;     (evil-next-line))
+;;   :general
+;;   (:keymaps 'julia-snail-mode-map
+;;    "M-e" 's/julia-snail-send-line-and-step
+;;    "M-RET" 'julia-snail-send-top-level-form)
+;;   (s/local-leader-def
+;;     :keymaps 'julia-mode-map
+;;     "j" '(julia-snail :wk "julia"))
+;;   )
 
 ;;;; Themes
 (use-package doom-themes
@@ -778,8 +798,8 @@
   ("M-x" 'counsel-M-x
    "C-x C-f" 'counsel-find-file)
   :init
-  (counsel-mode +1))
-
+  (counsel-mode +1)
+  )
 
 ;; Show last used functions in M-x
 (use-package amx)
@@ -863,8 +883,7 @@
 (use-package reftex
   :diminish reftex-mode
   :config
-  (add-hook 'LaTeX-mode-hook
-  	    (lambda () (reftex-mode 1)))
+  (add-hook 'LaTeX-mode-hook (lambda () (reftex-mode 1)))
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
   (setq reftex-plug-into-AUCTEX t))
 
@@ -890,7 +909,6 @@
   (add-hook 'LaTeX-mode-hook 's/latex-company-function)
   )
 
-
 ;;;; Auto-fill texts
 (add-hook 'text-mode-hook 'auto-fill-mode)
 (add-hook 'LaTeX-mode 'auto-fill-mode)
@@ -898,6 +916,11 @@
 
 (diminish 'auto-fill-mode)
 (diminish 'auto-revert-mode)
+
+(use-package markdown-mode
+  :config
+  (add-hook 'markdown-mode-hook 'auto-fill-mode)
+  (add-hook 'markdown-mode-hook 'flyspell-mode))
 
 ;;;; Dictionary (flyspell)
 (use-package flyspell
@@ -961,6 +984,23 @@
 
 ;;;; Terminal
 (use-package vterm)
+
+(use-package vterm-toggle
+  :config
+  ;; Show vterm buffer in side window (taken from https://github.com/jixiuf/vterm-toggle)
+  (setq vterm-toggle-fullscreen-p nil)
+  (add-to-list 'display-buffer-alist
+               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
+                 (display-buffer-reuse-window display-buffer-in-side-window)
+                 (side . bottom)
+                 ;;(dedicated . t) ;dedicated is supported in emacs27
+                 (reusable-frames . visible)
+                 (window-height . 0.3)))
+  :general
+  (s/local-leader-def
+    :keymaps '(vterm-mode-map vterm-copy-mode-map)
+    "c" '(vterm-toggle-insert-cd :wk "cd to last buffer"))
+  )
 
 ;;;; Pairing of parentheses
 (use-package elec-pair
@@ -1107,3 +1147,9 @@
  '(evil-search-module 'evil-search))
 
 ;;; init.el ends here
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
