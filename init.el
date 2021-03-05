@@ -1,160 +1,50 @@
 ;;; My Emacs init file
 
 ;;;; TODO
+;; FIX YASNIPPET
+;; USE MULTIPLE FILES FOR YOUR CONFIG
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Figure out how to control the kill-ring
 ;; Add expand-region
 ;; Speed up eglot in some way?
 ;; Fix the autosave-stuff!
 
+;; Define the directory with all init-files
+(defconst user-init-dir
+  (cond ((boundp 'user-emacs-directory)
+         user-emacs-directory)
+        ((boundp 'user-init-directory)
+         user-init-directory)
+        (t "~/.emacs.d/"))
+  "Directory containing all user-specific init-files")
+
+(defun load-user-file (file)
+  (interactive "f")
+  "Load a file in current user's configuration directory"
+  (load-file (expand-file-name file user-init-dir)))
+
 ;;; Non-package specific stuff
 ;;;; Global variables and constants
 (defvar s/init-theme "light") ; Default theme
 (defvar s/init-dict "british") ; Default language
-(defvar s/gc-cons-threshold (* 1024 1024 50)) ; Threshold for garbage disposal
-(defvar s/macos-p (string-equal system-type "darwin")) ; Is this a mac?
 (defvar s/literature-dir "~/OneDrive - NTNU/literature/")
 (setq-default fill-column 100) ; Column for starting automatic line wrap
 (setq-default default-input-method "TeX") ; Input method activated by the command toggle-input-method
 
-;;;; Startup optimisation
+;; Fixes garbage collection, bootstraps straight.el and
+;; sets some settings that are nice to have
+(load-user-file "startup.el")
 
-;; Set garbage collection threshold
-;; From https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
-(setq gc-cons-threshold (* 1024 1024 100))
+;; Some random functions that make life easier
+(load-user-file "functions.el")
 
-;; Set file-name-handler-alist
-;; Also from https://www.reddit.com/r/emacs/comments/3kqt6e/2_easy_little_known_steps_to_speed_up_emacs_start/
-(setq file-name-handler-alist-original file-name-handler-alist
-      file-name-handler-alist nil)
+;; Load evil and general.el and define all your personal keybindings
+(load-user-file "keybinds.el")
 
-;; Reset all variables after startup is finished
-(defun s/reset-vars ()
-  (setq gc-cons-threshold s/gc-cons-threshold)
-  (setq file-name-handler-alist file-name-handler-alist-original)
-  (makunbound 'file-name-handler-alist-original)
-  (message "gc-cons-threshold and file-name-handler-alist restored"))
-(run-with-idle-timer 5 nil 's/reset-vars)
-
-;;;; Bootstrap straight.el
-
-;; https://github.com/raxod502/straight.el/issues/356
-(setq straight-recipes-emacsmirror-use-mirror t) ; Use a mirror for emacsmirror
-
-;; Perform the bootstrap
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-
-;; https://github.com/raxod502/straight.el/blob/develop/README.md#integration-with-use-package
-;; Use straight together with use-package
-(straight-use-package 'use-package) ; Install use-package
-(setq straight-use-package-by-default t)
-
-;;;; Import the shell environment
-;; https://gitlab.com/vigou3/emacs-modified-macos/blob/master/default.el
-;; Import some shell environment variables into Emacs at launch.
-(use-package exec-path-from-shell
-  :config
-  ;; https://emacs.stackexchange.com/questions/29681/ess-r-startup-warning-locale
-  (setq exec-path-from-shell-check-startup-files nil) ; Some variables should be set in .bashrc
-  (nconc exec-path-from-shell-variables
-	 '("LANG" "LC_ALL" "LANG" "R_PROFILE_USER"))
-  (exec-path-from-shell-initialize))
-
-
-;;;; BASIC SETTINGS
-
-(setq inhibit-startup-screen t) ; Remove startup screen
-(setq column-number-mode t) ; Display column numbers
-(global-hl-line-mode) ; Highlight current line
-(setq ring-bell-function 'ignore) ; Stop the error bell sound
-(fset 'yes-or-no-p 'y-or-n-p) ; Change all prompts to y or n
-
-(scroll-bar-mode -1) ; Remove scroll bar
-(tool-bar-mode -1) ; Remove tool bar
-(menu-bar-mode -1) ; Sometimes remove menu bar
-
-;; ;; Autosave and backups
-;; (setq make-backup-files nil) ; don't make backup files
-;; (setq auto-save-default nil) ; Do not autosave
-
-;; macOS stuff
-(if s/macos-p
-    (progn
-     (setq mac-option-modifier nil ;; do not use the option key
-	   mac-command-modifier 'meta) ;; command is meta
-     (setq dired-use-ls-dired nil)))
- 
-;; Ignore case in completion
-(setq completion-ignore-case t
-      case-fold-search nil
-      read-buffer-completion-ignore-case t
-      read-file-name-completion-ignore-case t)
-
-;;;; Misc. functions
-(defun s/kill-buffer-and-frame ()
-  "Kill the current buffer and delete the selected frame."
-  (interactive)
-  (let ((frame-to-delete (selected-frame))
-	(buffer-to-kill (current-buffer))
-	(kill-buffer-query-functions nil)
-	(delete-frame-functions (lambda () (ignore-errors (delete-frame)))))
-    (unwind-protect
-	(progn
-	  (add-hook 'kill-buffer-hook delete-frame-functions t t)
-	  (if (kill-buffer (current-buffer))
-	      ;; If `delete-frame' failed before, we rerun it to regenerate
-	      ;; the error so it can be seen in the echo area.
-	      (when (eq (selected-frame) frame-to-delete)
-		(delete-frame))))
-      ;; If the buffer is not dead for some reason (probably because
-      ;; of a `quit' signal), remove the hook again.
-      (ignore-errors
-	(with-current-buffer buffer-to-kill
-	  (remove-hook 'kill-buffer-hook delete-frame-functions t))))))
-
-
-(defun s/choose-from-list (prompt var-list &optional var-name)
-  (if (not var-name)
-      (setq var-name
-	    (ivy-read prompt var-list)))
-  (nth 1 (assoc var-name var-list)))
-
-(defun s/kill-this-buffer ()
-  "Kill the current buffer without any prompts"
-  (interactive)
-  (kill-buffer (current-buffer)))
-
-(defun s/go-to-config ()
-  "Go to the emacs config-file"
-  (interactive)
-  (find-file (concat user-emacs-directory "init.el")))
+;; Use company-mode for completion
+(load-user-file "completion.el")
 
 ;;; Package specific settings
-;;;; Evil-mode
-
-(use-package evil
-  :init
-  (setq evil-want-integration t)
-  (setq evil-want-keybinding nil)
-  :config
-  (evil-mode 1))
-
-(use-package evil-collection
-  :after evil
-  :custom (evil-collection-minibuffer-setup t)
-  :config
-  (evil-collection-init))
 
 ;;;; Diminish
 ;; Don't let active modes clutter the mode-line
@@ -166,265 +56,6 @@
 (use-package smooth-scrolling
   :config
   (smooth-scrolling-mode 1))
-
-;;;; General.el - keybindings
-;; Keybindings
-(use-package general
-  :config
-  (general-evil-setup t)
-
-  (general-create-definer s/leader-def
-    :prefix "SPC"
-    :global-prefix "M-SPC"
-    :states '(normal visual motion insert emacs)
-    :keymaps 'override)
-
-  (general-create-definer s/local-leader-def
-    :prefix "SPC m"
-    :global-prefix "M-SPC m"
-    :states '(normal visual motion insert emacs))
-
-  (general-create-definer s/goto-leader-def
-    ;:global-prefix "M-g"
-    :prefix "M-g"
-    :states '(normal visual motion insert emacs)
-    ;:keymaps '(prog-mode-map text-mode-map dired-mode-map TeX-mode-map))
-    :keymaps 'override)
-
-  (general-create-definer s/insert-unicode
-    :prefix "`"
-    ;:states '(insert emacs)
-    :keymaps '(prog-mode-map
-	       text-mode-map ess-mode-map
-	       inferior-ess-mode-map
-	       evil-ex-completion-map
-	       minibuffer-local-map
-	       swiper-map))
-
-  (general-define-key
-   :keymaps 'override
-   :states '(normal visual insert)
-   "M-?" '(which-key-show-top-level :wk "show all bindings")
-   "M-o" '(ace-window :wk "other window")
-   "M-s" '(save-buffer :wk "save buffer")
-   "M-S" '(save-some-buffers :wk "save all buffers")
-   "M-`" '(ns-next-frame :wk "switch frame"))
-
-  (general-define-key
-   :keymaps 'override
-   :states '(normal visual)
-   "/" '(counsel-grep-or-swiper :wk "search in buffer")
-   "M-k" '(scroll-down-command :wk t)
-   "M-j" '(scroll-up-command :wk t)
-   "M-h" '(evil-jump-backward :wk "jump backward")
-   "M-l" '(evil-jump-forward :wk "jump forward"))
-
-  (general-define-key
-   :keymaps 'minibuffer-local-map
-   "M-p" '(yank :wk "copy from clipboard")) 
-
-  (general-define-key
-   :states 'visual
-   :keymaps 'override
-   "<tab>" 'indent-for-tab-command) ;; Indent a large area
-  
-  ;; Allow enclosing a marked region with $$
-  (add-to-list 'insert-pair-alist (list ?\$ ?\$))
-  ;; Editing commands
-  (general-define-key
-   :states 'visual
-   :keymaps 'override
-   :prefix "M-i"
-   "" '(:ignore t :wk "insert")
-   "(" '(insert-pair :wk "(")
-   "[" '(insert-pair :wk "[")
-   "{" '(insert-pair :wk "{")
-   "\"" '(insert-pair :wk "\"")
-   "\'" '(insert-pair :wk "\'")
-   "\$" '(insert-pair :wk "\$")
-   "`" '(insert-pair :wk "`")
-   ")" '(delete-pair :wk "delete pair"))
-
-  (s/goto-leader-def
-    "" '(:ignore t :wk "go to...")
-    "l" '(avy-goto-line :wk "line")
-    "e" '(flymake-goto-next-error :wk "next error (flymake)")
-    "E" '(flymake-goto-prev-error :wk "prev error (flymake)")
-    "b" '(evil-next-buffer :wk "next buffer")
-    "B" '(evil-prev-buffer :wk "prev buffer")
-    "s" '(flyspell-correct-next :wk "next spelling error")
-    "S" '(flyspell-correct-previous :wk "prev spelling error")
-    "t" '(persp-next :wk "next tab")
-    "T" '(persp-prev :wk "prev tab")
-    "r" '(revert-buffer :wk "refresh buffer")
-
-    "d" '(:ignore t :wk "definition")
-    "d i" '(ivy-imenu-anywhere :wk "with imenu")
-    "d d" '(dumb-jump-go :wk "with dumb-jump")
-    "d x" '(xref-find-definitions :wk "with xref"))
-
-  (s/insert-unicode
-    "" '(:ignore t :wk "insert unicode")
-    "`" (lambda () (interactive) (insert "`") :wk "`")
-
-    "q" (lambda () (interactive) (insert "χ") :wk "χ")
-    "w" (lambda () (interactive) (insert "ω") :wk "ω")
-    "e" (lambda () (interactive) (insert "ε") :wk "ε")
-    "r" (lambda () (interactive) (insert "ρ") :wk "ρ")
-    "t" (lambda () (interactive) (insert "τ") :wk "τ")
-    "y" (lambda () (interactive) (insert "ψ") :wk "ψ")
-    "u" (lambda () (interactive) (insert "υ") :wk "υ")
-    "p" (lambda () (interactive) (insert "π") :wk "π")
-    "a" (lambda () (interactive) (insert "α") :wk "α")
-    "s" (lambda () (interactive) (insert "σ") :wk "σ")
-    "d" (lambda () (interactive) (insert "δ") :wk "δ")
-    "f" (lambda () (interactive) (insert "ϕ") :wk "ϕ")
-    "g" (lambda () (interactive) (insert "γ") :wk "γ")
-    "h" (lambda () (interactive) (insert "η") :wk "η")
-    "j" (lambda () (interactive) (insert "θ") :wk "θ")
-    "k" (lambda () (interactive) (insert "κ") :wk "κ")
-    "l" (lambda () (interactive) (insert "λ") :wk "λ")
-    "z" (lambda () (interactive) (insert "ζ") :wk "ζ")
-    "x" (lambda () (interactive) (insert "ξ") :wk "ξ")
-    "b" (lambda () (interactive) (insert "β") :wk "β")
-    "n" (lambda () (interactive) (insert "ν") :wk "ν")
-    "m" (lambda () (interactive) (insert "μ") :wk "μ")
-    "," (lambda () (interactive) (insert "ℓ") :wk "ℓ")
-
-    "Q" (lambda () (interactive) (insert "Χ") :wk "Χ")
-    "W" (lambda () (interactive) (insert "Ω") :wk "Ω")
-    "E" (lambda () (interactive) (insert "Ε") :wk "Ε")
-    "R" (lambda () (interactive) (insert "Ρ") :wk "Ρ")
-    "T" (lambda () (interactive) (insert "Τ") :wk "Τ")
-    "Y" (lambda () (interactive) (insert "Ψ") :wk "Ψ")
-    "U" (lambda () (interactive) (insert "Υ") :wk "Υ")
-    "P" (lambda () (interactive) (insert "Π") :wk "Π")
-    "A" (lambda () (interactive) (insert "Α") :wk "Α")
-    "S" (lambda () (interactive) (insert "Σ") :wk "Σ")
-    "D" (lambda () (interactive) (insert "Δ") :wk "Δ")
-    "F" (lambda () (interactive) (insert "ϕ") :wk "ϕ")
-    "G" (lambda () (interactive) (insert "Γ") :wk "Γ")
-    "H" (lambda () (interactive) (insert "Η") :wk "Η")
-    "J" (lambda () (interactive) (insert "Θ") :wk "Θ")
-    "K" (lambda () (interactive) (insert "Κ") :wk "Κ")
-    "L" (lambda () (interactive) (insert "Λ") :wk "Λ")
-    "Z" (lambda () (interactive) (insert "Ζ") :wk "Ζ")
-    "X" (lambda () (interactive) (insert "Ξ") :wk "Ξ")
-    "B" (lambda () (interactive) (insert "Β") :wk "Β")
-    "N" (lambda () (interactive) (insert "Ν") :wk "Ν")
-    "M" (lambda () (interactive) (insert "Μ") :wk "Μ")
-    )
-
-  (s/leader-def
-    "" nil
-    "M-SPC" '(counsel-find-file :wk "find file")
-    "SPC" '(counsel-find-file :wk "find file")
-    "~" '(s/go-to-config :wk "go home")
-
-    "g" (general-simulate-key "M-g" :which-key "go to...")
-    "m" '(:ignore t :wk "mode specific")
-
-    "c" '(makefile-executor-execute-project-target :wk "compile")
-
-    ;; Yasnippet keymap
-    "y" '(:ignore t :wk "yasnippet")
-    "y i" '(yas-insert-snippet :wk "insert")
-    "y c" '(yas-new-snippet :wk "create")
-    "y r" '(yas-reload-all :wk "reload")
-    
-    ;; Buffer keymap
-    "b" '(:ignore t :wk "buffers")
-    "b k" '(s/kill-this-buffer :wk "kill buffer")
-    "b K" '(kill-buffer :wk "kill some buffer")
-    "b s" '(save-buffer :wk "save buffer")
-    "b r" '(rename-buffer :wk "rename buffer")
-    "b b" '(counsel-switch-buffer :wk "switch buffer")
-
-    ;; Help keymap
-    "h" '(:ignore t :wk "help")
-    "h k" '(describe-key :wk "keys")
-    "h v" '(describe-variable :wk "variables")
-    "h ?" '(help-for-help :wk "all the help-possibilities")
-    "h i" '(info :wk "read the manual")
-    "h m" '(describe-mode :wk "modes")
-    "h f" '(describe-function :wk "functions")
-
-    ;; Frame manipulation
-    "F" '(:ignore t :wk "frame manipulation")
-    "F |" '(tile-frames-horizontally :wk "tile horisontally")
-    "F -" '(tile-frames-vertically :wk "tile vertically")
-    "F F" '(toggle-max-frame :wk "toggle full-screen")
-    "F K" '(toggle-max-frame-vertically :wk "toggle vertical full-screen")
-    "F H" '(toggle-max-frame-horizontally :wk "toggle horisontal full-screen")
-    "F l" '(move-frame-to-screen-right :wk "move to right side")
-    "F h" '(move-frame-to-screen-left :wk "move to left side")
-    "F k" '(move-frame-to-screen-up :wk "move to top")
-    "F j" '(move-frame-to-screen-down :wk "move to bottom")
-    
-    ;; Quit
-    "q" '(:ignore t :wk "quit")
-    "q f" '(delete-frame :wk "close frame")
-    "q w" '(delete-window :wk "close window")
-    "q o" '(delete-other-windows :wk "close other windows")
-    "q W" '(kill-buffer-and-window :wk "Kill buffer, close window")
-    "q F" '(s/kill-buffer-and-frame :wk "Kill buffer, close frame")
-
-    ;; Search keymap
-    "s" '(:ignore t :wk "search")
-    "s b" '(counsel-grep-or-swiper :wk "search in buffer")
-    "s 0" '(evil-ex-nohighlight :wk "turn off highlight")
-    "s d" '(counsel-ag :wk "search in directory")
-    "s g" '(counsel-git-grep :wk "search in git repository")
-    ;; "s p" '(projectile-ripgrep :wk "search in project")
-
-    ;; Project keymap
-    "p" '(:keymap projectile-command-map :package projectile :wk "project menu")
-
-    ;; Variables keymap
-    "v" '(:ignore t :wk "change variables")
-    "v d" '(s/choose-dictionary :wk "spell-check dictionary")
-    "v t" '(s/choose-theme :wk "theme")
-    "v s" '(flyspell-mode :wk "toggle spelling")
-    "v F" '(flycheck-mode :wk "toggle flycheck")
-    "v f" '(:ignore t :wk "font size")
-    "v f +" '(default-text-scale-increase :wk "enlarge")
-    "v f -" '(default-text-scale-decrease :wk "decrease")
-    "v i" '(toggle-input-method :wk "input method (TeX)")
-
-    ;; Window keymap
-    "w" '(:ignore t :wk "window")
-    "w +" '(evil-window-increase-height :wk "increase height")
-    "w -" '(evil-window-decrease-height :wk "decrease height")
-    "w =" '(balance-windows :wk "balance windows")
-    "w <" '(evil-window-increase-width :wk "increase width")
-    "w >" '(evil-window-decrease-width :wk "decrease width")
-    "w h" '(evil-window-left :wk t)
-    "w j" '(evil-window-down :wk t)
-    "w k" '(evil-window-up :wk t)
-    "w l" '(evil-window-right :wk t)
-    "w d" '(delete-window :wk "delete window")
-    "w f" '(delete-other-windows :wk "focus on window")
-    "w v" '(split-window-right :wk "split vertical")
-    "w s" '(split-window-below :wk "split")
-    "w o" '(ace-window :wk "other window")
-
-    ;; "Open programs" - keymap
-    "o" '(:ignore t :wk "open ...")
-    "o d" '(dired :wk "dired")
-    "o t" '(vterm-toggle-cd :wk "terminal")
-    "o g" '(magit-status :wk "git")
-    "o e" '(eshell :wk "eshell")
-    "o r" '(run-ess-r :wk "R")
-
-    ;; "Workspaces (tabs)"
-    "t" '(:ignore t :wk "workspaces")
-    "t o" '(persp-switch :wk "other workspace")
-    "t n" '(persp-next :wk "next")
-    "t p" '(persp-prev :wk "prev")
-    "t r" '(persp-rename :wk "rename")
-    "t d" '(persp-kill :wk "close")
-    ))
-
 
 ;;;; Change text size
 ;; This contains the functions default-text-scale-(increase/decrease)
@@ -474,7 +105,6 @@
  "i" '(eval-last-sexp :wk "evaluate inner sexp")
  )
 
-
 ;;;; Language servers
 (use-package eglot
   :config
@@ -520,64 +150,6 @@
    aw-scope 'frame ;; Only switch windows in the focused frame
    aw-background nil  ; Don't remove colour around the letters
    ))
-
-;;;; Company
-(use-package company
-  :delight
-  :diminish company-mode
-  :init
-  (add-hook 'after-init-hook 'global-company-mode)
-  :config
-  (general-define-key
-   :keymaps 'company-active-map
-   "<tab>" nil
-   "TAB" nil
-   "<backtab>" nil
-   "S-TAB" nil
-   "<return>" nil
-   "M-l" 'company-complete
-   "M-j" 'company-select-next
-   "M-k" 'company-select-previous
-   "M-n" 'company-other-backend
-					;"M-/" 'company-search-candidates
-   "M-/" 'counsel-company
-   "M-S" '(counsel-company :wk "counsel-company"))
-
-  (general-define-key
-   :keymaps 'company-search-map
-   "M-j" 'company-search-repeat-forward
-   "M-k" 'company-search-repeat-backward)
-
-  (general-define-key
-   :states 'insert
-   :keymaps 'company-mode-map
-   "M-n" 'company-other-backend)
-
-  ;; set default `company-backends'
-  (setq company-backends
-	'(company-capf
-	  company-files ; files & directory
-					;(company-abbrev company-dabbrev :separate)
-	  ))
-
-  ;; Behavoiur of completion pop-up
-  (setq company-selection-wrap-around t ; Start at the top after reaching the bottom
-	company-tooltip-align-annotations t
-	company-idle-delay .1 ; Waiting time before we start completion
-	company-minimum-prefix-length 1 ; Minimum letters before we start completion
-	company-tooltip-limit 10)
-
-  ;; Settings for backends
-  (setq company-dabbrev-downcase nil
-	company-dabbrev-code-ignore-case t
-	company-dabbrev-ignore-case t
-	company-dabbrev-code-other-buffers nil) ; Search other buffers with same major mode
-
-  )
-
-(use-package company-statistics
-  :config
-  (add-hook 'after-init-hook 'company-statistics-mode))
 
 
 ;;;; ESS (Emacs Speaks Statistics)
