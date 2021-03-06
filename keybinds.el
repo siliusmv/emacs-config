@@ -268,3 +268,15 @@
     ))
 
 
+;;;; which-key
+;; Display a popup-buffer with the available key-combinations
+;; whenever a keymap is pressed
+(use-package which-key
+  :init
+  (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-sort-order 'which-key-local-then-key-order)
+  (which-key-setup-side-window-bottom)
+  (setq which-key-side-window-max-height 0.5))
+
