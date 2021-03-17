@@ -7,6 +7,7 @@
     (set (make-local-variable 'company-backends)
 	 '(company-capf
 	   company-files
+	   company-dabbrev-code
 	   (company-R-args company-R-objects company-R-library :separate))))
 
   :general

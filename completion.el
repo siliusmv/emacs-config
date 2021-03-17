@@ -43,16 +43,14 @@
   :config
   (general-define-key
    :keymaps 'company-active-map
-   "<tab>" nil
-   "TAB" nil
-   "<backtab>" nil
-   "S-TAB" nil
+   "TAB" 'company-select-next
+   "<backtab>" 'company-select-previous
+   "S-TAB" 'company-select-previous
    "<return>" nil
    "M-l" 'company-complete
    "M-j" 'company-select-next
    "M-k" 'company-select-previous
    "M-n" 'company-other-backend
-					;"M-/" 'company-search-candidates
    "M-/" 'counsel-company
    "M-S" '(counsel-company :wk "counsel-company"))
 
@@ -64,13 +62,14 @@
   (general-define-key
    :states 'insert
    :keymaps 'company-mode-map
-   "M-n" 'company-other-backend)
+   "TAB" 'company-indent-or-complete-common
+   "M-n" 'company-complete)
 
   ;; set default `company-backends'
   (setq company-backends
 	'(company-capf
 	  company-files ; files & directory
-					;(company-abbrev company-dabbrev :separate)
+	  company-dabbrev-code
 	  ))
 
   ;; Behavoiur of completion pop-up

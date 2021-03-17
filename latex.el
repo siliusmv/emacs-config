@@ -81,8 +81,9 @@
 	    company-auctex-symbols
 	    company-capf
 	    :separate)
-	   company-files
 	   company-capf
+	   company-files
+	   company-dabbrev
 	   ))
     (company-auctex-init))
 
