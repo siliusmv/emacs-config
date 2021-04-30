@@ -75,7 +75,7 @@
   ;; Behavoiur of completion pop-up
   (setq company-selection-wrap-around t ; Start at the top after reaching the bottom
 	company-tooltip-align-annotations t
-	company-idle-delay .1 ; Waiting time before we start completion
+	company-idle-delay nil ; Waiting time before we start completion
 	company-minimum-prefix-length 1 ; Minimum letters before we start completion
 	company-tooltip-limit 10)
 

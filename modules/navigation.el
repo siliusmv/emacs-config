@@ -60,3 +60,4 @@
 (use-package dumb-jump
   :hook (prog-mode . dumb-jump-mode))
 
+(use-package expand-region)

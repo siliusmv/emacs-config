@@ -82,8 +82,6 @@
 ;;;; Midnight mode
 (use-package midnight)
 
-
-
 ;;;; Fix the usage of accent keys
 ;; https://wiki.archlinux.org/index.php/Emacs
 ;; "Emacs, the normal way to use accent keys does not work as expected.

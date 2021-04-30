@@ -2,6 +2,7 @@
   :init
   (setq evil-want-integration t)
   (setq evil-want-keybinding nil)
+  (setq evil-undo-system 'undo-tree) ; Use undo-tree for undo in evil
   :config
   (evil-mode 1))
 
@@ -58,8 +59,8 @@
    "/" '(counsel-grep-or-swiper :wk "search in buffer")
    "M-k" '(scroll-down-command :wk t)
    "M-j" '(scroll-up-command :wk t)
-   "M-h" '(evil-jump-backward :wk "jump backward")
-   "M-l" '(evil-jump-forward :wk "jump forward"))
+   "M-l" '(er/expand-region :wk "expand region")
+   "M-h" '(er/contract-region :wk "contract region"))
 
   (general-define-key
    :keymaps 'minibuffer-local-map

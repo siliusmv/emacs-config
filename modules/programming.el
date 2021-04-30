@@ -5,10 +5,12 @@
   (defun s/ess-r-company ()
     "Set company backends for R buffers"
     (set (make-local-variable 'company-backends)
-	 '(company-capf
-	   company-files
+	 '(
+	   (company-R-args company-R-objects company-R-library company-files company-dabbrev-code :separate)
+	   company-capf
 	   company-dabbrev-code
-	   (company-R-args company-R-objects company-R-library :separate))))
+	   company-files
+	   )))
 
   :general
   (s/local-leader-def
@@ -61,7 +63,7 @@
   (add-hook 'ess-r-mode-hook 's/ess-r-company)
   (add-hook 'inferior-ess-r-mode-hook (lambda () (company-mode -1)))
 
-  (add-hook 'ess-mode-hook 'eglot-ensure)
+  ;(add-hook 'ess-mode-hook 'eglot-ensure)
   (add-hook 'inferior-ess-mode-hook '(lambda () (electric-pair-local-mode -1)))
 )
 

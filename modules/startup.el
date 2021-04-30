@@ -69,9 +69,9 @@
 (tool-bar-mode -1) ; Remove tool bar
 (menu-bar-mode -1) ; Sometimes remove menu bar
 
-;; ;; Autosave and backups
-;; (setq make-backup-files nil) ; don't make backup files
-;; (setq auto-save-default nil) ; Do not autosave
+;; Autosave and backups
+(setq make-backup-files nil) ; don't make backup files
+(setq auto-save-interval 20) ; Save every 20 characters typed
 
 ;; macOS stuff
 (if s/macos-p

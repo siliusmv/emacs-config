@@ -6,7 +6,6 @@
     :keymaps 'TeX-mode-map
     "ESC" '(:ignore t :wk t)
     "v" '(TeX-view :wk "view pdf")
-    "c" '(TeX-command-master :wk "compile document")
     "t" '(reftex-toc :wk "navigate document")
     "r" '(reftex-toc-Rescan :wk "refresh reftex")
     "e" '(TeX-next-error :wk "compilation errors")
@@ -84,8 +83,7 @@
 	   company-capf
 	   company-files
 	   company-dabbrev
-	   ))
-    (company-auctex-init))
+	   )))
 
   (add-hook 'LaTeX-mode-hook 's/latex-company-function)
   )

@@ -2,7 +2,6 @@
 
 ;;;; TODO
 ;; FIX YASNIPPET
-;; USE MULTIPLE FILES FOR YOUR CONFIG
 ;; Ensure that the dictionary in auctex is correct, and not "default"
 ;; Figure out how to control the kill-ring
 ;; Add expand-region
@@ -11,10 +10,8 @@
 
 ;; Define the directory with all init-files
 (defconst user-init-dir
-  (cond ((boundp 'user-emacs-directory)
-         user-emacs-directory)
-        ((boundp 'user-init-directory)
-         user-init-directory)
+  (cond ((boundp 'user-emacs-directory) user-emacs-directory)
+        ((boundp 'user-init-directory) user-init-directory)
         (t "~/.emacs.d/"))
   "Directory containing all user-specific init-files")
 
@@ -32,40 +29,43 @@
 
 ;; Fixes garbage collection, bootstraps straight.el and
 ;; sets some settings that are nice to have
-(load-user-file "startup.el")
+(load-user-file "modules/startup.el")
 
 ;; Some random functions that make life easier
-(load-user-file "functions.el")
+(load-user-file "modules/functions.el")
 
 ;; Load evil and general.el and define all your personal keybindings.
 ;; Use which-key to keep control of all the bindings
 ;; This needs to be quite early
-(load-user-file "keybinds.el")
+(load-user-file "modules/keybinds.el")
 
 ;; Use company-mode for completion, eglot with flymake for languageservers,
 ;; flyspell for spelling, yasnippet and ivy/counsel
-(load-user-file "completion.el")
+(load-user-file "modules/completion.el")
 
 ;; All my auctex-stuff and reftex stuff
-(load-user-file "latex.el")
+(load-user-file "modules/latex.el")
 
 ;; Everything needed for R, julia, elisp and others?
-(load-user-file "programming.el")
+(load-user-file "modules/programming.el")
 
 ;; My themes and modeline and code for changing text size etc.
-(load-user-file "visual.el")
+(load-user-file "modules/visual.el")
 
 ;; Some configuration for org-mode and org-ref
-(load-user-file "org.el")
+(load-user-file "modules/org.el")
 
 ;; Dired, avy, ace-window, dumb-jump
-(load-user-file "navigation.el")
+(load-user-file "modules/navigation.el")
 
 ;; Workspaces, projects, ways to separate between code
-(load-user-file "projects.el")
+(load-user-file "modules/projects.el")
+
+;; Syntax highligting (font-lock and stuff)
+(load-user-file "modules/syntax-highlighting.el")
 
 ;; Everything else
-(load-user-file "packages.el")
+(load-user-file "modules/packages.el")
 
 
 
@@ -78,7 +78,8 @@
  '(custom-safe-themes nil)
  '(ess-style 'RStudio)
  '(evil-collection-minibuffer-setup t t)
- '(evil-search-module 'evil-search))
+ '(evil-search-module 'evil-search)
+ '(org-agenda-files '("~/OneDrive - NTNU/literature/bibliography.org")))
 
 ;;; init.el ends here
 (custom-set-faces
