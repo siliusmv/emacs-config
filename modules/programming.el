@@ -12,6 +12,46 @@
 	   company-files
 	   )))
 
+  (defun s/format-r-buffer ()
+    "Format a buffer containing R-code"
+    (interactive)
+    ;; Replace arrows with equal signs
+    (replace-regexp "<-" "=" nil (point-min) (point-max))
+    ;; Add spaces around equal signs, but not if it is a logical operator
+    (replace-regexp "\\([^ !=#]\\)=" "\\1 =" nil (point-min) (point-max))
+    (replace-regexp "=\\([^ =#$]\\)" "= \\1" nil (point-min) (point-max))
+    ;; Add space after comma
+    (replace-regexp ",\\([^ $]\\)" ", \\1" nil (point-min) (point-max))
+    (replace-regexp ",\\([^ $]\\)" ", \\1" nil (point-min) (point-max))
+    (replace-regexp ",\\([^ $]\\)" ", \\1" nil (point-min) (point-max))
+    ;; Add spaces around plus signs
+    (replace-regexp "\\([^ `]\\)\\+" "\\1 +" nil (point-min) (point-max))
+    (replace-regexp "\\+\\([^ `$]\\)" "+ \\1" nil (point-min) (point-max))
+    ;; Add spaces around tilde sign
+    (replace-regexp "\\([^ `]\\)~" "\\1 ~" nil (point-min) (point-max))
+    (replace-regexp "~\\([^ `$]\\)" "~ \\1" nil (point-min) (point-max))
+    ;; Add spaces around multiplication signs
+    (replace-regexp "\\([^ %`]\\)\\*" "\\1 *" nil (point-min) (point-max))
+    (replace-regexp "\\*\\([^ %`$]\\)" "* \\1" nil (point-min) (point-max))
+    ;; Add spaces in if-else statements
+    (replace-regexp "\\([^\\w]\\)if(" "\\1if (" nil (point-min) (point-max))
+    (replace-regexp "}else" "} else" nil (point-min) (point-max))
+    (replace-regexp "){" ") {" nil (point-min) (point-max))
+    ;; Add spaces around divide signs, but don't destroy file paths
+    (replace-regexp "\\(^[^\"']*[^ `]\\)/\\([^ `$]\\)" "\\1 / \\2" nil (point-min) (point-max))
+    (replace-regexp "\\(^[^\"']*[^ `]\\)/\\([^ `$]\\)" "\\1 / \\2" nil (point-min) (point-max))
+    ;; Add spaces around minus signs, but don't when we have a minus in front of a variable,
+    ;; or when the minus is in a sentence
+    (replace-regexp "\\(^[^#'\"]+[^ `([{]\\)-\\([^ `$]\\)" "\\1 - \\2" nil (point-min) (point-max))
+    (replace-regexp "\\(^[^#'\"]+[^ `([{]\\)-\\([^ `$]\\)" "\\1 - \\2" nil (point-min) (point-max))
+    (replace-regexp "\\(^[^#'\"]+[^ `([{]\\)-" "\\1 -" nil (point-min) (point-max))
+    (replace-regexp "\\(^[^#'\"]+[^ `([{]\\)-\\([^ `$]\\)" "\\1 - \\2" nil (point-min) (point-max))
+    (replace-regexp "\\(^[^#'\"]+[^ `([{]\\)-\\([^ `$]\\)" "\\1 - \\2" nil (point-min) (point-max))
+    ;; Remove leading whitespace
+    (replace-regexp "[ ]+$" "" nil (point-min) (point-max))
+    )
+
+
   :general
   (s/local-leader-def
     :keymaps '(ess-r-mode-map inferior-ess-mode-map)
@@ -22,6 +62,7 @@
     "b" '(ess-r-devtools-build-package :wk "build package")
     "i" '(ess-r-devtools-install-package :wk "install package")
     "u" '(ess-r-devtools-unload-package :wk "unload package")
+    "f" '(s/format-r-buffer :wk "format buffer")
     )
   (:keymaps '(ess-r-mode-map inferior-ess-mode-map)
    :states '(motion normal insert visual emacs)
