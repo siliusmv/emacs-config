@@ -64,6 +64,9 @@
 ;; Syntax highligting (font-lock and stuff)
 (load-user-file "modules/syntax-highlighting.el")
 
+;; Everything terminal-related (vterm, vterm-toggle)
+(load-user-file "modules/terminal.el")
+
 ;; Everything else
 (load-user-file "modules/packages.el")
 

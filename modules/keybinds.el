@@ -254,7 +254,7 @@
     ;; "Open programs" - keymap
     "o" '(:ignore t :wk "open ...")
     "o d" '(dired :wk "dired")
-    "o t" '(vterm-toggle-cd :wk "terminal")
+    "o t" '(vterm :wk "terminal")
     "o g" '(magit-status :wk "git")
     "o e" '(eshell :wk "eshell")
     "o r" '(run-ess-r :wk "R")

@@ -41,26 +41,6 @@
   (add-hook 'markdown-mode-hook 'flyspell-mode))
 
 
-;;;; Terminal
-(use-package vterm)
-
-(use-package vterm-toggle
-  :config
-  ;; Show vterm buffer in side window (taken from https://github.com/jixiuf/vterm-toggle)
-  (setq vterm-toggle-fullscreen-p nil)
-  (add-to-list 'display-buffer-alist
-               '((lambda(bufname _) (with-current-buffer bufname (equal major-mode 'vterm-mode)))
-                 (display-buffer-reuse-window display-buffer-in-side-window)
-                 (side . bottom)
-                 ;;(dedicated . t) ;dedicated is supported in emacs27
-                 (reusable-frames . visible)
-                 (window-height . 0.3)))
-  :general
-  (s/local-leader-def
-    :keymaps '(vterm-mode-map vterm-copy-mode-map)
-    "c" '(vterm-toggle-insert-cd :wk "cd to last buffer"))
-  )
-
 ;;;; Pairing of parentheses
 (use-package elec-pair
   :init
