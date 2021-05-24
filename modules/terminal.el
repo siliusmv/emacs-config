@@ -3,6 +3,17 @@
 (use-package vterm
   :init
 
+  (defun s/vterm-cd ()
+    "cd to the directory of the last buffer you visited"
+    (interactive)
+    (let* ((init-buffer (current-buffer)))
+      (switch-to-buffer-other-window (other-buffer (current-buffer) t))
+      (let* ((dir (expand-file-name default-directory))
+	     (cd-cmd (concat " cd " (shell-quote-argument dir))))
+	(switch-to-buffer-other-window init-buffer)
+	(vterm-send-string cd-cmd t)
+	(vterm-send-return))))
+
   (defun s/persp-generate-process-name (process make-new)
     "Infer the buffer name for PROCESS or generate a new one if MAKE-NEW is true.
 This function is heavily inspired by the function projectile-generate-process-name"
@@ -41,13 +52,8 @@ This function is heavily inspired by the functions projectile-run-vterm"
   :general
   (s/leader-def
     "o t" '(s/persp-toggle-vterm :wk "terminal"))
-
-  )
-
-(use-package vterm-toggle
-  :general
   (s/local-leader-def
     :keymaps '(vterm-mode-map vterm-copy-mode-map)
-    "c" '(vterm-toggle :wk "cd to last buffer"))
-)
-
+    "ESC" '(vterm-send-escape :wk "escape")
+    "c" '(s/vterm-cd :wk "cd to dir of last active buffer"))
+  )
